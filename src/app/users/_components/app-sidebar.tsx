@@ -96,6 +96,8 @@ export function AppSidebar() {
 
   const { setTheme, resolvedTheme } = useTheme();
 
+  const role = session.data?.user?.role;
+
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -109,6 +111,7 @@ export function AppSidebar() {
   const userInitials = session.data?.user?.name
     ?.split(" ")
     .map((name) => name[0])
+    .slice(0, 2)
     .join("");
 
   return (
@@ -116,23 +119,25 @@ export function AppSidebar() {
       <SidebarHeader className="bg-background flex items-center justify-center border-b p-4" />
 
       <SidebarContent className="bg-background">
-        <SidebarGroup>
-          <SidebarGroupLabel>Administradores</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {itemsEnterprise.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {(role === "administrator") && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administradores</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {itemsEnterprise.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={pathname === item.url}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>Atendimento</SidebarGroupLabel>
