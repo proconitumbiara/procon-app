@@ -8,6 +8,7 @@ import { db } from "@/db";
 import {
   clientsTable,
   operationsTable,
+  pausesTable,
   sectorsTable,
   servicePointsTable,
   ticketsTable,
@@ -109,6 +110,7 @@ export const callNextTicket = actionClient.action(async () => {
     };
   }
 
+  // Inserir atendimento
   await db.insert(treatmentsTable).values({
     ticketId: ticket.id,
     operationId: operation.id,
@@ -117,13 +119,39 @@ export const callNextTicket = actionClient.action(async () => {
   // Chama a função para enviar a lista atualizada
   await sendLastCalledClients();
 
-  // Atualizar status do ticket para 'finished'
+  // Atualizar status do ticket para 'in-attendance'
   await db
     .update(ticketsTable)
     .set({ status: "in-attendance" })
     .where(eq(ticketsTable.id, ticket.id));
 
   revalidatePath("/professional/professionals-services");
+
+  // Buscar pausas da operação
+  const pauses = await db.query.pausesTable.findMany({
+    where: and(
+      eq(pausesTable.operationId, operation.id),
+      eq(pausesTable.status, "in-progress")
+    ),
+  });
+
+  // Atualizar pausas in-progress para finished e calcular duração
+  for (const pause of pauses) {
+    const start = pause.createdAT instanceof Date
+      ? pause.createdAT
+      : new Date(pause.createdAT);
+    const end = new Date();
+    const durationMs = end.getTime() - start.getTime();
+    const durationMinutes = Math.floor(durationMs / 60000); // duração em minutos
+
+    await db
+      .update(pausesTable)
+      .set({
+        status: "finished",
+        duration: durationMinutes
+      })
+      .where(eq(pausesTable.id, pause.id));
+  }
 
   // Buscar o cliente do ticket
   const client = await db.query.clientsTable.findFirst({
@@ -143,7 +171,7 @@ export const callNextTicket = actionClient.action(async () => {
   const sectorName = sector.name;
 
   // Enviar para o painel Tizen via HTTP POST
-  await fetch("http://192.168.1.13:3001/call", {
+  await fetch("http://192.168.1.75:3001/call", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

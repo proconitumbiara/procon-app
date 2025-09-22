@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { ticketsTable, treatmentsTable } from "@/db/schema";
+import { pausesTable, ticketsTable, treatmentsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -26,7 +26,7 @@ export const endService = actionClient
         },
       };
     }
-
+    // Buscar atendimento
     const treatment = await db.query.treatmentsTable.findFirst({
       where: eq(treatmentsTable.id, parsedInput.treatmentId),
     });
@@ -38,7 +38,7 @@ export const endService = actionClient
         },
       };
     }
-
+    // Verificar se o atendimento está em andamento
     if (treatment.status !== "in_service") {
       return {
         error: {
@@ -65,10 +65,17 @@ export const endService = actionClient
         .where(eq(ticketsTable.id, treatment.ticketId));
     }
 
+    // Atualizar status do atendimento para "finished"
     await db
       .update(treatmentsTable)
       .set({ status: "finished", duration: durationMinutes })
       .where(eq(treatmentsTable.id, treatment.id));
+
+    //Criar pausa
+    await db.insert(pausesTable).values({
+      operationId: treatment.operationId,
+      reason: "finished-service",
+    });
 
     revalidatePath("/users/professionals-services");
   });

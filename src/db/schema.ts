@@ -102,6 +102,21 @@ export const operationsTable = pgTable("operations", {
     .references(() => servicePointsTable.id, { onDelete: "cascade" }),
 });
 
+//Tabela para armazenar pausas de operações
+export const pausesTable = pgTable("pauses", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  duration: integer("duration"),
+  status: text("status").notNull().default("in-progress"),
+  reason: text("reason").notNull(),
+  operationId: uuid("operation_id")
+    .notNull()
+    .references(() => operationsTable.id, { onDelete: "cascade" }),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
 //Tabela para armazenar clientes
 export const clientsTable = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -176,13 +191,10 @@ export const operationsTableRelations = relations(
 );
 
 //Clients tables relationships
-export const clientsTableRelations = relations(
-  clientsTable,
-  ({ many }) => ({
-    tickets: many(ticketsTable),
-    treatments: many(treatmentsTable),
-  }),
-);
+export const clientsTableRelations = relations(clientsTable, ({ many }) => ({
+  tickets: many(ticketsTable),
+  treatments: many(treatmentsTable),
+}));
 
 //Service points tables relationships
 export const servicePointsTableRelations = relations(

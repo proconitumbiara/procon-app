@@ -85,7 +85,7 @@ export const callTheCustomerAgain = actionClient.action(async () => {
   }
 
   // Enviar para o painel Tizen via HTTP POST
-  await fetch("http://192.168.1.13:3001/call", {
+  await fetch("http://192.168.1.75:3001/call", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
