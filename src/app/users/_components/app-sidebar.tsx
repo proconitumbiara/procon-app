@@ -46,17 +46,17 @@ const itemsEnterprise = [
     icon: BriefcaseBusinessIcon,
   },
   {
-    title: "Monitoramento de Operações",
+    title: "Operações",
     url: "/users/operations",
     icon: LaptopMinimalCheck,
   },
   {
-    title: "Métricas de Profissionais",
+    title: "Profissionais",
     url: "/users/users-professionals",
     icon: Users,
   },
   {
-    title: "Métricas de atendimentos",
+    title: "Atendimentos",
     url: "/users/dashboard",
     icon: ChartBarBig,
   },

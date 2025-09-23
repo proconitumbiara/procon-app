@@ -28,7 +28,7 @@ const Operations = async () => {
     redirect("/");
   }
 
-  // Buscar operações com status 'operating', incluindo joins
+  // Buscar operações com status 'operating', incluindo joins e atendimentos
   const operations = await db.query.operationsTable.findMany({
     where: (op, { eq }) => eq(op.status, "operating"),
     with: {
@@ -38,6 +38,16 @@ const Operations = async () => {
         },
       },
       user: true,
+      treatments: {
+        where: (treatment, { eq }) => eq(treatment.status, "in_service"),
+        with: {
+          ticket: {
+            with: {
+              client: true,
+            },
+          },
+        },
+      },
     },
   });
 

@@ -1,4 +1,5 @@
 "use client";
+import { MonitorX } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,14 +17,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
+  clientsTable,
   operationsTable,
   sectorsTable,
   servicePointsTable,
+  ticketsTable,
+  treatmentsTable,
   usersTable,
 } from "@/db/schema";
+import { formatCPF } from "@/lib/utils";
 
 interface OperationCardProps {
   operations: (typeof operationsTable.$inferSelect & {
@@ -31,6 +36,11 @@ interface OperationCardProps {
       sector: typeof sectorsTable.$inferSelect;
     };
     user: typeof usersTable.$inferSelect;
+    treatments: (typeof treatmentsTable.$inferSelect & {
+      ticket: typeof ticketsTable.$inferSelect & {
+        client: typeof clientsTable.$inferSelect;
+      };
+    })[];
   })[];
 }
 
@@ -57,9 +67,29 @@ const OperationTimer = ({ createdAt }: { createdAt: string | Date }) => {
   const start = new Date(createdAt).getTime();
   const diff = now - start;
   return (
-    <span className="text-primary flex flex-row gap-1 text-sm font-semibold">
+    <span className="text-foreground flex flex-row gap-1 text-sm font-bold">
       Tempo de operação:{" "}
-      <p className="text-muted-foreground font-normal">
+      <p className="text-foreground font-light">
+        {formatDuration(diff)}
+      </p>
+    </span>
+  );
+};
+
+const TreatmentTimer = ({ createdAt }: { createdAt: string | Date }) => {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const start = new Date(createdAt).getTime();
+  const diff = now - start;
+  return (
+    <span className="text-foreground flex flex-row gap-1 text-sm font-semibold">
+      Tempo de atendimento:{" "}
+      <p className="text-foreground font-normal">
         {formatDuration(diff)}
       </p>
     </span>
@@ -128,7 +158,7 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
       {operations.map((operation) => (
         <Card
           key={operation.id}
-          className="relative flex w-full max-w-md min-w-[30px] flex-col"
+          className="relative flex w-full max-w-md min-w-[30px] flex-col h-[400px]"
         >
           {operation && (
             <Badge className="absolute top-3 right-3 bg-green-500">
@@ -136,15 +166,15 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
             </Badge>
           )}
           <CardHeader className="flex flex-col">
-            <h3 className="text-base font-semibold">
-              {operation.user?.name || "-"} -{" "}
-              {operation.servicePoint?.name || "-"}
+            <h3 className="text-base text-primary/80 font-semibold">
+              {operation.user?.name || "-"}
             </h3>
-            <p className="text-muted-foreground text-sm">
-              {operation.servicePoint?.sector?.name || "-"}
+            <p className="text-foreground text-sm font-semibold">
+              {operation.servicePoint?.sector?.name || "-"} -{" "}
+              {operation.servicePoint?.name || "-"}
             </p>
-            <p className="text-muted-foreground text-sm">
-              <span className="text-primary font-semibold">Início:</span>{" "}
+            <p className="text-foreground text-sm font-light">
+              <span className="text-foreground font-bold">Início:</span>{" "}
               {operation.createdAT
                 ? new Date(operation.createdAT).toLocaleDateString("pt-BR", {
                   day: "2-digit",
@@ -152,7 +182,7 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
                   year: "2-digit",
                 })
                 : "-"}{" "}
-              <span className="text-primary font-semibold">Horário:</span>{" "}
+              <span className="text-foreground font-bold">Horário:</span>{" "}
               {operation.createdAT
                 ? new Date(operation.createdAT).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -164,6 +194,61 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
               )}
             </p>
           </CardHeader>
+          <Separator />
+          <CardContent className="flex-1 flex flex-col">
+            {/* Seção de atendimentos em andamento */}
+            {operation.treatments && operation.treatments.length > 0 ? (
+              <div className="flex-1 bg-background/10 flex flex-col justify-between h-full">
+                <h3 className="text-base text-primary/80 font-semibold mb-2">
+                  Atendimento em Andamento
+                </h3>
+                {operation.treatments.map((treatment) => (
+                  <div key={treatment.id} className="space-y-2 flex-1">
+                    <p className="text-sm">
+                      <span className="text-foreground font-semibold">Consumidor:</span>{" "}
+                      {treatment.ticket?.client?.name || "-"}
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-foreground font-semibold">CPF:</span>{" "}
+                      {treatment.ticket?.client?.register ? formatCPF(treatment.ticket?.client?.register) : "-"}
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-foreground font-semibold">Início do atendimento:</span>{" "}
+                      {treatment.createdAT
+                        ? new Date(treatment.createdAT).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                        })
+                        : "-"}{" "}
+                      <span className="text-foreground font-semibold">às</span>{" "}
+                      {treatment.createdAT
+                        ? new Date(treatment.createdAT).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                        : "-"}
+                    </p>
+                    {treatment.createdAT && (
+                      <TreatmentTimer createdAt={treatment.createdAT} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 p-3 bg-background/10 rounded-lg border border-border flex flex-col justify-center items-center h-full">
+                <div className="flex items-center gap-2 mb-2">
+                  <MonitorX className="w-4 h-4" />
+                  <p className="text-sm text-foreground font-medium">
+                    Nenhum atendimento em andamento
+                  </p>
+                </div>
+                <p className="text-xs text-foreground text-center">
+                  Aguardando chamada do próximo cliente
+                </p>
+              </div>
+            )}
+          </CardContent>
           <Separator />
           <CardFooter className="flex items-center justify-center">
             <FinishOperationAlertButton operationId={operation.id} />
