@@ -39,20 +39,21 @@ import { authClient } from "@/lib/auth.client";
 
 // Menu items.
 const itemsEnterprise = [
-  {
-    title: "Profissionais",
-    url: "/users/users-professionals",
-    icon: Users,
-  },
+
   {
     title: "Setores",
     url: "/users/sectors",
     icon: BriefcaseBusinessIcon,
   },
   {
-    title: "Operações",
+    title: "Monitoramento de Operações",
     url: "/users/operations",
     icon: LaptopMinimalCheck,
+  },
+  {
+    title: "Métricas de Profissionais",
+    url: "/users/users-professionals",
+    icon: Users,
   },
   {
     title: "Métricas de atendimentos",

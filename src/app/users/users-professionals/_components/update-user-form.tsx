@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ const formSchema = z.object({
     name: z.string().trim().min(1, { message: "Nome do usuário é obrigatório." }),
     phoneNumber: z.string().trim().min(1, { message: "Telefone do usuário é obrigatório." }),
     cpf: z.string().trim().min(1, { message: "CPF do usuário é obrigatório." }),
-    role: z.string().trim().min(1, { message: "Cargo do usuário é obrigatório." }),
+    role: z.string().trim().min(1, { message: "Acesso do usuário é obrigatório." }),
 });
 
 interface UpdateUserFormProps {
@@ -146,19 +146,19 @@ const UpdateUserForm = ({ user, onSuccess }: UpdateUserFormProps) => {
                         name="role"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Cargo do usuário</FormLabel>
+                                <FormLabel>Acesso do usuário</FormLabel>
                                 <Select
                                     onValueChange={field.onChange}
                                     defaultValue={field.value}
                                 >
                                     <FormControl>
                                         <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Selecione o cargo" />
+                                            <SelectValue placeholder="Selecione o acesso" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectLabel>Cargos</SelectLabel>
+                                            <SelectLabel>Acessos</SelectLabel>
                                             <SelectItem value="administrator">Administrador</SelectItem>
                                             <SelectItem value="professional">Usuário Padrão</SelectItem>
                                         </SelectGroup>
