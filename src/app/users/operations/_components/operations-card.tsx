@@ -244,7 +244,7 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
                   </p>
                 </div>
                 <p className="text-xs text-foreground text-center">
-                  Aguardando chamada do próximo cliente
+                  Aguardando chamada do próximo consumidor
                 </p>
               </div>
             )}
