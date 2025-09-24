@@ -68,7 +68,7 @@ export const endService = actionClient
     // Atualizar status do atendimento para "finished"
     await db
       .update(treatmentsTable)
-      .set({ status: "finished", duration: durationMinutes })
+      .set({ status: "finished", duration: durationMinutes, processNumber: parsedInput.processNumber })
       .where(eq(treatmentsTable.id, treatment.id));
 
     //Criar pausa

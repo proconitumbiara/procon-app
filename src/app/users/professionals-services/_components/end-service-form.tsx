@@ -1,8 +1,7 @@
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 
-import { endService } from "@/actions/end-service";
-import { updateTicket } from "@/actions/upsert-ticket";
+import { cancelTreatmentAndTicket } from "@/actions/cancel-treatment-and-ticket";
 import { Button } from "@/components/ui/button";
 import { DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 
@@ -13,31 +12,26 @@ interface EndServiceFormProps {
 }
 
 const EndServiceForm = ({ ticket, treatment, onSuccess }: EndServiceFormProps) => {
-    const { execute: executeUpdateTicket, status: updateTicketStatus } = useAction(updateTicket, {
-        onSuccess: () => {
-            executeEndService({ treatmentId: treatment.id });
-        },
-        onError: (error) => {
-            toast.error("Erro ao cancelar ticket.");
-            console.log(error);
-        },
-    });
-
-    const { execute: executeEndService, status: endServiceStatus } = useAction(endService, {
-        onSuccess: () => {
+    const { execute, status } = useAction(cancelTreatmentAndTicket, {
+        onSuccess: (result) => {
+            if (result.data?.error) {
+                toast.error(result.data.error.message);
+                return;
+            }
             toast.success("Ticket cancelado e atendimento encerrado com sucesso!");
             onSuccess?.();
         },
         onError: (error) => {
-            toast.error("Erro ao encerrar serviço.");
-            console.log(error);
+            const msg = error.error?.serverError || error.error?.validationErrors?.treatmentId?._errors?.[0] || "Erro ao cancelar atendimento";
+            toast.error(msg);
         },
     });
 
-    const isPending = updateTicketStatus === "executing" || endServiceStatus === "executing";
-
     const handleConfirm = () => {
-        executeUpdateTicket({ id: ticket.id });
+        execute({
+            treatmentId: treatment.id,
+            ticketId: ticket.id
+        });
     };
 
     return (
@@ -47,11 +41,11 @@ const EndServiceForm = ({ ticket, treatment, onSuccess }: EndServiceFormProps) =
                 Caso o consumidor não tenha chegado ainda, você pode cancelar o ticket e encerrar o atendimento.
             </DialogDescription>
             <DialogFooter>
-                <Button type="button" onClick={onSuccess} disabled={isPending} variant="outline">
+                <Button type="button" onClick={onSuccess} disabled={status === "executing"} variant="outline">
                     Não, manter o ticket e o atendimento
                 </Button>
-                <Button onClick={handleConfirm} disabled={isPending} variant="default">
-                    {isPending ? "Processando..." : "Sim, encerrar"}
+                <Button onClick={handleConfirm} disabled={status === "executing"} variant="default">
+                    {status === "executing" ? "Processando..." : "Sim, encerrar"}
                 </Button>
             </DialogFooter>
         </DialogContent>

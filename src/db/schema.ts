@@ -150,6 +150,7 @@ export const treatmentsTable = pgTable("treatments", {
   id: uuid("id").primaryKey().defaultRandom(),
   status: text("status").notNull().default("in_service"),
   duration: integer("duration"),
+  processNumber: text("process_number"),
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

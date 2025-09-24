@@ -16,6 +16,7 @@ export type ErrorType = keyof typeof ErrorTypes;
 
 export const EndServiceSchema = z.object({
   treatmentId: z.string().min(1, "ID do atendimento é obrigatório"),
+  processNumber: z.string().min(1, "Número do processo é obrigatório"),
 });
 
 export type Schema = z.infer<typeof EndServiceSchema>;
