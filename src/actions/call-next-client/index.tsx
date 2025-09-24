@@ -171,7 +171,7 @@ export const callNextTicket = actionClient.action(async () => {
   const sectorName = sector.name;
 
   // Enviar para o painel Tizen via HTTP POST
-  await fetch("http://192.168.1.75:3001/call", {
+  await fetch("http://192.168.1.12:3001/call", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
