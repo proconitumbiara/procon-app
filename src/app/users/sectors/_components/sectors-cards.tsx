@@ -110,7 +110,6 @@ const SectorsGrid = ({ sectors }: SectorsGridProps) => {
                                     <ServicePointCard
                                         key={servicePoint.id}
                                         servicePoint={servicePoint}
-                                        sectors={sectors}
                                     />
                                 ))}
                             </div>
