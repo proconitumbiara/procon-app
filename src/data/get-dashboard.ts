@@ -90,12 +90,46 @@ const getDashboard = async ({ from, to }: Params) => {
     );
   }
 
+  // Média de tempo de espera do cliente (diferença entre ticket.createdAT e treatment.createdAT)
+  const waitingRows = await db
+    .select({
+      treatmentCreatedAt: treatmentsTable.createdAT,
+      ticketCreatedAt: ticketsTable.createdAT,
+    })
+    .from(treatmentsTable)
+    .leftJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
+    .where(
+      and(gte(treatmentsTable.createdAT, from), lte(treatmentsTable.createdAT, to)),
+    );
+
+  let averageWaitingTimeMinutes = 0;
+
+  if (waitingRows.length > 0) {
+    const diffs = waitingRows
+      .map((row) => {
+        const start = row.ticketCreatedAt?.getTime();
+        const end = row.treatmentCreatedAt?.getTime();
+        if (!start || !end) return null;
+        const diffMs = end - start;
+        // proteger contra registros inconsistentes
+        if (diffMs < 0) return 0;
+        return Math.round(diffMs / 60000); // minutos
+      })
+      .filter((v): v is number => v !== null && v !== undefined);
+
+    if (diffs.length > 0) {
+      const total = diffs.reduce((acc, n) => acc + n, 0);
+      averageWaitingTimeMinutes = Math.round(total / diffs.length);
+    }
+  }
+
   return {
     topProfessionals,
     totalTreatments,
     totalNewClients,
     totalCanceledTickets,
     averageTreatmentDuration,
+    averageWaitingTimeMinutes,
   };
 };
 

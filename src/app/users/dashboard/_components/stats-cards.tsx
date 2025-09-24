@@ -1,4 +1,4 @@
-import { CalendarDays, TicketX, UserPlus2, UsersIcon } from "lucide-react";
+import { CalendarDays, Clock, Hourglass, TicketX, UserPlus2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -7,6 +7,7 @@ interface StatsCardsProps {
   totalClients: number;
   totalCanceledTickets: number;
   averageTreatmentDuration: number; // novo campo
+  averageWaitingTimeMinutes: number; // novo campo
 }
 
 const StatsCards = ({
@@ -14,8 +15,14 @@ const StatsCards = ({
   totalClients,
   totalCanceledTickets,
   averageTreatmentDuration,
+  averageWaitingTimeMinutes,
 }: StatsCardsProps) => {
   const stats = [
+    {
+      title: "Consumidores cadastrados",
+      value: totalClients.toString(),
+      icon: UserPlus2,
+    },
     {
       title: "Atendimentos realizados",
       value: totalAppointments.toString(),
@@ -27,14 +34,14 @@ const StatsCards = ({
       icon: TicketX,
     },
     {
-      title: "Novos consumidores",
-      value: totalClients.toString(),
-      icon: UserPlus2,
-    },
-    {
       title: "Média de tempo de atendimento",
       value: `${averageTreatmentDuration} min`,
-      icon: UsersIcon,
+      icon: Clock,
+    },
+    {
+      title: "Média de tempo de espera",
+      value: `${averageWaitingTimeMinutes} min`,
+      icon: Hourglass,
     },
   ];
 

@@ -94,6 +94,7 @@ const Home = async ({ searchParams }: DashboardPageProps) => {
           totalClients={dashboard.totalNewClients}
           totalCanceledTickets={dashboard.totalCanceledTickets}
           averageTreatmentDuration={dashboard.averageTreatmentDuration}
+          averageWaitingTimeMinutes={dashboard.averageWaitingTimeMinutes}
         />
         <TopProfessionals professionals={professionals} />
       </PageContent>
