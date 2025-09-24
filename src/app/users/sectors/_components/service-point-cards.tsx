@@ -67,16 +67,6 @@ const ServicePointCard = ({ servicePoint }: ServicePointCardProps) => {
                             Operando
                         </Badge>
                     )}
-                    {servicePoint.availability === "paused" && (
-                        <Badge className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
-                            Pausado
-                        </Badge>
-                    )}
-                    {(!["free", "operating", "paused"].includes(servicePoint.availability as string)) && (
-                        <Badge className="text-xs bg-red-100 text-red-800 border-red-300">
-                            Indisponível
-                        </Badge>
-                    )}
                 </div>
             </CardHeader>
             <Separator />

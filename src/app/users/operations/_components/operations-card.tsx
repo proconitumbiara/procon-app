@@ -67,7 +67,7 @@ const OperationTimer = ({ createdAt }: { createdAt: string | Date }) => {
   const start = new Date(createdAt).getTime();
   const diff = now - start;
   return (
-    <span className="text-foreground flex flex-row gap-1 text-sm font-bold">
+    <span className="text-foreground flex flex-row gap-1 text-sm font-semibold">
       Tempo de operação:{" "}
       <p className="text-foreground font-light">
         {formatDuration(diff)}
@@ -161,12 +161,12 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
           className="relative flex w-full max-w-md min-w-[30px] flex-col h-[400px]"
         >
           {operation && (
-            <Badge className="absolute top-3 right-3 bg-green-500">
+            <Badge className="absolute top-3 right-3 bg-green-500 text-white">
               Operando
             </Badge>
           )}
           <CardHeader className="flex flex-col">
-            <h3 className="text-base text-primary/80 font-semibold">
+            <h3 className="text-base text-primary font-semibold">
               {operation.user?.name || "-"}
             </h3>
             <p className="text-foreground text-sm font-semibold">
@@ -174,7 +174,7 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
               {operation.servicePoint?.name || "-"}
             </p>
             <p className="text-foreground text-sm font-light">
-              <span className="text-foreground font-bold">Início:</span>{" "}
+              <span className="text-foreground font-semibold">Início:</span>{" "}
               {operation.createdAT
                 ? new Date(operation.createdAT).toLocaleDateString("pt-BR", {
                   day: "2-digit",
@@ -182,7 +182,7 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
                   year: "2-digit",
                 })
                 : "-"}{" "}
-              <span className="text-foreground font-bold">Horário:</span>{" "}
+              <span className="text-foreground font-semibold">Horário:</span>{" "}
               {operation.createdAT
                 ? new Date(operation.createdAT).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -199,7 +199,7 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
             {/* Seção de atendimentos em andamento */}
             {operation.treatments && operation.treatments.length > 0 ? (
               <div className="flex-1 bg-background/10 flex flex-col justify-between h-full">
-                <h3 className="text-base text-primary/80 font-semibold mb-2">
+                <h3 className="text-base text-primary font-semibold mb-2">
                   Atendimento em Andamento
                 </h3>
                 {operation.treatments.map((treatment) => (

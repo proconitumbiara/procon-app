@@ -33,10 +33,10 @@ export const startOperation = actionClient
       servicePointId: parsedInput.servicePointId,
     });
 
-    // Atualiza o status do ponto de serviço para 'busy'
+    // Atualiza o status do ponto de serviço para 'operating'
     await db
       .update(servicePointsTable)
-      .set({ availability: "busy" })
+      .set({ availability: "operating" })
       .where(eq(servicePointsTable.id, parsedInput.servicePointId));
 
     revalidatePath("/users/professionals-services");
