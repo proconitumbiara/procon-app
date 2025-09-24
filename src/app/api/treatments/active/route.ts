@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     });
 
     if (!operation) {
-        return NextResponse.json({ inService: false });
+        return NextResponse.json({ inService: false, hasActiveOperation: false });
     }
 
     const treatment = await db.query.treatmentsTable.findFirst({
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
         ),
     });
 
-    return NextResponse.json({ inService: Boolean(treatment) });
+    return NextResponse.json({ inService: Boolean(treatment), hasActiveOperation: true });
 }
 
 

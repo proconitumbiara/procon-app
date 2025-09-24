@@ -80,11 +80,12 @@ export default function PendingTicketAlert() {
                 return;
             }
             const ticketsData = (await ticketsRes.json()) as { tickets?: Array<unknown> };
-            const activeData = (await activeRes.json()) as { inService?: boolean };
+            const activeData = (await activeRes.json()) as { inService?: boolean; hasActiveOperation?: boolean };
             const hasPendingTickets = Array.isArray(ticketsData.tickets) && ticketsData.tickets.length > 0;
             const hasActiveService = Boolean(activeData?.inService);
+            const hasActiveOperation = Boolean(activeData?.hasActiveOperation);
 
-            const shouldAlert = hasPendingTickets && !hasActiveService;
+            const shouldAlert = hasPendingTickets && hasActiveOperation && !hasActiveService;
             setHasPending(shouldAlert);
             setOpen(shouldAlert);
             if (shouldAlert) {
