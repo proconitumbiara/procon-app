@@ -33,6 +33,9 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
     };
 
     const formatTime = (minutes: number) => {
+        if (minutes <= 0) {
+            return `~1min`;
+        }
         if (minutes < 60) {
             return `${minutes}min`;
         }
@@ -146,7 +149,7 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
                                             </span>
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Clock className="h-4 w-4" />
-                                                {treatment.duration ? formatTime(treatment.duration) : 'Em andamento'}
+                                                {treatment.duration != null ? formatTime(treatment.duration) : 'Em andamento'}
                                             </div>
                                         </div>
                                     </Button>
@@ -165,7 +168,7 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
                                                 <span className="font-medium">Duração:</span>
                                                 <span className="flex items-center gap-1">
                                                     <Clock className="h-4 w-4" />
-                                                    {treatment.duration ? formatTime(treatment.duration) : 'Em andamento'}
+                                                    {treatment.duration != null ? formatTime(treatment.duration) : 'Em andamento'}
                                                 </span>
                                             </div>
 
@@ -181,7 +184,7 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
                                                 </div>
                                             )}
 
-                                            {treatment.duration && (
+                                            {treatment.duration != null && (
                                                 <div className="pt-2 border-t">
                                                     <div className="text-xs text-muted-foreground">
                                                         Este atendimento foi concluído em {formatTime(treatment.duration)}.

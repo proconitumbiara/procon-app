@@ -34,6 +34,9 @@ const PausesList = ({ pauses }: PausesListProps) => {
     };
 
     const formatTime = (minutes: number) => {
+        if (minutes <= 0) {
+            return `~1min`;
+        }
         if (minutes < 60) {
             return `${minutes}min`;
         }
@@ -168,7 +171,7 @@ const PausesList = ({ pauses }: PausesListProps) => {
                                             </span>
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Clock className="h-4 w-4" />
-                                                {pause.duration ? formatTime(pause.duration) : 'Em andamento'}
+                                                {pause.duration != null ? formatTime(pause.duration) : 'Em andamento'}
                                             </div>
                                         </div>
                                     </Button>
