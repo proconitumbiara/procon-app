@@ -341,8 +341,8 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
       {...props}
     >
       <div className="flex-1 flex flex-col items-center min-w-0 group-data-[state=collapsed]:hidden">
-        <h1 className="text-xl font-bold text-primary">ProcQ</h1>
-        <span className="text-sm text-muted-foreground">Procon Itumbiara</span>
+        <h1 className="text-xl font-bold text-primary">Procon Itumbiara</h1>
+        <span className="text-sm text-muted-foreground">Sistema de Atendimento</span>
       </div>
       <SidebarTrigger />
     </div>
