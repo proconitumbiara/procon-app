@@ -54,7 +54,7 @@ export async function sendLastCalledClients() {
   const top5 = result.slice(0, 5);
 
   // Envia para o servidor HTTP
-  await fetch("http://192.168.1.12:3001/call", {
+  await fetch("http://192.168.1.13:3001/call", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(top5),
