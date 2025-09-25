@@ -94,8 +94,8 @@ const StartOperationForm = ({ onSuccess, sectors }: StartOperationFormProps) => 
                                                             return getNum(a.name) - getNum(b.name);
                                                         })
                                                         .map(sp => (
-                                                            <SelectItem key={sp.id} value={sp.id} disabled={sp.availability === "busy"}>
-                                                                {sp.name} {sp.availability === "busy" ? "(Ocupado)" : ""}
+                                                            <SelectItem key={sp.id} value={sp.id} disabled={sp.availability === "operating"}>
+                                                                {sp.name} {sp.availability === "operating" ? "(Ocupado)" : ""}
                                                             </SelectItem>
                                                         ))}
                                                 </SelectGroup>
