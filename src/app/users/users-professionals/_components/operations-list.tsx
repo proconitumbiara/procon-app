@@ -42,7 +42,12 @@ const OperationsList = ({ operations }: OperationsListProps) => {
         setExpandedOperations(newExpanded);
     };
 
+
+
     const formatTime = (minutes: number) => {
+        if (minutes <= 0) {
+            return `~1min`;
+        }
         if (minutes < 60) {
             return `${minutes}min`;
         }
@@ -92,6 +97,27 @@ const OperationsList = ({ operations }: OperationsListProps) => {
                 return 'Pausada';
             default:
                 return status;
+        }
+    };
+
+    const getReasonText = (reason: string) => {
+        switch (reason.toLowerCase()) {
+            case 'lunch':
+                return 'Almoço';
+            case 'break':
+                return 'Intervalo';
+            case 'meeting':
+                return 'Reunião';
+            case 'personal':
+                return 'Pessoal';
+            case 'technical':
+                return 'Técnico';
+            case 'finished-service':
+                return 'Atendimento Finalizado';
+            case 'other':
+                return 'Outro';
+            default:
+                return reason.charAt(0).toUpperCase() + reason.slice(1);
         }
     };
 
@@ -208,7 +234,7 @@ const OperationsList = ({ operations }: OperationsListProps) => {
                                                 <div className="space-y-1">
                                                     {operation.pauses.map((pause) => (
                                                         <div key={pause.id} className="flex justify-between items-center text-xs bg-background p-2 rounded">
-                                                            <span className="capitalize">{pause.reason}</span>
+                                                            <span className="capitalize">{getReasonText(pause.reason)}</span>
                                                             <span className="text-muted-foreground">
                                                                 {pause.duration ? formatTime(pause.duration) : 'Em andamento'}
                                                             </span>

@@ -38,6 +38,9 @@ const ProfessionalMetrics = ({ metrics, selectedDate, onDateSelect, professional
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
     const formatTime = (minutes: number) => {
+        if (minutes <= 0) {
+            return `~1min`;
+        }
         if (minutes < 60) {
             return `${minutes}min`;
         }
