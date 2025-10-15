@@ -8,9 +8,10 @@ import FinishServiceDialog from "./finish-service-dialog";
 
 interface FinishServiceButtonProps {
     treatmentId: string;
+    ticketId: string;
 }
 
-const FinishServiceButton = ({ treatmentId }: FinishServiceButtonProps) => {
+const FinishServiceButton = ({ treatmentId, ticketId }: FinishServiceButtonProps) => {
     const [dialogOpen, setDialogOpen] = useState(false);
 
     return (
@@ -25,6 +26,7 @@ const FinishServiceButton = ({ treatmentId }: FinishServiceButtonProps) => {
 
             <FinishServiceDialog
                 treatmentId={treatmentId}
+                ticketId={ticketId}
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
             />

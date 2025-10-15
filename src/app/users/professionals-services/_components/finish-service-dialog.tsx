@@ -1,6 +1,6 @@
 "use client"
 
-import { BadgeCheck } from "lucide-react";
+import { AlertTriangle, BadgeCheck, FileText, HelpCircle } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,19 +8,25 @@ import { toast } from "sonner";
 import { endService } from "@/actions/end-service";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+
+import CreateComplaintForm from "./create-complaint-form";
+import CreateConsultationForm from "./create-consultation-form";
+import CreateDenunciationForm from "./create-denunciation-form";
 
 interface FinishServiceDialogProps {
     treatmentId: string;
+    ticketId: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-const FinishServiceDialog = ({ treatmentId, open, onOpenChange }: FinishServiceDialogProps) => {
-    const [processNumber, setProcessNumber] = useState<string>("");
+const FinishServiceDialog = ({ treatmentId, ticketId, open, onOpenChange }: FinishServiceDialogProps) => {
     const [, setError] = useState<string | null>(null);
+    const [showComplaintForm, setShowComplaintForm] = useState(false);
+    const [showDenunciationForm, setShowDenunciationForm] = useState(false);
+    const [showConsultationForm, setShowConsultationForm] = useState(false);
 
-    const { execute, status } = useAction(endService, {
+    const { status } = useAction(endService, {
         onSuccess: (result) => {
             if (result.data?.error) {
                 toast.error(result.data.error.message);
@@ -29,7 +35,6 @@ const FinishServiceDialog = ({ treatmentId, open, onOpenChange }: FinishServiceD
             }
             toast.success("Atendimento finalizado com sucesso!");
             setError(null);
-            setProcessNumber("");
             onOpenChange(false);
         },
         onError: (error) => {
@@ -39,59 +44,124 @@ const FinishServiceDialog = ({ treatmentId, open, onOpenChange }: FinishServiceD
         },
     });
 
-    const handleFinishService = () => {
-        if (!processNumber.trim()) {
-            toast.error("Por favor, informe um número de processo válido");
-            return;
-        }
-
-        execute({
-            treatmentId,
-            processNumber: processNumber.trim()
-        });
-    };
-
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <BadgeCheck className="w-5 h-5" />
-                        Finalizar Atendimento
-                    </DialogTitle>
-                    <DialogDescription>
-                        Para finalizar o atendimento, é obrigatório informar o número do processo.
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <BadgeCheck className="w-5 h-5" />
+                            Finalizar Atendimento
+                        </DialogTitle>
+                        <DialogDescription>
+                            Selecione o tipo de finalização para este atendimento.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <div>
-                    <Input
-                        id="processNumber"
-                        type="text"
-                        value={processNumber}
-                        onChange={(e) => setProcessNumber(e.target.value)}
-                        className="col-span-3"
-                        placeholder="Digite o número do processo"
-                    />
-                </div>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <h4 className="text-sm font-medium">Tipo de Finalização:</h4>
+                            <div className="grid grid-cols-1 gap-3">
+                                <Button
+                                    variant="outline"
+                                    className="justify-start h-auto p-4"
+                                    onClick={() => setShowComplaintForm(true)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <FileText className="w-5 h-5 text-blue-600" />
+                                        <div className="text-left">
+                                            <div className="font-medium">Reclamação</div>
+                                            <div className="text-sm text-muted-foreground">
+                                                Registrar uma reclamação do consumidor
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Button>
 
-                <DialogFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => onOpenChange(false)}
-                        disabled={status === "executing"}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={handleFinishService}
-                        disabled={status === "executing" || !processNumber}
-                    >
-                        {status === "executing" ? "Finalizando..." : "Finalizar Atendimento"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                                <Button
+                                    variant="outline"
+                                    className="justify-start h-auto p-4"
+                                    onClick={() => setShowDenunciationForm(true)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-orange-600" />
+                                        <div className="text-left">
+                                            <div className="font-medium">Denúncia</div>
+                                            <div className="text-sm text-muted-foreground">
+                                                Registrar uma denúncia contra fornecedor
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    className="justify-start h-auto p-4"
+                                    onClick={() => setShowConsultationForm(true)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <HelpCircle className="w-5 h-5 text-green-600" />
+                                        <div className="text-left">
+                                            <div className="font-medium">Consulta</div>
+                                            <div className="text-sm text-muted-foreground">
+                                                Registrar uma consulta de informações
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            disabled={status === "executing"}
+                        >
+                            Cancelar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Formulários de Upsert */}
+            <Dialog open={showComplaintForm} onOpenChange={setShowComplaintForm}>
+                <CreateComplaintForm
+                    treatmentId={treatmentId}
+                    ticketId={ticketId}
+                    onSuccess={() => {
+                        setShowComplaintForm(false);
+                        onOpenChange(false);
+                    }}
+                    onOpenChange={setShowComplaintForm}
+                />
+            </Dialog>
+
+            <Dialog open={showDenunciationForm} onOpenChange={setShowDenunciationForm}>
+                <CreateDenunciationForm
+                    treatmentId={treatmentId}
+                    ticketId={ticketId}
+                    onSuccess={() => {
+                        setShowDenunciationForm(false);
+                        onOpenChange(false);
+                    }}
+                    onOpenChange={setShowDenunciationForm}
+                />
+            </Dialog>
+
+            <Dialog open={showConsultationForm} onOpenChange={setShowConsultationForm}>
+                <CreateConsultationForm
+                    treatmentId={treatmentId}
+                    ticketId={ticketId}
+                    onSuccess={() => {
+                        setShowConsultationForm(false);
+                        onOpenChange(false);
+                    }}
+                    onOpenChange={setShowConsultationForm}
+                />
+            </Dialog>
+        </>
     );
 };
 

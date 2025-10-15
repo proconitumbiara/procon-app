@@ -150,8 +150,8 @@ export const treatmentsTable = pgTable("treatments", {
   id: uuid("id").primaryKey().defaultRandom(),
   status: text("status").notNull().default("in_service"),
   duration: integer("duration"),
-  processNumber: text("process_number"),
   createdAT: timestamp("created_at").defaultNow().notNull(),
+  resolutionType: text("resolution_type"),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date()),
@@ -161,6 +161,61 @@ export const treatmentsTable = pgTable("treatments", {
   operationId: uuid("operation_id")
     .notNull()
     .references(() => operationsTable.id, { onDelete: "cascade" }),
+});
+
+//Tabela para armazenar reclamações
+export const complaintsTable = pgTable("complaints", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  caseNumber: text("case_number"),
+  consumerName: text("consumer_name"),
+  supplierName: text("supplier_name"),
+  numberOfPages: integer("number_of_pages"),
+  status: text("status").notNull().default("open"),
+  authorizationArquive: text("authorization_arquive"),
+  treatmentId: uuid("treatment_id")
+    .notNull()
+    .references(() => treatmentsTable.id, { onDelete: "cascade" }),
+  ticketId: uuid("ticket_id")
+    .notNull()
+    .references(() => ticketsTable.id, { onDelete: "cascade" }),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar denuncia 
+export const denunciationsTable = pgTable("denunciations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  denunciationNumber: text("denunciation_number"),
+  authorizationArquive: text("authorization_arquive"),
+  treatmentId: uuid("treatment_id")
+    .notNull()
+    .references(() => treatmentsTable.id, { onDelete: "cascade" }),
+  ticketId: uuid("ticket_id")
+    .notNull()
+    .references(() => ticketsTable.id, { onDelete: "cascade" }),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar consultas
+export const consultationsTable = pgTable("consultations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  consultationNumber: text("consultation_number"),
+  authorizationArquive: text("authorization_arquive"),
+  treatmentId: uuid("treatment_id")
+    .notNull()
+    .references(() => treatmentsTable.id, { onDelete: "cascade" }),
+  ticketId: uuid("ticket_id")
+    .notNull()
+    .references(() => ticketsTable.id, { onDelete: "cascade" }),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 //Relationships
@@ -232,3 +287,4 @@ export const treatmentsTableRelations = relations(
     }),
   }),
 );
+

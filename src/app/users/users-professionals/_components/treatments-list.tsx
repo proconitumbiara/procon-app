@@ -1,11 +1,13 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Clock, User } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, FileText, User } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+import TreatmentResolutionDialog from "./treatment-resolution-dialog";
 
 interface Treatment {
     id: string;
@@ -191,6 +193,15 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
                                                     </div>
                                                 </div>
                                             )}
+
+                                            <div className="pt-4 border-t">
+                                                <TreatmentResolutionDialog treatmentId={treatment.id}>
+                                                    <Button variant="outline" size="sm" className="w-full">
+                                                        <FileText className="h-4 w-4 mr-2" />
+                                                        Visualizar Resolução
+                                                    </Button>
+                                                </TreatmentResolutionDialog>
+                                            </div>
                                         </div>
                                     </div>
                                 </CollapsibleContent>

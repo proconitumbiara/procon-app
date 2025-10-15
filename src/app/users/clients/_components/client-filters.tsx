@@ -3,15 +3,19 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { clientsTable, sectorsTable } from "@/db/schema";
 
 import { clientsTableColumns } from "./table-columns";
+
+type Client = typeof clientsTable.$inferSelect;
+type Sector = typeof sectorsTable.$inferSelect;
 
 export default function ClientFilters({
   clients,
   sectors,
 }: {
-  clients: any[];
-  sectors: any[];
+  clients: Client[];
+  sectors: Sector[];
 }) {
   const [nameFilter, setNameFilter] = useState("");
   const [cpfFilter, setCpfFilter] = useState("");

@@ -84,7 +84,7 @@ const ServiceInProgressCard = async () => {
                     {ticket && treatment && (
                         <CallCustomerAgainButton ticket={{ id: ticket.id }} treatment={{ id: treatment.id }} />
                     )}
-                    <FinishServiceButton treatmentId={treatment.id} />
+                    <FinishServiceButton treatmentId={treatment.id} ticketId={ticket?.id || ""} />
                 </CardFooter>
             </Card>
         </div>
