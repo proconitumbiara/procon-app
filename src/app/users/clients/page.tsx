@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { PageActions, PageContainer, PageContent, PageDescription, PageHeader, PageHeaderContent, PageTitle } from "@/components/ui/page-container";
+import { clientsTable, sectorsTable } from "@/db/schema";
 
 import AddClientButton from "./_components/add-client-button";
 import ClientFilters from "./_components/client-filters";
@@ -16,9 +17,12 @@ const fetchClientsAndSectors = async () => {
     return res.json();
 };
 
+type Client = typeof clientsTable.$inferSelect;
+type Sector = typeof sectorsTable.$inferSelect;
+
 export default function ProfessionalServices() {
-    const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
-    const [sectors, setSectors] = useState<{ id: string; name: string }[]>([]);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [sectors, setSectors] = useState<Sector[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
