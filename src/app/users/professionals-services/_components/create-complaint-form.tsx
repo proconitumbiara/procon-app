@@ -239,22 +239,6 @@ const CreateComplaintForm = ({ treatmentId, ticketId, onSuccess, onOpenChange }:
                                 )}
                             </div>
                         )}
-
-                        {!isOfflineMode && (
-                            <FormField
-                                control={form.control}
-                                name="authorizationArquive"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Número da Autorização</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Digite o número da autorização" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )}
                     </div>
 
                     <DialogFooter>
