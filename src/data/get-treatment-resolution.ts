@@ -9,7 +9,6 @@ export interface TreatmentResolution {
     caseNumber: string | null;
     consumerName: string | null;
     supplierName: string | null;
-    numberOfPages: number | null;
     status: string;
     authorizationArquive: string | null;
     createdAT: Date;
