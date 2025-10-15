@@ -20,7 +20,6 @@ const formSchema = z.object({
     caseNumber: z.string().optional(),
     consumerName: z.string().optional(),
     supplierName: z.string().optional(),
-    numberOfPages: z.number().optional(),
     status: z.string().default("open"),
     authorizationArquive: z.string().optional(),
 });
@@ -43,7 +42,6 @@ const CreateComplaintForm = ({ treatmentId, ticketId, onSuccess, onOpenChange }:
             caseNumber: "",
             consumerName: "",
             supplierName: "",
-            numberOfPages: 1,
             status: "open",
             authorizationArquive: "",
         }
@@ -127,7 +125,6 @@ const CreateComplaintForm = ({ treatmentId, ticketId, onSuccess, onOpenChange }:
             ...formData,
             consumerName: formData.consumerName || "",
             supplierName: formData.supplierName || "",
-            numberOfPages: formData.numberOfPages || 0,
         });
     };
 
@@ -201,26 +198,6 @@ const CreateComplaintForm = ({ treatmentId, ticketId, onSuccess, onOpenChange }:
                                     <Input
                                         placeholder="Digite o nome do fornecedor"
                                         {...field}
-                                        disabled={isOfflineMode}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="numberOfPages"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Número de Páginas</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        placeholder="Digite o número de páginas"
-                                        {...field}
-                                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                                         disabled={isOfflineMode}
                                     />
                                 </FormControl>

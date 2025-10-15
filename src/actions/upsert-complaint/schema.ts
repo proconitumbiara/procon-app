@@ -15,7 +15,6 @@ export const UpdateComplaintSchema = z.object({
     caseNumber: z.string().optional(),
     consumerName: z.string().optional(),
     supplierName: z.string().optional(),
-    numberOfPages: z.number().optional(),
     status: z.string().optional(),
     authorizationArquive: z.string().optional(),
 });
@@ -24,7 +23,6 @@ export const CreateComplaintSchema = z.object({
     caseNumber: z.string().optional(),
     consumerName: z.string().optional(),
     supplierName: z.string().optional(),
-    numberOfPages: z.number().optional(),
     status: z.string().default("open"),
     authorizationArquive: z.string().optional(),
     treatmentId: z.string().min(1, "ID do tratamento é obrigatório"),

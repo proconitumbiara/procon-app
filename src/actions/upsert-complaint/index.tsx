@@ -33,7 +33,6 @@ export const updateComplaint = actionClient
                 caseNumber: parsedInput.caseNumber,
                 consumerName: parsedInput.consumerName,
                 supplierName: parsedInput.supplierName,
-                numberOfPages: parsedInput.numberOfPages,
                 status: parsedInput.status,
                 authorizationArquive: parsedInput.authorizationArquive,
             })
@@ -62,7 +61,6 @@ export const createComplaint = actionClient
             caseNumber: parsedInput.caseNumber,
             consumerName: parsedInput.consumerName,
             supplierName: parsedInput.supplierName,
-            numberOfPages: parsedInput.numberOfPages,
             status: parsedInput.status,
             authorizationArquive: parsedInput.authorizationArquive,
             treatmentId: parsedInput.treatmentId,

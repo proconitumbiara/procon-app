@@ -169,7 +169,6 @@ export const complaintsTable = pgTable("complaints", {
   caseNumber: text("case_number"),
   consumerName: text("consumer_name"),
   supplierName: text("supplier_name"),
-  numberOfPages: integer("number_of_pages"),
   status: text("status").notNull().default("open"),
   authorizationArquive: text("authorization_arquive"),
   treatmentId: uuid("treatment_id")
