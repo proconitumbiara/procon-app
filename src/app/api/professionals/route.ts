@@ -1,13 +1,10 @@
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 
 export async function GET() {
   try {
-    const professionals = await db.query.usersTable.findMany({
-      where: (row) => eq(row.role, "professional"),
-    });
+    const professionals = await db.query.usersTable.findMany();
 
     return NextResponse.json(professionals);
   } catch (error) {

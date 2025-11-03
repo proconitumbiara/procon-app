@@ -39,38 +39,37 @@ import { authClient } from "@/lib/auth.client";
 
 // Menu items.
 const itemsEnterprise = [
-
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: ChartBarBig,
+  },
   {
     title: "Setores",
-    url: "/users/sectors",
+    url: "/setores",
     icon: BriefcaseBusinessIcon,
   },
   {
     title: "Operações",
-    url: "/users/operations",
+    url: "/operacoes",
     icon: LaptopMinimalCheck,
   },
   {
     title: "Profissionais",
-    url: "/users/users-professionals",
+    url: "/profissionais",
     icon: Users,
-  },
-  {
-    title: "Atendimentos",
-    url: "/users/dashboard",
-    icon: ChartBarBig,
   },
 ];
 
 const itemsProfessionals = [
   {
     title: "Operação",
-    url: "/users/professionals-services",
+    url: "/atendimento",
     icon: Headset,
   },
   {
     title: "Meus atendimentos",
-    url: "/users/my-services",
+    url: "/meus-atendimentos",
     icon: ListCheck,
   },
 ];
@@ -78,12 +77,12 @@ const itemsProfessionals = [
 const itemsClients = [
   {
     title: "Gerenciar consumidores",
-    url: "/users/clients",
+    url: "/consumidores",
     icon: BookUser,
   },
   {
     title: "Fila de atendimentos",
-    url: "/users/pending-appointments",
+    url: "/atendimentos-pendentes",
     icon: ListOrdered,
   },
 ];
@@ -120,7 +119,7 @@ export function AppSidebar() {
       <SidebarHeader className="bg-background flex items-center justify-center border-b p-4" />
 
       <SidebarContent className="bg-background">
-        {(role === "administrator") && (
+        {role === "administrator" && (
           <SidebarGroup>
             <SidebarGroupLabel>Administradores</SidebarGroupLabel>
             <SidebarGroupContent>

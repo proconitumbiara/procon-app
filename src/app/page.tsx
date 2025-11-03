@@ -9,15 +9,15 @@ import LoginForm from "./_components/login-form";
 const AuthenticationPage = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
+  });
 
   if (session?.user) {
-    redirect("/users")
+    redirect("/atendimento");
   }
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-center bg-white">
-      <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-white">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4">
         <Image
           src="/Logo.svg"
           alt="Procon Logo"
@@ -25,12 +25,12 @@ const AuthenticationPage = async () => {
           height={0}
           priority
         />
-        <div className="w-full h-auto max-w-md rounded-md">
+        <div className="h-auto w-full max-w-md rounded-md">
           <LoginForm />
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default AuthenticationPage;
