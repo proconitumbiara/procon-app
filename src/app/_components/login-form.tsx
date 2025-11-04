@@ -89,7 +89,7 @@ const LoginForm = () => {
                         <Input
                           placeholder="Digite seu email"
                           {...field}
-                          className="border-1 border-gray-200 bg-white text-gray-600 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -108,11 +108,11 @@ const LoginForm = () => {
                             type={showPassword ? "text" : "password"}
                             placeholder="Digite sua senha"
                             {...field}
-                            className="border-1 border-gray-200 bg-white text-gray-600 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
                           <button
                             type="button"
-                            className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-500 hover:text-gray-900"
+                            className="text-primary absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent shadow-none hover:bg-transparent"
                             onClick={() => setShowPassword((v) => !v)}
                             tabIndex={-1}
                           >

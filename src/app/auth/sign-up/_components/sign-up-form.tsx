@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -11,7 +10,14 @@ import { z } from "zod";
 
 import { updateUserData } from "@/actions/update-user-data";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -90,29 +96,23 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-center">
-        <Image
-          src="/Logo.svg"
-          alt="Procon Logo"
-          width={400}
-          height={0}
-          priority
-        />
-      </div>
-      <Card className="w-full overflow-hidden border border-gray-200 bg-white p-0 shadow-sm">
-        <CardContent className="p-6 text-center md:p-8">
+    <Card className="w-full overflow-hidden border-1 border-gray-200 bg-white p-0 shadow-sm">
+      <CardContent className="grid p-0 text-center">
+        <CardHeader className="flex flex-col items-center justify-center">
+          <CardTitle className="mt-4 text-xl font-bold text-gray-900">
+            Cadastro
+          </CardTitle>
+          <CardDescription className="text-sm font-extralight text-gray-900">
+            Preencha os campos abaixo para cadastrar-se
+          </CardDescription>
+        </CardHeader>
+        <div className="mx-auto w-full max-w-md p-6 md:p-8">
           <Form {...formRegister}>
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center">
-                <h1 className="text-xl font-bold text-gray-900">
-                  Cadastro de Administrador
-                </h1>
-              </div>
-              <form
-                onSubmit={formRegister.handleSubmit(onSubmitRegister)}
-                className="space-y-8"
-              >
+            <form
+              onSubmit={formRegister.handleSubmit(onSubmitRegister)}
+              className="space-y-4"
+            >
+              <div className="space-y-4">
                 <FormField
                   control={formRegister.control}
                   name="name"
@@ -123,7 +123,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu nome"
                           {...field}
-                          className="border border-gray-200 bg-white text-gray-600 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -140,7 +140,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu CPF"
                           {...field}
-                          className="border border-gray-200 bg-white text-gray-600 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -157,7 +157,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu telefone"
                           {...field}
-                          className="border border-gray-200 bg-white text-gray-600 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -174,7 +174,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu email"
                           {...field}
-                          className="border border-gray-200 bg-white text-gray-600 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -193,11 +193,11 @@ export function SignUpForm() {
                             placeholder="Crie sua senha"
                             type={showPassword ? "text" : "password"}
                             {...field}
-                            className="border border-gray-200 bg-white text-gray-600 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
                           <button
                             type="button"
-                            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2"
+                            className="text-primary absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent shadow-none hover:bg-transparent"
                             onClick={() => setShowPassword((v) => !v)}
                             tabIndex={-1}
                           >
@@ -213,20 +213,28 @@ export function SignUpForm() {
                     </FormItem>
                   )}
                 />
+              </div>
+              <CardFooter className="p-0">
                 <Button
+                  variant="default"
                   type="submit"
                   className="w-full"
                   disabled={formRegister.formState.isSubmitting}
                 >
-                  {formRegister.formState.isSubmitting
-                    ? "Cadastrando..."
-                    : "Cadastrar"}
+                  {formRegister.formState.isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      Cadastrando...
+                    </>
+                  ) : (
+                    "Cadastrar"
+                  )}
                 </Button>
-              </form>
-            </div>
+              </CardFooter>
+            </form>
           </Form>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

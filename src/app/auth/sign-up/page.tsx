@@ -1,16 +1,23 @@
-import { ThemeProvider } from "next-themes";
+import Image from "next/image";
 
 import { SignUpForm } from "./_components/sign-up-form";
 
 const AuthenticationPage = () => {
   return (
-    <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
-      <div className="flex min-h-svh flex-col items-center justify-center bg-white p-6 md:p-10">
-        <div className="w-full max-w-sm md:max-w-3xl">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-white">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+        <Image
+          src="/Logo.svg"
+          alt="Procon Logo"
+          width={400}
+          height={0}
+          priority
+        />
+        <div className="h-auto w-full max-w-md rounded-md">
           <SignUpForm />
         </div>
       </div>
-    </ThemeProvider>
+    </div>
   );
 };
 

@@ -7,6 +7,13 @@ import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { usersTable } from "@/db/schema";
 
+const resetTokensCache = new Map<
+  string,
+  { url: string; token: string; expiresAt: Date }
+>();
+
+export { resetTokensCache };
+
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL,
   basePath: "/api/auth",
@@ -48,7 +55,7 @@ export const auth = betterAuth({
       },
       cpf: {
         type: "string",
-        cpfFieldName: "cpf",
+        fieldName: "cpf",
         required: false,
       },
       role: {
@@ -69,5 +76,18 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    resetPassword: {
+      enabled: true,
+    },
+    sendResetPassword: async ({ user, url, token }) => {
+      resetTokensCache.set(user.email, {
+        url,
+        token,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      });
+      setTimeout(() => {
+        resetTokensCache.delete(user.email);
+      }, 60000);
+    },
   },
 });
