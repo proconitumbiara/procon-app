@@ -84,8 +84,14 @@ export const callTheCustomerAgain = actionClient.action(async () => {
     return { error: "Setor não encontrado" };
   }
 
+  const panelServerUrl = process.env.PANEL_SERVER_URL;
+  if (!panelServerUrl) {
+    console.warn("PANEL_SERVER_URL não está definido no .env");
+    return { success: false };
+  }
+
   // Enviar para o painel Tizen via HTTP POST
-  await fetch("http://192.168.1.13:3001/call", {
+  await fetch(`${panelServerUrl}/call`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

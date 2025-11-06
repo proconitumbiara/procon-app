@@ -131,15 +131,16 @@ export const callNextTicket = actionClient.action(async () => {
   const pauses = await db.query.pausesTable.findMany({
     where: and(
       eq(pausesTable.operationId, operation.id),
-      eq(pausesTable.status, "in-progress")
+      eq(pausesTable.status, "in-progress"),
     ),
   });
 
   // Atualizar pausas in-progress para finished e calcular duração
   for (const pause of pauses) {
-    const start = pause.createdAT instanceof Date
-      ? pause.createdAT
-      : new Date(pause.createdAT);
+    const start =
+      pause.createdAT instanceof Date
+        ? pause.createdAT
+        : new Date(pause.createdAT);
     const end = new Date();
     const durationMs = end.getTime() - start.getTime();
     const durationMinutes = Math.floor(durationMs / 60000); // duração em minutos
@@ -148,7 +149,7 @@ export const callNextTicket = actionClient.action(async () => {
       .update(pausesTable)
       .set({
         status: "finished",
-        duration: durationMinutes
+        duration: durationMinutes,
       })
       .where(eq(pausesTable.id, pause.id));
   }
@@ -170,8 +171,13 @@ export const callNextTicket = actionClient.action(async () => {
   const servicePointName = servicePoint.name;
   const sectorName = sector.name;
 
-  // Enviar para o painel Tizen via HTTP POST
-  await fetch("http://192.168.1.13:3001/call", {
+  const panelServerUrl = process.env.PANEL_SERVER_URL;
+  if (!panelServerUrl) {
+    console.warn("PANEL_SERVER_URL não está definido no .env");
+    return { success: false };
+  }
+
+  await fetch(`${panelServerUrl}/call`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

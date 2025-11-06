@@ -19,21 +19,21 @@ export async function sendLastCalledClients() {
       });
       const client = ticket
         ? await db.query.clientsTable.findFirst({
-          where: (c) => eq(c.id, ticket.clientId),
-        })
+            where: (c) => eq(c.id, ticket.clientId),
+          })
         : null;
       const operation = await db.query.operationsTable.findFirst({
         where: (o) => eq(o.id, treatment.operationId),
       });
       const servicePoint = operation
         ? await db.query.servicePointsTable.findFirst({
-          where: (sp) => eq(sp.id, operation.servicePointId),
-        })
+            where: (sp) => eq(sp.id, operation.servicePointId),
+          })
         : null;
       const sector = servicePoint
         ? await db.query.sectorsTable.findFirst({
-          where: (s) => eq(s.id, servicePoint.sectorId),
-        })
+            where: (s) => eq(s.id, servicePoint.sectorId),
+          })
         : null;
 
       return {
@@ -53,8 +53,14 @@ export async function sendLastCalledClients() {
   // Limita para os 5 mais recentes
   const top5 = result.slice(0, 5);
 
+  const panelServerUrl = process.env.PANEL_SERVER_URL;
+  if (!panelServerUrl) {
+    console.warn("PANEL_SERVER_URL não está definido no .env");
+    return { success: false };
+  }
+
   // Envia para o servidor HTTP
-  await fetch("http://192.168.1.13:3001/call", {
+  await fetch(`${panelServerUrl}/call`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(top5),
