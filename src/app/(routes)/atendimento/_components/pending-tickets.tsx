@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
+import { useTicketsWebSocket } from "@/hooks/use-tickets-websocket";
 
 import CallNextTicketButton from "./call-next-ticket-button";
 import { ticketsTableColumns, TicketTableRow } from "./tickets-table-columns";
 
 const fetchTickets = async () => {
-    const res = await fetch("/api/tickets", { credentials: "same-origin" });
+    const res = await fetch("/api/tickets?status=pending", { credentials: "same-origin" });
     if (!res.ok) {
         if (res.status === 401) throw new Error("unauthorized");
         throw new Error("Erro ao buscar tickets");
@@ -60,9 +61,13 @@ export default function PendingTickets() {
         }
     }, [router]);
 
+    // Conectar ao WebSocket para atualizações em tempo real
+    useTicketsWebSocket(loadData);
+
     useEffect(() => {
         loadData();
-        const interval = setInterval(loadData, 30000);
+        // Manter polling como fallback, mas com intervalo maior (60s)
+        const interval = setInterval(loadData, 60000);
         return () => clearInterval(interval);
     }, [loadData]);
 

@@ -1,8 +1,9 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { useTicketsWebSocket } from "@/hooks/use-tickets-websocket";
 
 import { ticketsTableColumns, TicketTableRow } from "./table-columns";
 
@@ -12,13 +13,68 @@ interface TicketsFiltersProps {
 }
 
 export default function TicketsFilters({
-  tickets,
+  tickets: initialTickets,
   sectors,
 }: TicketsFiltersProps) {
+  const [tickets, setTickets] = useState(initialTickets);
   const [nameFilter, setNameFilter] = useState("");
   const [cpfFilter, setCpfFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sectorFilter, setSectorFilter] = useState("");
+
+  // Função para recarregar tickets
+  const reloadTickets = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tickets", { credentials: "same-origin" });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("unauthorized");
+        throw new Error("Erro ao buscar tickets");
+      }
+      const data = await res.json();
+      
+      // Buscar clientes e setores
+      const clientsRes = await fetch("/api/clients", { credentials: "same-origin" });
+      if (!clientsRes.ok) throw new Error("Erro ao buscar clientes/setores");
+      const clientsSectorsData = await clientsRes.json();
+      
+      const clientsMap = Object.fromEntries(
+        (clientsSectorsData.clients || []).map((c: { id: string; name: string }) => [c.id, c.name])
+      );
+      const sectorsMap = Object.fromEntries(
+        (clientsSectorsData.sectors || []).map((s: { id: string; name: string }) => [s.id, s.name])
+      );
+      
+      const mapped: TicketTableRow[] = (data.tickets || []).map(
+        (ticket: { id: string; status: string; clientId: string; sectorId: string; createdAT: string; createdAt: string }) => ({
+          id: ticket.id,
+          status: ticket.status,
+          clientName: clientsMap[ticket.clientId] || ticket.clientId,
+          clientId: ticket.clientId,
+          sectorName: sectorsMap[ticket.sectorId] || ticket.sectorId,
+          sectorId: ticket.sectorId,
+          createdAt: new Date(ticket.createdAT ?? ticket.createdAt),
+        })
+      );
+      
+      setTickets(mapped);
+    } catch (error) {
+      console.error("Erro ao recarregar tickets:", error);
+    }
+  }, []);
+
+  // Conectar ao WebSocket para atualizações em tempo real
+  useTicketsWebSocket(reloadTickets);
+
+  // Atualizar tickets quando initialTickets mudar (server-side update)
+  useEffect(() => {
+    setTickets(initialTickets);
+  }, [initialTickets]);
+
+  // Polling como fallback (60 segundos)
+  useEffect(() => {
+    const interval = setInterval(reloadTickets, 60000);
+    return () => clearInterval(interval);
+  }, [reloadTickets]);
 
   const filteredTickets = useMemo(() => {
     let filtered = tickets.filter(
