@@ -102,8 +102,8 @@ export const createTicket = actionClient
       })
       .returning();
 
-    revalidatePath("/users/professionals-services");
-    revalidatePath("/users/pending-appointments");
+    revalidatePath("/atendimento");
+    revalidatePath("/atendimentos-pendentes");
 
     // Emitir evento WebSocket para atualização em tempo real
     broadcastTicketUpdate({

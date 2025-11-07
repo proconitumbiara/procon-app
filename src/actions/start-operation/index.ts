@@ -39,5 +39,5 @@ export const startOperation = actionClient
       .set({ availability: "operating" })
       .where(eq(servicePointsTable.id, parsedInput.servicePointId));
 
-    revalidatePath("/users/professionals-services");
+    revalidatePath("/atendimento");
   });

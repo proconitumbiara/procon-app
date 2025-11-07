@@ -47,5 +47,5 @@ export const upsertSector = actionClient
           ...parsedInput,
         },
       });
-    revalidatePath("/administrator/sectors");
+    revalidatePath("/setores");
   });

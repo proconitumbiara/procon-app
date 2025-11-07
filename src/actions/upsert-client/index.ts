@@ -39,7 +39,7 @@ export const updateUser = actionClient
         register: parsedInput.register,
         phoneNumber: parsedInput.phoneNumber,
         ...(parsedInput.dateOfBirth && {
-          dateOfBirth: new Date(parsedInput.dateOfBirth),
+          dateOfBirth: parsedInput.dateOfBirth,
         }),
       })
       .where(eq(clientsTable.id, parsedInput.id));
@@ -69,8 +69,8 @@ export const insertClient = actionClient
       name: parsedInput.name,
       register: parsedInput.register,
       phoneNumber: parsedInput.phoneNumber,
-      dateOfBirth: parsedInput.dateOfBirth ? new Date(parsedInput.dateOfBirth) : null,
+      dateOfBirth: parsedInput.dateOfBirth || null,
     });
 
-    revalidatePath("/users/clients");
+    revalidatePath("/consumidores");
   });

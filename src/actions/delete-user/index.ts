@@ -29,5 +29,5 @@ export const deleteUser = actionClient
     });
     if (user?.role !== "administrator") throw new Error("Unauthorized");
     await db.delete(usersTable).where(eq(usersTable.id, parsedInput.id));
-    revalidatePath("/users/users-professionals");
+    revalidatePath("/professionais");
   });

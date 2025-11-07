@@ -74,5 +74,5 @@ export const finishOperation = actionClient
         .where(eq(servicePointsTable.id, operation.servicePointId));
     }
 
-    revalidatePath("/users/professionals-services");
+    revalidatePath("/atendimento");
   });

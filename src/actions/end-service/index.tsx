@@ -81,5 +81,5 @@ export const endService = actionClient
       reason: "finished-service",
     });
 
-    revalidatePath("/users/professionals-services");
+    revalidatePath("/atendimento");
   });

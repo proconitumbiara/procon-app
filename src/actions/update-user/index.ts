@@ -49,5 +49,5 @@ export const updateUser = actionClient
       })
       .where(eq(usersTable.id, parsedInput.id));
 
-    revalidatePath("/users/users-professionals");
+    revalidatePath("/professionais");
   });

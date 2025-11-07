@@ -37,5 +37,5 @@ export const deleteSector = actionClient
     }
 
     await db.delete(sectorsTable).where(eq(sectorsTable.id, parsedInput.id));
-    revalidatePath("/users/sectors");
+    revalidatePath("/setores");
   });
