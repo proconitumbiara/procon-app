@@ -62,7 +62,7 @@ const LoginForm = () => {
   }
 
   return (
-    <Card className="w-full overflow-hidden border-1 border-gray-200 bg-white p-0 shadow-sm">
+    <Card className="w-full overflow-hidden border border-gray-200 bg-white p-0 shadow-sm">
       <CardContent className="grid p-0 text-center">
         <CardHeader className="flex flex-col items-center justify-center">
           <CardTitle className="mt-4 text-xl font-bold text-gray-900">
@@ -89,7 +89,7 @@ const LoginForm = () => {
                         <Input
                           placeholder="Digite seu email"
                           {...field}
-                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -108,7 +108,7 @@ const LoginForm = () => {
                             type={showPassword ? "text" : "password"}
                             placeholder="Digite sua senha"
                             {...field}
-                            className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
                           <button
                             type="button"
