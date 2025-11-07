@@ -92,15 +92,35 @@ export const callTheCustomerAgain = actionClient.action(async () => {
   }
 
   // Enviar para o painel Tizen via HTTP POST
-  await fetch(`${panelServerUrl}/call`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      nome: client.name,
-      guiche: `${servicePoint.name} - ${sector.name}`,
-      prioridade: getPriorityLabel(ticket.priority),
-    }),
-  });
+  try {
+    const response = await fetch(`${panelServerUrl}/call`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: client.name,
+        guiche: `${servicePoint.name} - ${sector.name}`,
+        prioridade: getPriorityLabel(ticket.priority),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Erro desconhecido");
+      console.error(
+        `Erro ao enviar chamada para o painel: ${response.status} ${response.statusText}`,
+        errorText,
+      );
+      return { success: false };
+    }
+
+    const responseData = await response.json().catch(() => null);
+    console.log("Chamada enviada com sucesso para o painel:", responseData);
+  } catch (error) {
+    console.error("Erro ao enviar chamada para o painel:", error);
+    if (error instanceof Error) {
+      console.error("Stack trace:", error.stack);
+    }
+    return { success: false };
+  }
 
   return { success: true };
 });

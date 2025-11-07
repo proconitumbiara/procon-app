@@ -37,12 +37,18 @@ export async function sendLastCalledClients() {
           })
         : null;
 
+      // Garantir que chamadoEm seja uma string ISO
+      const chamadoEmDate =
+        treatment.createdAT instanceof Date
+          ? treatment.createdAT
+          : new Date(treatment.createdAT);
+
       return {
         nome: client?.name ?? "",
         guiche:
           servicePoint && sector ? `${servicePoint.name} - ${sector.name}` : "",
-        chamadoEm: treatment.createdAT,
-        prioridade: ticket ? getPriorityLabel(ticket.priority) : undefined,
+        chamadoEm: chamadoEmDate.toISOString(),
+        prioridade: ticket ? getPriorityLabel(ticket.priority) : "Comum",
       };
     }),
   );
@@ -62,9 +68,33 @@ export async function sendLastCalledClients() {
   }
 
   // Envia para o servidor HTTP
-  await fetch(`${panelServerUrl}/call`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(top5),
-  });
+  try {
+    const response = await fetch(`${panelServerUrl}/call`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(top5),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Erro desconhecido");
+      console.error(
+        `Erro ao enviar últimas chamadas para o painel: ${response.status} ${response.statusText}`,
+        errorText,
+      );
+      return { success: false };
+    }
+
+    const responseData = await response.json().catch(() => null);
+    console.log(
+      "Últimas chamadas enviadas com sucesso para o painel:",
+      responseData,
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao enviar últimas chamadas para o painel:", error);
+    if (error instanceof Error) {
+      console.error("Stack trace:", error.stack);
+    }
+    return { success: false };
+  }
 }
