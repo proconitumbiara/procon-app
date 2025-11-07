@@ -16,7 +16,7 @@ import { servicePointsTable } from "@/db/schema";
 
 const formSchema = z.object({
     name: z.string().trim().min(1, { message: "Nome do ponto de atendimento é obrigatório." }),
-    preferredPriority: z.number().int().min(0).max(1).default(0),
+    preferredPriority: z.number().int().min(0).max(1),
 });
 
 interface UpsertServicePointFormProps {
