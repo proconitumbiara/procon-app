@@ -40,7 +40,7 @@ import { authClient } from "@/lib/auth.client";
 // Menu items.
 const itemsEnterprise = [
   {
-    title: "Dashboard",
+    title: "Atendimentos",
     url: "/dashboard",
     icon: ChartBarBig,
   },
