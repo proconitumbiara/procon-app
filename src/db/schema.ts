@@ -77,7 +77,7 @@ export const servicePointsTable = pgTable("service_points", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   availability: text("availability").default("free"),
-  preferredPriority: integer("preferred_priority").notNull().default(0),
+  preferredPriority: integer("preferred_priority").notNull().default(0), //Adicionado
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -124,7 +124,7 @@ export const clientsTable = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   register: text("register").unique().notNull(),
-  dateOfBirth: date("date_of_birth"),
+  dateOfBirth: date("date_of_birth"), //Adicionado
   phoneNumber: text("phone_number").notNull(),
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -136,7 +136,7 @@ export const clientsTable = pgTable("clients", {
 export const ticketsTable = pgTable("tickets", {
   id: uuid("id").primaryKey().defaultRandom(),
   status: text("status").notNull().default("pending"),
-  priority: integer("priority").notNull().default(0), //NOVO
+  priority: integer("priority").notNull().default(0), //Adicionado
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

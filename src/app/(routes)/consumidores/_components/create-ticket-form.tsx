@@ -23,7 +23,7 @@ interface CreateTicketFormProps {
 const CreateTicketForm = ({ clientId, sectors, onSuccess, defaultSectorId }: CreateTicketFormProps) => {
     const sectorOnlySchema = z.object({
         sectorId: z.string().min(1, "ID do setor é obrigatório"),
-        priority: z.number().int().min(0).max(1).default(0),
+        priority: z.number().int().min(0).max(1),
     });
 
     const form = useForm<z.infer<typeof sectorOnlySchema>>({
