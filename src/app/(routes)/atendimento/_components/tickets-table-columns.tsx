@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 export type TicketTableRow = {
     id: string
     status: string
+    priority: number
     clientName: string
     clientId: string
     sectorName: string
@@ -25,6 +26,21 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
         id: "sectorName",
         accessorKey: "sectorName",
         header: "Setor",
+    },
+    {
+        id: "priority",
+        accessorKey: "priority",
+        header: "Prioridade",
+        cell: ({ row }) => {
+            const priority = row.original.priority;
+            const label = priority === 1 ? "Prioritário" : "Comum";
+            const color = priority === 1 
+                ? "bg-purple-100 text-purple-800 border-purple-300" 
+                : "bg-gray-100 text-gray-800 border-gray-300";
+            return (
+                <Badge className={color}>{label}</Badge>
+            );
+        },
     },
     {
         id: "status",

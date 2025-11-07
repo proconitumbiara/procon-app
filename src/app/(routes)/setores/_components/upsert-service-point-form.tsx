@@ -9,12 +9,14 @@ import { z } from "zod";
 import { upsertServicePoint } from "@/actions/upsert-service-point";
 import { Button } from "@/components/ui/button";
 import { DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { servicePointsTable } from "@/db/schema";
 
 const formSchema = z.object({
     name: z.string().trim().min(1, { message: "Nome do ponto de atendimento é obrigatório." }),
+    preferredPriority: z.number().int().min(0).max(1).default(0),
 });
 
 interface UpsertServicePointFormProps {
@@ -28,6 +30,7 @@ const UpsertServicePointForm = ({ servicePoint, onSuccess }: UpsertServicePointF
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: servicePoint?.name ?? "",
+            preferredPriority: servicePoint?.preferredPriority ?? 0,
         }
     });
 
@@ -52,7 +55,8 @@ const UpsertServicePointForm = ({ servicePoint, onSuccess }: UpsertServicePointF
 
     const onSubmit = (values: z.infer<typeof formSchema>) => {
         execute({
-            ...values,
+            name: values.name,
+            preferredPriority: values.preferredPriority,
             id: servicePoint?.id,
             sectorId: servicePoint?.sectorId || "",
         });
@@ -73,11 +77,36 @@ const UpsertServicePointForm = ({ servicePoint, onSuccess }: UpsertServicePointF
                         name="name"
                         render={({ field }) => (
                             <FormItem>
+                                <FormLabel>Nome</FormLabel>
                                 <FormControl>
                                     <Input
                                         placeholder="Digite o nome do ponto de atendimento"
                                         {...field}
                                     />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="preferredPriority"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Preferência de Atendimento</FormLabel>
+                                <FormControl>
+                                    <Select 
+                                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                                        value={field.value.toString()}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione a preferência" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="0">Comum</SelectItem>
+                                            <SelectItem value="1">Prioritário</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

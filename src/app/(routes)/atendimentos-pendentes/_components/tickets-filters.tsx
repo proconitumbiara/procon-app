@@ -45,9 +45,10 @@ export default function TicketsFilters({
       );
       
       const mapped: TicketTableRow[] = (data.tickets || []).map(
-        (ticket: { id: string; status: string; clientId: string; sectorId: string; createdAT: string; createdAt: string }) => ({
+        (ticket: { id: string; status: string; priority: number; clientId: string; sectorId: string; createdAT: string; createdAt: string }) => ({
           id: ticket.id,
           status: ticket.status,
+          priority: ticket.priority ?? 0,
           clientName: clientsMap[ticket.clientId] || ticket.clientId,
           clientId: ticket.clientId,
           sectorName: sectorsMap[ticket.sectorId] || ticket.sectorId,

@@ -21,6 +21,7 @@ export const UpsertClientschema = z.object({
     .string()
     .min(11, "O telefone deve ter pelo menos 11 caracteres")
     .optional(),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data de nascimento deve estar no formato YYYY-MM-DD").optional(),
 });
 
 export const InsertClientSchema = z.object({
@@ -29,6 +30,7 @@ export const InsertClientSchema = z.object({
   phoneNumber: z
     .string()
     .min(11, "O telefone deve ter pelo menos 11 caracteres"),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data de nascimento deve estar no formato YYYY-MM-DD"),
 });
 
 export type Schema = z.infer<typeof UpsertClientschema>;

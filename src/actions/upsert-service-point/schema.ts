@@ -19,6 +19,7 @@ export const upsertServicePointSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1, { message: "Nome é obrigatório." }),
   availability: z.enum(["free", "busy", "unavailable"]).default("free"),
+  preferredPriority: z.number().int().min(0).max(1).default(0),
   sectorId: z.string().uuid(),
 });
 

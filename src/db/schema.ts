@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  date,
   integer,
   pgTable,
   text,
@@ -76,6 +77,7 @@ export const servicePointsTable = pgTable("service_points", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   availability: text("availability").default("free"),
+  preferredPriority: integer("preferred_priority").notNull().default(0),
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -122,6 +124,7 @@ export const clientsTable = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   register: text("register").unique().notNull(),
+  dateOfBirth: date("date_of_birth"),
   phoneNumber: text("phone_number").notNull(),
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -133,6 +136,7 @@ export const clientsTable = pgTable("clients", {
 export const ticketsTable = pgTable("tickets", {
   id: uuid("id").primaryKey().defaultRandom(),
   status: text("status").notNull().default("pending"),
+  priority: integer("priority").notNull().default(0), //NOVO
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -183,7 +187,7 @@ export const complaintsTable = pgTable("complaints", {
     .$onUpdate(() => new Date()),
 });
 
-//Tabela para armazenar denuncia 
+//Tabela para armazenar denuncia
 export const denunciationsTable = pgTable("denunciations", {
   id: uuid("id").primaryKey().defaultRandom(),
   denunciationNumber: text("denunciation_number"),
@@ -286,4 +290,3 @@ export const treatmentsTableRelations = relations(
     }),
   }),
 );
-

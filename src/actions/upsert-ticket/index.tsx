@@ -7,9 +7,10 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { ticketsTable } from "@/db/schema";
+import { clientsTable, ticketsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { calculateAge } from "@/lib/utils";
 // Importar ws-server para garantir inicialização do servidor WebSocket
 import { broadcastTicketUpdate } from "@/ws-server";
 
@@ -75,12 +76,29 @@ export const createTicket = actionClient
       };
     }
 
+    // Buscar o cliente para verificar data de nascimento
+    const client = await db.query.clientsTable.findFirst({
+      where: eq(clientsTable.id, parsedInput.clientId),
+    });
+
+    // Determinar a prioridade baseada na idade do cliente
+    let finalPriority = parsedInput.priority ?? 0;
+    if (client?.dateOfBirth) {
+      const age = calculateAge(new Date(client.dateOfBirth));
+      // Se cliente tem 60 anos ou mais, forçar prioridade prioritária
+      if (age >= 60) {
+        finalPriority = 1;
+      }
+      // Se menor que 60, usar a prioridade do formulário (já definida acima)
+    }
+
     const [newTicket] = await db
       .insert(ticketsTable)
       .values({
         status: parsedInput.status,
         sectorId: parsedInput.sectorId,
         clientId: parsedInput.clientId,
+        priority: finalPriority,
       })
       .returning();
 

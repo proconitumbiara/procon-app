@@ -15,12 +15,14 @@ export const UpdateTicketSchema = z.object({
   status: z.string().optional(),
   sectorId: z.string().optional(),
   clientId: z.string().optional(),
+  priority: z.number().int().min(0).max(1).optional(),
 });
 
 export const CreateTicketSchema = z.object({
   status: z.string().min(1, "Status é obrigatório"),
   sectorId: z.string().min(1, "ID do setor é obrigatório"),
   clientId: z.string().min(1, "ID do cliente é obrigatório"),
+  priority: z.number().int().min(0).max(1).optional().default(0),
 });
 
 export type UpdateTicketSchema = z.infer<typeof UpdateTicketSchema>;

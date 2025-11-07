@@ -93,14 +93,34 @@ export const callNextTicket = actionClient.action(async () => {
     };
   }
 
-  // Buscar ticket pendente mais antigo do mesmo setor
-  const ticket = await db.query.ticketsTable.findFirst({
+  // Determinar qual prioridade buscar baseado na preferência do guichê
+  // Se preferredPriority === 1: buscar primeiro tickets prioritários (1), depois comuns (0)
+  // Se preferredPriority === 0: buscar primeiro tickets comuns (0), depois prioritários (1)
+  const preferredPriority = servicePoint.preferredPriority ?? 0;
+  const fallbackPriority = preferredPriority === 1 ? 0 : 1;
+
+  // Buscar ticket pendente com a prioridade preferida
+  let ticket = await db.query.ticketsTable.findFirst({
     where: and(
       eq(ticketsTable.status, "pending"),
       eq(ticketsTable.sectorId, sectorId),
+      eq(ticketsTable.priority, preferredPriority),
     ),
     orderBy: (ticketsTable) => asc(ticketsTable.createdAT),
   });
+
+  // Fallback: se não houver do tipo preferido, buscar o outro tipo
+  if (!ticket) {
+    ticket = await db.query.ticketsTable.findFirst({
+      where: and(
+        eq(ticketsTable.status, "pending"),
+        eq(ticketsTable.sectorId, sectorId),
+        eq(ticketsTable.priority, fallbackPriority),
+      ),
+      orderBy: (ticketsTable) => asc(ticketsTable.createdAT),
+    });
+  }
+
   if (!ticket) {
     return {
       error: {

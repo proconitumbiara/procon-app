@@ -36,3 +36,29 @@ export function formatName(name: string) {
     .join(" ")
     .trim();
 }
+
+export function formatDate(date: string) {
+  // Remove non-digits and format as DD/MM/YYYY
+  const cleaned = date.replace(/\D/g, "").slice(0, 8);
+  if (cleaned.length <= 2) {
+    return cleaned;
+  } else if (cleaned.length <= 4) {
+    return cleaned.replace(/(\d{2})(\d{0,2})/, "$1/$2");
+  } else {
+    return cleaned.replace(/(\d{2})(\d{2})(\d{0,4})/, "$1/$2/$3");
+  }
+}
+
+export function calculateAge(dateOfBirth: Date): number {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  // Se ainda não fez aniversário este ano, subtrai 1
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+}

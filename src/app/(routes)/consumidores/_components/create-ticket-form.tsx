@@ -23,6 +23,7 @@ interface CreateTicketFormProps {
 const CreateTicketForm = ({ clientId, sectors, onSuccess, defaultSectorId }: CreateTicketFormProps) => {
     const sectorOnlySchema = z.object({
         sectorId: z.string().min(1, "ID do setor é obrigatório"),
+        priority: z.number().int().min(0).max(1).default(0),
     });
 
     const form = useForm<z.infer<typeof sectorOnlySchema>>({
@@ -30,6 +31,7 @@ const CreateTicketForm = ({ clientId, sectors, onSuccess, defaultSectorId }: Cre
         resolver: zodResolver(sectorOnlySchema),
         defaultValues: {
             sectorId: defaultSectorId || sectors[0]?.id || "",
+            priority: 0,
         },
     });
 
@@ -45,8 +47,8 @@ const CreateTicketForm = ({ clientId, sectors, onSuccess, defaultSectorId }: Cre
         },
     });
 
-    const onSubmit = (values: { sectorId: string }) => {
-        executeCreateTicket({ status: 'pending', sectorId: values.sectorId, clientId });
+    const onSubmit = (values: { sectorId: string; priority: number }) => {
+        executeCreateTicket({ status: 'pending', sectorId: values.sectorId, clientId, priority: values.priority });
     };
 
     const isPending = status === "executing";
@@ -74,6 +76,30 @@ const CreateTicketForm = ({ clientId, sectors, onSuccess, defaultSectorId }: Cre
                                                     {sector.name}
                                                 </SelectItem>
                                             ))}
+                                        </SelectContent>
+                                    </Select>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="priority"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Prioridade</FormLabel>
+                                <FormControl>
+                                    <Select 
+                                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                                        value={field.value.toString()}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione a prioridade" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="0">Comum</SelectItem>
+                                            <SelectItem value="1">Prioritário</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </FormControl>

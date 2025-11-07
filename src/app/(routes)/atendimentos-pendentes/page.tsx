@@ -39,6 +39,7 @@ const PendingAppointments = async () => {
   const tickets = ticketsRaw.map((ticket) => ({
     id: ticket.id,
     status: ticket.status,
+    priority: ticket.priority ?? 0,
     clientName: clientMap[ticket.clientId] || "-",
     clientId: ticket.clientId,
     sectorName: sectorMap[ticket.sectorId] || "-",

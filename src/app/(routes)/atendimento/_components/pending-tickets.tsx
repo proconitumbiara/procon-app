@@ -42,9 +42,10 @@ export default function PendingTickets() {
             const clientsMap = Object.fromEntries((clientsSectorsData.clients || []).map((c: { id: string; name: string }) => [c.id, c.name]));
             const sectorsMap = Object.fromEntries((clientsSectorsData.sectors || []).map((s: { id: string; name: string }) => [s.id, s.name]));
             const tickets = (ticketsData.tickets || []);
-            const mapped: TicketTableRow[] = tickets.map((ticket: { id: string; status: string; clientId: string; sectorId: string; createdAT: string; createdAt: string }) => ({
+            const mapped: TicketTableRow[] = tickets.map((ticket: { id: string; status: string; priority: number; clientId: string; sectorId: string; createdAT: string; createdAt: string }) => ({
                 id: ticket.id,
                 status: ticket.status,
+                priority: ticket.priority ?? 0,
                 clientName: clientsMap[ticket.clientId] || ticket.clientId,
                 clientId: ticket.clientId,
                 sectorName: sectorsMap[ticket.sectorId] || ticket.sectorId,
