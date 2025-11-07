@@ -208,8 +208,8 @@ export const callNextTicket = actionClient.action(async () => {
     }),
   });
 
+  revalidatePath("/atendimento");
+  revalidatePath("/atendimentos-pendentes");
+
   return { success: true };
 });
-
-revalidatePath("/atendimento");
-revalidatePath("/atendimentos-pendentes");

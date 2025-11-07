@@ -40,4 +40,6 @@ export const startOperation = actionClient
       .where(eq(servicePointsTable.id, parsedInput.servicePointId));
 
     revalidatePath("/atendimento");
+
+    return { success: true };
   });
