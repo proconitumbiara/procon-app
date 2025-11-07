@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -40,7 +40,7 @@ const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-const ResetPasswordPage = () => {
+const ResetPasswordForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -238,6 +238,27 @@ const ResetPasswordPage = () => {
         </CardFooter>
       </Card>
     </div>
+  );
+};
+
+const ResetPasswordPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-svh flex-col items-center justify-center bg-white p-6">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Carregando...</CardTitle>
+              <CardDescription>
+                Aguarde enquanto carregamos a página de redefinição de senha.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 };
 
