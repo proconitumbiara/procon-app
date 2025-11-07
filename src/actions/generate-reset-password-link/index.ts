@@ -72,8 +72,7 @@ export const generateResetPasswordLink = actionClient
       // Usar a API do BetterAuth para gerar o token de reset
       // O BetterAuth usa forgetPassword para iniciar o processo de reset
       const requestHeaders = await headers();
-      const baseURL =
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const baseURL = process.env.NEXT_PUBLIC_APP_URL || "";
       const redirectTo = `${baseURL}/reset-password`;
 
       // Chamar a API do BetterAuth para gerar o token
