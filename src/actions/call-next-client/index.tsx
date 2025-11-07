@@ -16,6 +16,7 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { getPriorityLabel } from "@/lib/priority-utils";
 
 import { ErrorMessages, ErrorTypes } from "./schema";
 import { sendLastCalledClients } from "./send-last-called-clients";
@@ -203,6 +204,7 @@ export const callNextTicket = actionClient.action(async () => {
     body: JSON.stringify({
       nome: client.name,
       guiche: servicePointName + " - " + sectorName,
+      prioridade: getPriorityLabel(ticket.priority),
     }),
   });
 

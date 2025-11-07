@@ -5,6 +5,7 @@ interface Cliente {
   guiche: string;
   chamadoEm?: string;
   setor?: string; // Adicionar suporte ao campo setor
+  prioridade?: "Comum" | "Prioritário";
 }
 
 /**
@@ -28,12 +29,14 @@ export async function sendToPanel(cliente: Cliente | Cliente[]) {
           nome: c.nome,
           guiche: c.guiche,
           ...(c.chamadoEm && { chamadoEm: c.chamadoEm }),
+          ...(c.prioridade && { prioridade: c.prioridade }),
         }))
       : {
           nome: cliente.nome,
           guiche: cliente.guiche,
           ...(cliente.chamadoEm && { chamadoEm: cliente.chamadoEm }),
           ...(cliente.setor && { setor: cliente.setor }),
+          ...(cliente.prioridade && { prioridade: cliente.prioridade }),
         };
 
     console.log("[WebSocket Server] Enviando para:", apiUrl);

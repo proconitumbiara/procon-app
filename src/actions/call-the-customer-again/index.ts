@@ -14,6 +14,7 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { getPriorityLabel } from "@/lib/priority-utils";
 
 export const callTheCustomerAgain = actionClient.action(async () => {
   const session = await auth.api.getSession({
@@ -97,6 +98,7 @@ export const callTheCustomerAgain = actionClient.action(async () => {
     body: JSON.stringify({
       nome: client.name,
       guiche: `${servicePoint.name} - ${sector.name}`,
+      prioridade: getPriorityLabel(ticket.priority),
     }),
   });
 

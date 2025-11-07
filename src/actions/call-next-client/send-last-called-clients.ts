@@ -3,6 +3,7 @@
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
+import { getPriorityLabel } from "@/lib/priority-utils";
 
 export async function sendLastCalledClients() {
   // Busca os últimos 20 treatments, ordenados por createdAT desc
@@ -41,6 +42,7 @@ export async function sendLastCalledClients() {
         guiche:
           servicePoint && sector ? `${servicePoint.name} - ${sector.name}` : "",
         chamadoEm: treatment.createdAT,
+        prioridade: ticket ? getPriorityLabel(ticket.priority) : undefined,
       };
     }),
   );
