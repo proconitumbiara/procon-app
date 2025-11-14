@@ -36,16 +36,26 @@ export const upsertServicePoint = actionClient
         },
       };
     }
+    const { availability, ...restOfData } = parsedInput;
+
+    // Para novos registros, usa "free" como default se availability não foi fornecido
+    const insertValues = {
+      ...parsedInput,
+      availability: availability ?? "free",
+    };
+
+    // Para atualizações, só inclui availability se foi explicitamente enviado
+    const updateData = {
+      ...restOfData,
+      ...(availability !== undefined && { availability }),
+    };
+
     await db
       .insert(servicePointsTable)
-      .values({
-        ...parsedInput,
-      })
+      .values(insertValues)
       .onConflictDoUpdate({
         target: [servicePointsTable.id],
-        set: {
-          ...parsedInput,
-        },
+        set: updateData,
       });
     revalidatePath("/setores");
   });
