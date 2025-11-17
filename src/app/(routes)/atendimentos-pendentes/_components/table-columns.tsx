@@ -32,15 +32,10 @@ const ActionsCell = ({ ticket }: { ticket: TicketTableRow }) => {
         aria-label="Cancelar atendimento"
         disabled={ticket.status === "canceled"}
       >
-        {ticket.status === "canceled"
-          ? "Já cancelado"
-          : "Cancelar atendimento"}
+        {ticket.status === "canceled" ? "Já cancelado" : "Cancelar"}
       </Button>
       {open && (
-        <UpdateTicketForm
-          ticket={ticket}
-          onSuccess={() => setOpen(false)}
-        />
+        <UpdateTicketForm ticket={ticket} onSuccess={() => setOpen(false)} />
       )}
     </Dialog>
   );
@@ -64,9 +59,10 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
     cell: ({ row }) => {
       const priority = row.original.priority;
       const label = priority === 1 ? "Prioritário" : "Comum";
-      const color = priority === 1 
-        ? "bg-purple-100 text-purple-800 border-purple-300" 
-        : "bg-gray-100 text-gray-800 border-gray-300";
+      const color =
+        priority === 1
+          ? "bg-purple-100 text-purple-800 border-purple-300"
+          : "bg-gray-100 text-gray-800 border-gray-300";
       return <Badge className={color}>{label}</Badge>;
     },
   },
