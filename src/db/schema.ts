@@ -221,7 +221,163 @@ export const consultationsTable = pgTable("consultations", {
     .$onUpdate(() => new Date()),
 });
 
+//Tabela para armazenar notícias
+export const newsTable = pgTable("news", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  excerpt: text("excerpt"), //Texto curto para o card da notícia
+  content: text("content"), //Texto longo para a notícia
+  coverImageUrl: text("cover_image_url"), //URL da imagem de capa da notícia
+  publishedAt: timestamp("published_at"), //Data de publicação
+  emphasis: boolean("emphasis").notNull().default(false), //Adicionado
+  isPublished: boolean("is_published").notNull().default(false), //Se a notícia está publicada
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar documentos de notícias
+export const newsDocumentsTable = pgTable("news_documents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  newsId: uuid("news_id")
+    .notNull()
+    .references(() => newsTable.id, { onDelete: "cascade" }),
+  label: text("label").notNull(),
+  fileUrl: text("file_url").notNull(),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar projetos
+export const projectsTable = pgTable("projects", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  summary: text("summary"), //Texto curto para o card do projeto
+  description: text("description"), //Texto longo para o projeto
+  coverImageUrl: text("cover_image_url"), //URL da imagem de capa do projeto
+  emphasis: boolean("emphasis").notNull().default(false), //Se o projeto é em destaque
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar serviços
+export const servicesTable = pgTable("services", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"), //Descrição do serviço
+  requirements: text("requirements"), //Requisitos para o serviço
+  howToApply: text("how_to_apply"), //Como aplicar para o serviço
+  contactEmail: text("contact_email"), //Email de contato para o serviço
+  contactPhone: text("contact_phone"), //Telefone de contato para o serviço
+  isActive: boolean("is_active").notNull().default(true), //Se o serviço está ativo
+  emphasis: boolean("emphasis").notNull().default(false), //Se o serviço é em destaque
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar pesquisas de preços
+export const priceSearchesTable = pgTable("price_searches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  summary: text("summary"), //Texto curto para o card da pesquisa de preços
+  description: text("description"), //Descrição da pesquisa de preços
+  coverImageUrl: text("cover_image_url"), //URL da imagem de capa da pesquisa de preços
+  emphasis: boolean("emphasis").notNull().default(false), //Se a pesquisa de preços é em destaque
+  year: integer("year").notNull(), //Ano da pesquisa de preços
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar fornecedores
+export const suppliersTable = pgTable("suppliers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  address: text("address"),
+  phone: text("phone"),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar categorias
+export const categoriesTable = pgTable("categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+//Tabela para armazenar produtos
+export const productsTable = pgTable("products", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  price: integer("price").notNull(),
+  priceVariation: text("price_variation").notNull(),
+  unit: text("unit"),
+  weight: integer("weight"),
+  priceSearchId: uuid("price_search_id")
+    .notNull()
+    .references(() => priceSearchesTable.id, { onDelete: "cascade" }),
+  supplierId: uuid("supplier_id")
+    .notNull()
+    .references(() => suppliersTable.id, { onDelete: "cascade" }),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => categoriesTable.id, { onDelete: "cascade" }),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
 //Relationships
+
+export const priceSearchesRelations = relations(
+  priceSearchesTable,
+  ({ many }) => ({
+    products: many(productsTable),
+  }),
+);
+
+export const productsRelations = relations(productsTable, ({ one }) => ({
+  priceSearch: one(priceSearchesTable, {
+    fields: [productsTable.priceSearchId],
+    references: [priceSearchesTable.id],
+  }),
+  supplier: one(suppliersTable, {
+    fields: [productsTable.supplierId],
+    references: [suppliersTable.id],
+  }),
+  category: one(categoriesTable, {
+    fields: [productsTable.categoryId],
+    references: [categoriesTable.id],
+  }),
+}));
+
+export const suppliersRelations = relations(suppliersTable, ({ many }) => ({
+  products: many(productsTable),
+}));
+
+export const categoriesRelations = relations(categoriesTable, ({ many }) => ({
+  products: many(productsTable),
+}));
 
 //Users table relationships
 export const usersTableRelations = relations(usersTable, ({ many }) => ({
@@ -287,6 +443,22 @@ export const treatmentsTableRelations = relations(
     operation: one(operationsTable, {
       fields: [treatmentsTable.operationId],
       references: [operationsTable.id],
+    }),
+  }),
+);
+
+//News tables relationships
+export const newsTableRelations = relations(newsTable, ({ many }) => ({
+  documents: many(newsDocumentsTable),
+}));
+
+//News documents tables relationships
+export const newsDocumentsTableRelations = relations(
+  newsDocumentsTable,
+  ({ one }) => ({
+    news: one(newsTable, {
+      fields: [newsDocumentsTable.newsId],
+      references: [newsTable.id],
     }),
   }),
 );
