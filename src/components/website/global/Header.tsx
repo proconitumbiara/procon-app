@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -94,7 +94,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full" role="banner">
-      {/* Seção Superior - Azul Escuro */}
+      {/* Seção Superior - Branca*/}
       <div className="bg-white text-[#192f58]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between md:h-16">
@@ -152,12 +152,16 @@ export default function Header() {
                   </button>
                 </div>
               </form>
+
+              <Link href="/auth/sign-in">
+                <User className="h-6 w-6 transition-all duration-300 hover:scale-110" />
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Seção Inferior - Navegação Branca */}
+      {/* Seção Inferior - Navegação Azul */}
       <div className="border-b border-[#192f58] bg-[#192f58]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-center">
