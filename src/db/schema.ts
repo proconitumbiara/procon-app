@@ -238,21 +238,6 @@ export const newsTable = pgTable("news", {
     .$onUpdate(() => new Date()),
 });
 
-//Tabela para armazenar documentos de notícias
-export const newsDocumentsTable = pgTable("news_documents", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  newsId: uuid("news_id")
-    .notNull()
-    .references(() => newsTable.id, { onDelete: "cascade" }),
-  label: text("label").notNull(),
-  fileUrl: text("file_url").notNull(),
-  displayOrder: integer("display_order").notNull().default(0),
-  createdAT: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
-
 //Tabela para armazenar projetos
 export const projectsTable = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -470,22 +455,6 @@ export const treatmentsTableRelations = relations(
     operation: one(operationsTable, {
       fields: [treatmentsTable.operationId],
       references: [operationsTable.id],
-    }),
-  }),
-);
-
-//News tables relationships
-export const newsTableRelations = relations(newsTable, ({ many }) => ({
-  documents: many(newsDocumentsTable),
-}));
-
-//News documents tables relationships
-export const newsDocumentsTableRelations = relations(
-  newsDocumentsTable,
-  ({ one }) => ({
-    news: one(newsTable, {
-      fields: [newsDocumentsTable.newsId],
-      references: [newsTable.id],
     }),
   }),
 );

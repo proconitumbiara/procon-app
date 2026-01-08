@@ -15,7 +15,6 @@ import {
 import { db } from "@/db";
 import { usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { NewsWithDocuments } from "@/types/content-management";
 
 import AddNewsButton from "./_components/add-news-button";
 import NewsGrid from "./_components/news-grid";
@@ -39,17 +38,7 @@ const NoticiasPage = async () => {
 
   const news = await db.query.newsTable.findMany({
     orderBy: (table) => desc(table.createdAT),
-    with: {
-      documents: true,
-    },
   });
-
-  const formattedNews: NewsWithDocuments[] = news.map((item) => ({
-    ...item,
-    documents: [...item.documents].sort(
-      (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
-    ),
-  }));
 
   return (
     <PageContainer>
@@ -63,11 +52,10 @@ const NoticiasPage = async () => {
         </PageActions>
       </PageHeader>
       <PageContent>
-        <NewsGrid news={formattedNews} />
+        <NewsGrid news={news} />
       </PageContent>
     </PageContainer>
   );
 };
 
 export default NoticiasPage;
-

@@ -2,7 +2,6 @@ import { sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
-  newsDocumentsTable,
   newsTable,
   priceSearchesTable,
   projectsTable,
@@ -10,7 +9,6 @@ import {
 } from "@/db/schema";
 
 export type NewsRecord = typeof newsTable.$inferSelect;
-export type NewsDocumentRecord = typeof newsDocumentsTable.$inferSelect;
 export type ProjectRecord = typeof projectsTable.$inferSelect;
 export type ServiceRecord = typeof servicesTable.$inferSelect;
 export type PriceSearchRecord = typeof priceSearchesTable.$inferSelect;
@@ -35,12 +33,7 @@ export async function getNewsBySlug(slug: string) {
     return null;
   }
 
-  const documents = await db.query.newsDocumentsTable.findMany({
-    where: (doc, helpers) => helpers.eq(doc.newsId, news.id),
-    orderBy: (doc, { asc }) => [asc(doc.displayOrder), asc(doc.createdAT)],
-  });
-
-  return { ...news, documents };
+  return news;
 }
 
 export async function getAllProjects() {

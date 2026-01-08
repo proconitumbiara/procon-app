@@ -1,13 +1,11 @@
 import { db } from "@/db";
 import {
-  newsDocumentsTable,
   newsTable,
   projectsTable,
   servicesTable,
 } from "@/db/schema";
 
 export type NewsRecord = typeof newsTable.$inferSelect;
-export type NewsDocumentRecord = typeof newsDocumentsTable.$inferSelect;
 export type ProjectRecord = typeof projectsTable.$inferSelect;
 export type ServiceRecord = typeof servicesTable.$inferSelect;
 

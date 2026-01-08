@@ -1,6 +1,5 @@
 import {
   categoriesTable,
-  newsDocumentsTable,
   newsTable,
   priceSearchesTable,
   priceSearchItemsTable,
@@ -10,9 +9,7 @@ import {
   suppliersTable,
 } from "@/db/schema";
 
-export type NewsWithDocuments = typeof newsTable.$inferSelect & {
-  documents: (typeof newsDocumentsTable.$inferSelect)[];
-};
+export type NewsWithDocuments = typeof newsTable.$inferSelect;
 
 export type ProjectWithDocuments = typeof projectsTable.$inferSelect;
 

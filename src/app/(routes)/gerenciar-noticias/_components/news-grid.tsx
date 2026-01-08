@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -15,26 +15,20 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { NewsWithDocuments } from "@/types/content-management";
+import { newsTable } from "@/db/schema";
 
 import UpsertNewsForm from "./upsert-news-form";
 
 const DEFAULT_NEWS_IMAGE = "/LogoHorizontal.png";
 
 interface NewsGridProps {
-  news: NewsWithDocuments[];
+  news: (typeof newsTable.$inferSelect)[];
 }
 
 const formatDate = (value?: Date | string | null) => {
   if (!value) return "Sem data";
   const date = value instanceof Date ? value : new Date(value);
   return date.toLocaleDateString("pt-BR");
-};
-
-const sortDocuments = (documents: NewsWithDocuments["documents"]) => {
-  return [...documents].sort(
-    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
-  );
 };
 
 const truncateTitle = (title: string, maxWords: number = 6) => {
@@ -139,37 +133,6 @@ const NewsGrid = ({ news }: NewsGridProps) => {
                 <span>Atualizado em</span>
                 <span>{formatDate(item.updatedAt)}</span>
               </div>
-            </div>
-            <Separator />
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold">Documentos</h4>
-              {item.documents.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  Nenhum documento cadastrado.
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {sortDocuments(item.documents).map((doc) => (
-                    <li
-                      key={doc.id}
-                      className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
-                    >
-                      <span className="font-medium">{doc.label}</span>
-                      <Button variant="link" size="sm" asChild>
-                        <a
-                          href={doc.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1"
-                        >
-                          Abrir
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
           </CardContent>
         </Card>

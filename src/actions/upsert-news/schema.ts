@@ -11,19 +11,6 @@ export const ErrorMessages = {
     "Usuário não autorizado a realizar esta ação",
 } as const;
 
-const newsDocumentSchema = z.object({
-  id: z.string().uuid().optional(),
-  label: z
-    .string()
-    .trim()
-    .min(1, { message: "O nome do documento é obrigatório." }),
-  fileUrl: z
-    .string()
-    .trim()
-    .url({ message: "Informe uma URL válida para o documento." }),
-  displayOrder: z.coerce.number().min(0).default(0).optional(),
-});
-
 export const upsertNewsSchema = z.object({
   id: z.string().uuid().optional(),
   title: z
@@ -39,7 +26,6 @@ export const upsertNewsSchema = z.object({
   coverImageUrl: z.string().trim().optional(),
   publishedAt: z.string().optional(),
   isPublished: z.boolean(),
-  documents: z.array(newsDocumentSchema).optional(),
   emphasis: z.boolean().optional(),
 });
 

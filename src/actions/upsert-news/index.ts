@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { newsDocumentsTable, newsTable, usersTable } from "@/db/schema";
+import { newsTable, usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -52,57 +52,40 @@ export const upsertNews = actionClient
       };
     }
 
-    const { documents = [], ...newsPayload } = parsedInput;
-
     await db.transaction(async (tx) => {
       const [result] = await tx
         .insert(newsTable)
         .values({
-          id: newsPayload.id,
-          title: newsPayload.title.trim(),
-          slug: newsPayload.slug.trim(),
-          excerpt: normalizeNullableString(newsPayload.excerpt),
-          content: normalizeNullableString(newsPayload.content),
-          coverImageUrl: normalizeNullableString(newsPayload.coverImageUrl),
-          publishedAt: toDateOrNull(newsPayload.publishedAt),
-          isPublished: newsPayload.isPublished,
-          emphasis: newsPayload.emphasis ?? false,
+          id: parsedInput.id,
+          title: parsedInput.title.trim(),
+          slug: parsedInput.slug.trim(),
+          excerpt: normalizeNullableString(parsedInput.excerpt),
+          content: normalizeNullableString(parsedInput.content),
+          coverImageUrl: normalizeNullableString(parsedInput.coverImageUrl),
+          publishedAt: toDateOrNull(parsedInput.publishedAt),
+          isPublished: parsedInput.isPublished,
+          emphasis: parsedInput.emphasis ?? false,
         })
         .onConflictDoUpdate({
           target: [newsTable.id],
           set: {
-            title: newsPayload.title.trim(),
-            slug: newsPayload.slug.trim(),
-            excerpt: normalizeNullableString(newsPayload.excerpt),
-            content: normalizeNullableString(newsPayload.content),
-            coverImageUrl: normalizeNullableString(newsPayload.coverImageUrl),
-            publishedAt: toDateOrNull(newsPayload.publishedAt),
-            isPublished: newsPayload.isPublished,
-            emphasis: newsPayload.emphasis ?? false,
+            title: parsedInput.title.trim(),
+            slug: parsedInput.slug.trim(),
+            excerpt: normalizeNullableString(parsedInput.excerpt),
+            content: normalizeNullableString(parsedInput.content),
+            coverImageUrl: normalizeNullableString(parsedInput.coverImageUrl),
+            publishedAt: toDateOrNull(parsedInput.publishedAt),
+            isPublished: parsedInput.isPublished,
+            emphasis: parsedInput.emphasis ?? false,
             updatedAt: new Date(),
           },
         })
         .returning({ id: newsTable.id });
 
-      const newsId = result?.id ?? newsPayload.id;
+      const newsId = result?.id ?? parsedInput.id;
 
       if (!newsId) {
         throw new Error("Falha ao salvar notícia.");
-      }
-
-      await tx
-        .delete(newsDocumentsTable)
-        .where(eq(newsDocumentsTable.newsId, newsId));
-
-      if (documents.length) {
-        await tx.insert(newsDocumentsTable).values(
-          documents.map((doc, index) => ({
-            newsId,
-            label: doc.label.trim(),
-            fileUrl: doc.fileUrl.trim(),
-            displayOrder: doc.displayOrder ?? index,
-          })),
-        );
       }
     });
 

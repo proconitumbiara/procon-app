@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -27,10 +27,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { NewsWithDocuments } from "@/types/content-management";
+import { newsTable } from "@/db/schema";
 
 interface UpsertNewsFormProps {
-  news?: NewsWithDocuments;
+  news?: typeof newsTable.$inferSelect;
   onSuccess?: () => void;
 }
 
@@ -38,7 +38,7 @@ const formSchema = upsertNewsSchema.omit({ id: true });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const getDefaultValues = (news?: NewsWithDocuments) => ({
+const getDefaultValues = (news?: typeof newsTable.$inferSelect) => ({
   title: news?.title ?? "",
   slug: news?.slug ?? "",
   excerpt: news?.excerpt ?? "",
@@ -49,24 +49,12 @@ const getDefaultValues = (news?: NewsWithDocuments) => ({
     : "",
   isPublished: news?.isPublished ?? false,
   emphasis: news?.emphasis ?? false,
-  documents:
-    news?.documents?.map((doc, index) => ({
-      id: doc.id,
-      label: doc.label,
-      fileUrl: doc.fileUrl,
-      displayOrder: doc.displayOrder ?? index,
-    })) ?? [],
 });
 
 const UpsertNewsForm = ({ news, onSuccess }: UpsertNewsFormProps) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: getDefaultValues(news),
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "documents",
   });
 
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -127,10 +115,6 @@ const UpsertNewsForm = ({ news, onSuccess }: UpsertNewsFormProps) => {
       ...values,
       id: news?.id,
       publishedAt: values.publishedAt || undefined,
-      documents: values.documents?.map((doc, index) => ({
-        ...doc,
-        displayOrder: doc.displayOrder ?? index,
-      })),
     });
   };
 
@@ -325,93 +309,6 @@ const UpsertNewsForm = ({ news, onSuccess }: UpsertNewsFormProps) => {
                 </FormItem>
               )}
             />
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Documentos</h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  append({
-                    label: "",
-                    fileUrl: "",
-                    displayOrder: fields.length,
-                  })
-                }
-              >
-                <Plus className="h-4 w-4" />
-                Adicionar
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {fields.length === 0 && (
-                <p className="text-muted-foreground text-sm">
-                  Nenhum documento adicionado.
-                </p>
-              )}
-              {fields.map((fieldItem, index) => (
-                <div
-                  key={fieldItem.id}
-                  className="space-y-3 rounded-md border p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      Documento {index + 1}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => remove(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name={`documents.${index}.label`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Documento" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`documents.${index}.fileUrl`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`documents.${index}.displayOrder`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ordem de exibição</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={0} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              ))}
-            </div>
           </div>
 
           <DialogFooter>

@@ -9,7 +9,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { newsDocumentsTable } from "@/db/schema";
 import { getNewsBySlug } from "@/lib/data/content";
 
 const DEFAULT_NEWS_IMAGE = "/LogoVertical.png";
@@ -106,30 +105,6 @@ export default async function NoticiaDetailPage({
             className="prose prose-lg text-foreground prose-headings:text-foreground prose-p:text-foreground prose-p:leading-7 prose-p:mb-4 sm:prose-p:mb-6 prose-strong:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground max-w-none"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
-
-          {noticia.documents && noticia.documents.length > 0 && (
-            <section className="mt-10">
-              <h2 className="mb-4 text-xl font-semibold">Documentos</h2>
-              <div className="space-y-3">
-                {noticia.documents.map(
-                  (documento: typeof newsDocumentsTable.$inferSelect) => (
-                    <Link
-                      key={documento.id}
-                      href={documento.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="border-border text-foreground hover:border-primary hover:text-primary flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors"
-                    >
-                      <span>{documento.label}</span>
-                      <span className="text-muted-foreground text-xs">
-                        Abrir documento
-                      </span>
-                    </Link>
-                  ),
-                )}
-              </div>
-            </section>
-          )}
         </article>
       </div>
     </main>
