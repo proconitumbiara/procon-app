@@ -21,6 +21,7 @@ export default function TicketsFilters({
   const [cpfFilter, setCpfFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sectorFilter, setSectorFilter] = useState("");
+  const [showAllTickets, setShowAllTickets] = useState(false);
 
   // Função para recarregar tickets
   const reloadTickets = useCallback(async () => {
@@ -96,6 +97,10 @@ export default function TicketsFilters({
     return filtered;
   }, [tickets, nameFilter, cpfFilter, statusFilter, sectorFilter]);
 
+  const displayedTickets = useMemo(() => {
+    return showAllTickets ? filteredTickets : filteredTickets.slice(0, 20);
+  }, [filteredTickets, showAllTickets]);
+
   return (
     <>
       <div className="mb-4 flex gap-2">
@@ -166,7 +171,19 @@ export default function TicketsFilters({
         {filteredTickets.length === 1 ? "" : "s"} encontrado
         {filteredTickets.length === 1 ? "" : "s"}
       </div>
-      <DataTable data={filteredTickets} columns={ticketsTableColumns} />
+      <DataTable data={displayedTickets} columns={ticketsTableColumns} />
+      {filteredTickets.length > 20 && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowAllTickets(!showAllTickets)}
+          >
+            {showAllTickets
+              ? "Ver menos"
+              : `Ver mais (${filteredTickets.length - 20} restantes)`}
+          </Button>
+        </div>
+      )}
     </>
   );
 }
