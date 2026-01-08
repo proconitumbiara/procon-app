@@ -5,31 +5,17 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import {
-  categoriesTable,
-  productsTable,
-  suppliersTable,
-} from "@/db/schema";
+import { categoriesTable } from "@/db/schema";
 
-import UpsertPriceSearchForm from "./upsert-price-search-form";
+import UpsertProductForm from "./upsert-product-form";
 
-type Supplier = typeof suppliersTable.$inferSelect;
 type Category = typeof categoriesTable.$inferSelect;
-type Product = typeof productsTable.$inferSelect & {
-  category: Category;
-};
 
-interface AddPriceSearchButtonProps {
-  suppliers: Supplier[];
+interface AddProductButtonProps {
   categories: Category[];
-  products: Product[];
 }
 
-const AddPriceSearchButton = ({
-  suppliers,
-  categories,
-  products,
-}: AddPriceSearchButtonProps) => {
+const AddProductButton = ({ categories }: AddProductButtonProps) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,19 +23,16 @@ const AddPriceSearchButton = ({
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4" />
-          Nova pesquisa
+          Novo produto
         </Button>
       </DialogTrigger>
-      <UpsertPriceSearchForm
-        suppliers={suppliers}
+      <UpsertProductForm
         categories={categories}
-        products={products}
         onSuccess={() => setOpen(false)}
       />
     </Dialog>
   );
 };
 
-export default AddPriceSearchButton;
-
+export default AddProductButton;
 

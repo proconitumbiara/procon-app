@@ -4,6 +4,7 @@ import { db } from "@/db";
 import {
   newsDocumentsTable,
   newsTable,
+  priceSearchesTable,
   projectsTable,
   servicesTable,
 } from "@/db/schema";
@@ -12,6 +13,7 @@ export type NewsRecord = typeof newsTable.$inferSelect;
 export type NewsDocumentRecord = typeof newsDocumentsTable.$inferSelect;
 export type ProjectRecord = typeof projectsTable.$inferSelect;
 export type ServiceRecord = typeof servicesTable.$inferSelect;
+export type PriceSearchRecord = typeof priceSearchesTable.$inferSelect;
 
 export async function getPublishedNews() {
   return db.query.newsTable.findMany({
@@ -139,4 +141,37 @@ export async function searchServices(query: string) {
       ),
     orderBy: (service, { asc }) => [asc(service.title)],
   });
+}
+
+export async function getAllPriceSearches() {
+  return db.query.priceSearchesTable.findMany({
+    orderBy: (priceSearch, { desc }) => [
+      desc(priceSearch.year),
+      desc(priceSearch.createdAT),
+    ],
+  });
+}
+
+export async function getPriceSearchBySlug(slug: string) {
+  const priceSearch = await db.query.priceSearchesTable.findFirst({
+    where: (priceSearch, { eq }) => eq(priceSearch.slug, slug),
+    with: {
+      items: {
+        with: {
+          product: {
+            with: {
+              category: true,
+            },
+          },
+          supplier: true,
+        },
+      },
+    },
+  });
+
+  if (!priceSearch) {
+    return null;
+  }
+
+  return priceSearch;
 }

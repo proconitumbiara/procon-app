@@ -296,6 +296,8 @@ export const priceSearchesTable = pgTable("price_searches", {
   coverImageUrl: text("cover_image_url"), //URL da imagem de capa da pesquisa de preços
   emphasis: boolean("emphasis").notNull().default(false), //Se a pesquisa de preços é em destaque
   year: integer("year").notNull(), //Ano da pesquisa de preços
+  collectionDate: date("collection_date"), //Data da coleta dos preços
+  observation: text("observation"), //Observação da pesquisa de preços
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -314,7 +316,7 @@ export const suppliersTable = pgTable("suppliers", {
     .$onUpdate(() => new Date()),
 });
 
-//Tabela para armazenar categorias
+//Tabela para armazenar categorias de produtos
 export const categoriesTable = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
@@ -324,20 +326,10 @@ export const categoriesTable = pgTable("categories", {
     .$onUpdate(() => new Date()),
 });
 
-//Tabela para armazenar produtos
+//Tabela para armazenar produtos (catálogo geral de produtos)
 export const productsTable = pgTable("products", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  price: integer("price").notNull(),
-  priceVariation: text("price_variation").notNull(),
-  unit: text("unit"),
-  weight: integer("weight"),
-  priceSearchId: uuid("price_search_id")
-    .notNull()
-    .references(() => priceSearchesTable.id, { onDelete: "cascade" }),
-  supplierId: uuid("supplier_id")
-    .notNull()
-    .references(() => suppliersTable.id, { onDelete: "cascade" }),
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categoriesTable.id, { onDelete: "cascade" }),
@@ -347,37 +339,72 @@ export const productsTable = pgTable("products", {
     .$onUpdate(() => new Date()),
 });
 
+//Tabela intermediária para relacionar pesquisa, produto, fornecedor e preço
+export const priceSearchItemsTable = pgTable("price_search_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  price: integer("price").notNull(), //Preço em centavos (ex: R$2,00 = 200)
+  priceSearchId: uuid("price_search_id")
+    .notNull()
+    .references(() => priceSearchesTable.id, { onDelete: "cascade" }),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => productsTable.id, { onDelete: "cascade" }),
+  supplierId: uuid("supplier_id")
+    .notNull()
+    .references(() => suppliersTable.id, { onDelete: "cascade" }),
+  createdAT: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
 //Relationships
 
+//Price searches relationships
 export const priceSearchesRelations = relations(
   priceSearchesTable,
   ({ many }) => ({
-    products: many(productsTable),
+    items: many(priceSearchItemsTable),
   }),
 );
 
-export const productsRelations = relations(productsTable, ({ one }) => ({
-  priceSearch: one(priceSearchesTable, {
-    fields: [productsTable.priceSearchId],
-    references: [priceSearchesTable.id],
-  }),
-  supplier: one(suppliersTable, {
-    fields: [productsTable.supplierId],
-    references: [suppliersTable.id],
-  }),
+//Categories relationships
+export const categoriesRelations = relations(categoriesTable, ({ many }) => ({
+  products: many(productsTable),
+}));
+
+//Products relationships
+export const productsRelations = relations(productsTable, ({ one, many }) => ({
   category: one(categoriesTable, {
     fields: [productsTable.categoryId],
     references: [categoriesTable.id],
   }),
+  priceSearchItems: many(priceSearchItemsTable),
 }));
 
+//Suppliers relationships
 export const suppliersRelations = relations(suppliersTable, ({ many }) => ({
-  products: many(productsTable),
+  priceSearchItems: many(priceSearchItemsTable),
 }));
 
-export const categoriesRelations = relations(categoriesTable, ({ many }) => ({
-  products: many(productsTable),
-}));
+//Price search items relationships
+export const priceSearchItemsRelations = relations(
+  priceSearchItemsTable,
+  ({ one }) => ({
+    priceSearch: one(priceSearchesTable, {
+      fields: [priceSearchItemsTable.priceSearchId],
+      references: [priceSearchesTable.id],
+    }),
+    product: one(productsTable, {
+      fields: [priceSearchItemsTable.productId],
+      references: [productsTable.id],
+    }),
+    supplier: one(suppliersTable, {
+      fields: [priceSearchItemsTable.supplierId],
+      references: [suppliersTable.id],
+    }),
+  }),
+);
 
 //Users table relationships
 export const usersTableRelations = relations(usersTable, ({ many }) => ({

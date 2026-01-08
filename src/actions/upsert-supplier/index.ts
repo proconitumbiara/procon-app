@@ -1,12 +1,17 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
 import { suppliersTable, usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { formatPhone, normalizeAddress, normalizePhone } from "@/lib/formatters";
+import {
+  formatPhone,
+  normalizeAddress,
+  normalizePhone,
+} from "@/lib/formatters";
 import { actionClient } from "@/lib/next-safe-action";
 
 import { ErrorMessages, ErrorTypes, upsertSupplierSchema } from "./schema";
@@ -78,7 +83,8 @@ export const upsertSupplier = actionClient
         phone: suppliersTable.phone,
       });
 
+    revalidatePath("/gerenciar-pesquisas");
+    revalidatePath(`/gerenciar-pesquisas/fornecedores`);
+
     return { success: true, supplier };
   });
-
-

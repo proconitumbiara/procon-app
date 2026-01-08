@@ -1,8 +1,11 @@
 import { asc, desc, eq } from "drizzle-orm";
+import { Package, Truck } from "lucide-react";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AccessDenied } from "@/components/ui/access-denied";
+import { Button } from "@/components/ui/button";
 import {
   PageActions,
   PageContainer,
@@ -36,14 +39,18 @@ const GerenciarPesquisasPage = async () => {
     return <AccessDenied />;
   }
 
-  const [priceSearches, suppliers, categories] = await Promise.all([
+  const [priceSearches, suppliers, categories, products] = await Promise.all([
     db.query.priceSearchesTable.findMany({
       orderBy: (table) => desc(table.createdAT),
       with: {
-        products: {
+        items: {
           with: {
+            product: {
+              with: {
+                category: true,
+              },
+            },
             supplier: true,
-            category: true,
           },
         },
       },
@@ -53,6 +60,12 @@ const GerenciarPesquisasPage = async () => {
     }),
     db.query.categoriesTable.findMany({
       orderBy: (table) => asc(table.name),
+    }),
+    db.query.productsTable.findMany({
+      orderBy: (table) => asc(table.name),
+      with: {
+        category: true,
+      },
     }),
   ]);
 
@@ -66,7 +79,25 @@ const GerenciarPesquisasPage = async () => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <AddPriceSearchButton suppliers={suppliers} categories={categories} />
+          <div className="flex gap-2">
+            <Button variant="secondary" className="no-underline" asChild>
+              <Link href="/gerenciar-pesquisas/produtos">
+                <Package className="mr-2 h-4 w-4" />
+                Gerenciar Produtos
+              </Link>
+            </Button>
+            <Button variant="secondary" className="no-underline" asChild>
+              <Link href="/gerenciar-pesquisas/fornecedores">
+                <Truck className="mr-2 h-4 w-4" />
+                Gerenciar Fornecedores
+              </Link>
+            </Button>
+            <AddPriceSearchButton
+              suppliers={suppliers}
+              categories={categories}
+              products={products}
+            />
+          </div>
         </PageActions>
       </PageHeader>
       <PageContent>
@@ -74,6 +105,7 @@ const GerenciarPesquisasPage = async () => {
           priceSearches={priceSearches}
           suppliers={suppliers}
           categories={categories}
+          products={products}
         />
       </PageContent>
     </PageContainer>

@@ -11,6 +11,7 @@ import {
   ListOrdered,
   LogOutIcon,
   Newspaper,
+  Search,
   Users,
 } from "lucide-react";
 import { Moon, Sun } from "lucide-react";
@@ -90,6 +91,11 @@ const itemsClients = [
 ];
 
 const itemsWebSite = [
+  {
+    title: "Pesquisas",
+    url: "/gerenciar-pesquisas",
+    icon: Search,
+  },
   {
     title: "Notícias",
     url: "/gerenciar-noticias",

@@ -27,7 +27,7 @@ export default function Header() {
     { href: "/servicos", label: "Serviços" },
     { href: "/projetos", label: "Projetos" },
     { href: "/noticias", label: "Notícias" },
-    { href: "/pesquisa-de-precos", label: "Pesquisas" },
+    { href: "/pesquisas", label: "Pesquisas" },
     { href: "/#cdc", label: "CDC" },
     { href: "/#contato", label: "Contato" },
   ];
