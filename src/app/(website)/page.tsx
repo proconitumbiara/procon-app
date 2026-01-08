@@ -4,6 +4,7 @@ import { Baby, Book, Eye, Globe, Hand, Smile } from "lucide-react";
 import CDCCard from "@/components/website/cards/CDCCard";
 import ContactCard from "@/components/website/cards/ContactCard";
 import NewsCard from "@/components/website/cards/NewsCard";
+import PriceSearchCard from "@/components/website/cards/PriceSearchCard";
 import ProjectCard from "@/components/website/cards/ProjectCard";
 import ServiceCard from "@/components/website/cards/ServiceCard";
 import Footer from "@/components/website/global/Footer";
@@ -12,6 +13,7 @@ import Section from "@/components/website/global/Section";
 import type { FAQItem } from "@/components/website/home/FAQ";
 import FAQ from "@/components/website/home/FAQ";
 import Hero from "@/components/website/home/Hero";
+import { getAllPriceSearches } from "@/lib/data/content";
 import {
   getIndexProjects,
   getIndexPublishedNews,
@@ -20,6 +22,7 @@ import {
 
 const DEFAULT_PROJECT_IMAGE = "/LogoVertical.png";
 const DEFAULT_NEWS_IMAGE = "/LogoVertical.png";
+const DEFAULT_PRICE_SEARCH_IMAGE = "/LogoVertical.png";
 
 const SERVICE_ICON_MAP: Record<string, LucideIcon | undefined> = {
   "atendimento-ao-consumidor": Hand,
@@ -28,10 +31,11 @@ const SERVICE_ICON_MAP: Record<string, LucideIcon | undefined> = {
 };
 
 export default async function Home() {
-  const [services, projects, newsItems] = await Promise.all([
+  const [services, projects, newsItems, priceSearches] = await Promise.all([
     getIndexServices(),
     getIndexProjects(),
     getIndexPublishedNews(),
+    getAllPriceSearches(),
   ]);
 
   const featuredServices = services.slice(0, 3);
@@ -106,6 +110,40 @@ export default async function Home() {
                   slug={service.slug}
                   status={service.isActive ? "active" : "inactive"}
                   icon={SERVICE_ICON_MAP[service.slug]}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">
+              Ainda não há serviços cadastrados. Assim que disponíveis, eles
+              aparecerão aqui.
+            </p>
+          )}
+        </Section>
+
+        {/* Pesquisas */}
+        <Section
+          id="pesquisas"
+          title="Pesquisas"
+          description="Conheça as pesquisas que realizamos para você"
+          actionLink="/pesquisas"
+          actionLabel="Todas as pesquisas"
+        >
+          {priceSearches.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {priceSearches.map((search) => (
+                <PriceSearchCard
+                  key={search.id}
+                  id={search.id}
+                  title={search.title}
+                  description={
+                    search.description ||
+                    "Descrição deste serviço estará disponível em breve."
+                  }
+                  slug={search.slug}
+                  image={search.coverImageUrl || DEFAULT_PRICE_SEARCH_IMAGE}
+                  imageAlt={search.title}
+                  year={search.year}
                 />
               ))}
             </div>
