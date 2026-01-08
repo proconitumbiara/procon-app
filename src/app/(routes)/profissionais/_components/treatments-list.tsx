@@ -23,6 +23,7 @@ interface TreatmentsListProps {
 
 const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
     const [expandedTreatments, setExpandedTreatments] = useState<Set<string>>(new Set());
+    const [showAllTreatments, setShowAllTreatments] = useState(false);
 
     const toggleExpanded = (treatmentId: string) => {
         const newExpanded = new Set(expandedTreatments);
@@ -116,6 +117,7 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
                         const dateB = b.createdAT instanceof Date ? b.createdAT : new Date(b.createdAT);
                         return dateB.getTime() - dateA.getTime(); // Mais novo primeiro
                     })
+                    .slice(0, showAllTreatments ? undefined : 20)
                     .map((treatment) => {
                         const isExpanded = expandedTreatments.has(treatment.id);
 
@@ -208,6 +210,16 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
                             </Collapsible>
                         );
                     })}
+                {treatments.length > 20 && (
+                    <div className="pt-4 flex justify-center">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowAllTreatments(!showAllTreatments)}
+                        >
+                            {showAllTreatments ? "Ver menos" : `Ver mais (${treatments.length - 20} restantes)`}
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

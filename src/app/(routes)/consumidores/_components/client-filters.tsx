@@ -19,6 +19,7 @@ export default function ClientFilters({
 }) {
   const [nameFilter, setNameFilter] = useState("");
   const [cpfFilter, setCpfFilter] = useState("");
+  const [showAllClients, setShowAllClients] = useState(false);
 
   const filteredClients = useMemo(() => {
     let filtered = clients.filter(
@@ -38,6 +39,10 @@ export default function ClientFilters({
   }, [clients, nameFilter, cpfFilter]);
 
   const columns = useMemo(() => clientsTableColumns(sectors), [sectors]);
+
+  const displayedClients = useMemo(() => {
+    return showAllClients ? filteredClients : filteredClients.slice(0, 20);
+  }, [filteredClients, showAllClients]);
 
   return (
     <>
@@ -72,7 +77,19 @@ export default function ClientFilters({
         {filteredClients.length === 1 ? "" : "s"} encontrado
         {filteredClients.length === 1 ? "" : "s"}
       </div>
-      <DataTable data={filteredClients} columns={columns} />
+      <DataTable data={displayedClients} columns={columns} />
+      {filteredClients.length > 20 && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowAllClients(!showAllClients)}
+          >
+            {showAllClients
+              ? "Ver menos"
+              : `Ver mais (${filteredClients.length - 20} restantes)`}
+          </Button>
+        </div>
+      )}
     </>
   );
 }

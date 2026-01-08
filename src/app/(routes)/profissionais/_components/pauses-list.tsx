@@ -22,6 +22,7 @@ interface PausesListProps {
 
 const PausesList = ({ pauses }: PausesListProps) => {
     const [expandedPauses, setExpandedPauses] = useState<Set<string>>(new Set());
+    const [showAllPauses, setShowAllPauses] = useState(false);
 
     const toggleExpanded = (pauseId: string) => {
         const newExpanded = new Set(expandedPauses);
@@ -136,6 +137,7 @@ const PausesList = ({ pauses }: PausesListProps) => {
                         const dateB = b.createdAT instanceof Date ? b.createdAT : new Date(b.createdAT);
                         return dateB.getTime() - dateA.getTime(); // Mais novo primeiro
                     })
+                    .slice(0, showAllPauses ? undefined : 20)
                     .map((pause) => {
                         const isExpanded = expandedPauses.has(pause.id);
 
@@ -226,6 +228,16 @@ const PausesList = ({ pauses }: PausesListProps) => {
                             </Collapsible>
                         );
                     })}
+                {pauses.length > 20 && (
+                    <div className="pt-4 flex justify-center">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowAllPauses(!showAllPauses)}
+                        >
+                            {showAllPauses ? "Ver menos" : `Ver mais (${pauses.length - 20} restantes)`}
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
