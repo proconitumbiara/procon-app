@@ -33,11 +33,13 @@ const ProfessionalSelector = ({
           <SelectValue placeholder="Escolha um usuário..." />
         </SelectTrigger>
         <SelectContent>
-          {professionals.map((professional) => (
-            <SelectItem key={professional.id} value={professional.id}>
-              {professional.name}
-            </SelectItem>
-          ))}
+          {professionals
+            .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+            .map((professional) => (
+              <SelectItem key={professional.id} value={professional.id}>
+                {professional.name}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
     </div>
