@@ -11,7 +11,9 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { usersTable } from "@/db/schema";
+import { authClient } from "@/lib/auth.client";
 
+import GenerateCodeButton from "./_components/generate-code-button";
 import OperationsList from "./_components/operations-list";
 import PausesList from "./_components/pauses-list";
 import ProfessionalHeader from "./_components/professional-header";
@@ -62,6 +64,7 @@ interface ProfessionalMetricsData {
 }
 
 const AdminsProfessionals = () => {
+  const session = authClient.useSession();
   const [professionals, setProfessionals] = useState<
     (typeof usersTable.$inferSelect)[]
   >([]);
@@ -83,6 +86,8 @@ const AdminsProfessionals = () => {
   });
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+
+  const isAdmin = session.data?.user?.role === "administrator";
 
   // Carregar profissionais
   useEffect(() => {
@@ -175,6 +180,9 @@ const AdminsProfessionals = () => {
         </PageHeaderContent>
       </PageHeader>
       <PageContent className="space-y-6">
+        {/* Componente de Geração de Código (apenas para admins) */}
+        {isAdmin && <GenerateCodeButton />}
+
         {/* Seletor de Profissional */}
         <ProfessionalSelector
           professionals={professionals}

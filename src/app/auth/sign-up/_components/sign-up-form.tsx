@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { updateUserData } from "@/actions/update-user-data";
+import { validateRegistrationCode } from "@/actions/validate-registration-code";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth.client";
+import { useAction } from "next-safe-action/hooks";
 
 const registerSchema = z.object({
   name: z.string().trim().min(1, { message: "Nome é obrigatório" }),
@@ -37,6 +39,14 @@ const registerSchema = z.object({
   }),
   phoneNumber: z.string().trim().min(1, { message: "Telefone é obrigatório" }),
   cpf: z.string().trim().min(1, { message: "CPF é obrigatório" }),
+  registrationCode: z
+    .string()
+    .trim()
+    .min(6, { message: "Código deve ter 6 caracteres" })
+    .max(6, { message: "Código deve ter 6 caracteres" })
+    .regex(/^[A-Z0-9]{6}$/i, {
+      message: "Código deve conter apenas letras e números",
+    }),
 });
 
 export function SignUpForm() {
@@ -51,10 +61,30 @@ export function SignUpForm() {
       password: "",
       phoneNumber: "",
       cpf: "",
+      registrationCode: "",
     },
   });
 
-  async function onSubmitRegister(values: z.infer<typeof registerSchema>) {
+  const { execute: validateCode } = useAction(validateRegistrationCode, {
+    onSuccess: (result) => {
+      if (result?.data?.error) {
+        toast.error(result.data.error.message);
+        return;
+      }
+      // Se chegou aqui, o código é válido, prosseguir com cadastro
+      const formValues = formRegister.getValues();
+      proceedWithRegistration(formValues);
+    },
+    onError: (error) => {
+      const message =
+        error.error?.serverError || "Erro ao validar código de registro";
+      toast.error(message);
+    },
+  });
+
+  async function proceedWithRegistration(
+    values: z.infer<typeof registerSchema>,
+  ) {
     try {
       await authClient.signUp.email(
         {
@@ -95,8 +125,13 @@ export function SignUpForm() {
     }
   }
 
+  async function onSubmitRegister(values: z.infer<typeof registerSchema>) {
+    // Validar código de registro antes de prosseguir
+    validateCode({ code: values.registrationCode });
+  }
+
   return (
-    <Card className="w-full overflow-hidden border-1 border-gray-200 bg-white p-0 shadow-sm">
+    <Card className="w-full overflow-hidden border border-gray-200 bg-white p-0 shadow-sm">
       <CardContent className="grid p-0 text-center">
         <CardHeader className="flex flex-col items-center justify-center">
           <CardTitle className="mt-4 text-xl font-bold text-gray-900">
@@ -123,7 +158,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu nome"
                           {...field}
-                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -140,7 +175,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu CPF"
                           {...field}
-                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -157,7 +192,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu telefone"
                           {...field}
-                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -174,7 +209,7 @@ export function SignUpForm() {
                         <Input
                           placeholder="Digite seu email"
                           {...field}
-                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -193,7 +228,7 @@ export function SignUpForm() {
                             placeholder="Crie sua senha"
                             type={showPassword ? "text" : "password"}
                             {...field}
-                            className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
                           <button
                             type="button"
@@ -208,6 +243,32 @@ export function SignUpForm() {
                             )}
                           </button>
                         </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={formRegister.control}
+                  name="registrationCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-900">
+                        Código de Cadastro:
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Digite o código de cadastro"
+                          {...field}
+                          className="text-primary border border-gray-200 bg-white font-mono uppercase shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          maxLength={6}
+                          onChange={(e) => {
+                            const value = e.target.value
+                              .toUpperCase()
+                              .replace(/[^A-Z0-9]/g, "");
+                            field.onChange(value);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

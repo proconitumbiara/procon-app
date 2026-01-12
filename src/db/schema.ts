@@ -343,6 +343,15 @@ export const priceSearchItemsTable = pgTable("price_search_items", {
     .$onUpdate(() => new Date()),
 });
 
+//Tabela para armazenar códigos de registro
+export const registrationCodesTable = pgTable("registration_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  usedAt: timestamp("used_at"),
+});
+
 //Relationships
 
 //Price searches relationships
