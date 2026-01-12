@@ -19,6 +19,7 @@ import {
   getIndexPublishedNews,
   getIndexServices,
 } from "@/lib/data/index-content";
+import { redirect } from "next/navigation";
 
 const DEFAULT_PROJECT_IMAGE = "/LogoVertical.png";
 const DEFAULT_NEWS_IMAGE = "/LogoVertical.png";
@@ -31,6 +32,7 @@ const SERVICE_ICON_MAP: Record<string, LucideIcon | undefined> = {
 };
 
 export default async function Home() {
+  redirect("/auth/sign-in");
   const [services, projects, newsItems, priceSearches] = await Promise.all([
     getIndexServices(),
     getIndexProjects(),
