@@ -62,17 +62,17 @@ const LoginForm = () => {
   }
 
   return (
-    <Card className="w-full overflow-hidden border border-gray-200 bg-white p-0 shadow-sm">
-      <CardContent className="grid p-0 text-center">
+    <Card className="h-full w-full overflow-hidden border-none bg-white/20 shadow-none backdrop-blur-sm">
+      <CardContent className="h-full w-full space-y-4 text-center">
         <CardHeader className="flex flex-col items-center justify-center">
-          <CardTitle className="mt-4 text-xl font-bold text-gray-900">
+          <CardTitle className="text-2xl font-bold text-white">
             Seja bem-vindo(a) de volta!
           </CardTitle>
-          <CardDescription className="text-sm font-extralight text-gray-900">
+          <CardDescription className="text-base font-light text-white">
             Faça login para continuar
           </CardDescription>
         </CardHeader>
-        <div className="mx-auto w-full max-w-md p-6 md:p-8">
+        <div className="w-full space-y-4">
           <Form {...formLogin}>
             <form
               onSubmit={formLogin.handleSubmit(onSubmitLogin)}
@@ -84,12 +84,14 @@ const LoginForm = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">Email</FormLabel>
+                      <FormLabel className="text-base font-semibold text-white">
+                        Email
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Digite seu email"
                           {...field}
-                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                         />
                       </FormControl>
                       <FormMessage />
@@ -101,18 +103,20 @@ const LoginForm = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">Senha</FormLabel>
+                      <FormLabel className="text-base font-semibold text-white">
+                        Senha
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="Digite sua senha"
                             {...field}
-                            className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                           />
                           <button
                             type="button"
-                            className="text-primary absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent shadow-none hover:bg-transparent"
+                            className="absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent text-white shadow-none hover:bg-transparent"
                             onClick={() => setShowPassword((v) => !v)}
                             tabIndex={-1}
                           >
@@ -133,7 +137,7 @@ const LoginForm = () => {
                 <Button
                   variant="default"
                   type="submit"
-                  className="w-full"
+                  className="mt-4 w-full"
                   disabled={formLogin.formState.isSubmitting}
                 >
                   {formLogin.formState.isSubmitting ? (

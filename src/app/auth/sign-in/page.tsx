@@ -16,14 +16,20 @@ const AuthenticationPage = async () => {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-white">
-      <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+    <div
+      className="relative flex h-screen w-full flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/CapaAuthentication.png')",
+      }}
+    >
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#003173]/20 backdrop-blur-sm">
         <Image
           src="/Logo.svg"
           alt="Procon Logo"
-          width={400}
+          width={300}
           height={0}
           priority
+          className="absolute top-4 left-4 z-10"
         />
         <div className="h-auto w-full max-w-md rounded-md">
           <LoginForm />

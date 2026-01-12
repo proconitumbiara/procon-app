@@ -131,17 +131,17 @@ export function SignUpForm() {
   }
 
   return (
-    <Card className="w-full overflow-hidden border border-gray-200 bg-white p-0 shadow-sm">
-      <CardContent className="grid p-0 text-center">
+    <Card className="h-full w-full overflow-hidden border-none bg-white/20 shadow-none backdrop-blur-sm">
+      <CardContent className="h-full w-full space-y-4 text-center">
         <CardHeader className="flex flex-col items-center justify-center">
-          <CardTitle className="mt-4 text-xl font-bold text-gray-900">
+          <CardTitle className="text-2xl font-bold text-white">
             Cadastro
           </CardTitle>
-          <CardDescription className="text-sm font-extralight text-gray-900">
+          <CardDescription className="text-base font-light text-white">
             Preencha os campos abaixo para cadastrar-se
           </CardDescription>
         </CardHeader>
-        <div className="mx-auto w-full max-w-md p-6 md:p-8">
+        <div className="w-full space-y-4">
           <Form {...formRegister}>
             <form
               onSubmit={formRegister.handleSubmit(onSubmitRegister)}
@@ -153,12 +153,14 @@ export function SignUpForm() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">Nome:</FormLabel>
+                      <FormLabel className="text-base font-semibold text-white">
+                        Nome
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Digite seu nome"
                           {...field}
-                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="dark:focus:text-primary focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                         />
                       </FormControl>
                       <FormMessage />
@@ -170,12 +172,14 @@ export function SignUpForm() {
                   name="cpf"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">CPF:</FormLabel>
+                      <FormLabel className="text-base font-semibold text-white">
+                        CPF
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Digite seu CPF"
                           {...field}
-                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="dark:focus:text-primary focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                         />
                       </FormControl>
                       <FormMessage />
@@ -187,12 +191,14 @@ export function SignUpForm() {
                   name="phoneNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">Telefone:</FormLabel>
+                      <FormLabel className="text-base font-semibold text-white">
+                        Telefone
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Digite seu telefone"
                           {...field}
-                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="dark:focus:text-primary focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                         />
                       </FormControl>
                       <FormMessage />
@@ -204,12 +210,14 @@ export function SignUpForm() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">Email:</FormLabel>
+                      <FormLabel className="text-base font-semibold text-white">
+                        Email
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Digite seu email"
                           {...field}
-                          className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="dark:focus:text-primary focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                         />
                       </FormControl>
                       <FormMessage />
@@ -221,18 +229,20 @@ export function SignUpForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">Senha:</FormLabel>
+                      <FormLabel className="text-base font-semibold text-white">
+                        Senha
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
-                            placeholder="Crie sua senha"
                             type={showPassword ? "text" : "password"}
+                            placeholder="Crie sua senha"
                             {...field}
-                            className="text-primary border border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="dark:focus:text-primary focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                           />
                           <button
                             type="button"
-                            className="text-primary absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent shadow-none hover:bg-transparent"
+                            className="absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent text-white shadow-none hover:bg-transparent"
                             onClick={() => setShowPassword((v) => !v)}
                             tabIndex={-1}
                           >
@@ -253,14 +263,14 @@ export function SignUpForm() {
                   name="registrationCode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-900">
-                        Código de Cadastro:
+                      <FormLabel className="text-base font-semibold text-white">
+                        Código de Cadastro
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Digite o código de cadastro"
                           {...field}
-                          className="text-primary border border-gray-200 bg-white font-mono uppercase shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="dark:focus:text-primary focus:text-primary border border-white bg-transparent font-mono text-white uppercase shadow-none placeholder:font-sans placeholder:text-white placeholder:normal-case focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
                           maxLength={6}
                           onChange={(e) => {
                             const value = e.target.value
@@ -279,7 +289,7 @@ export function SignUpForm() {
                 <Button
                   variant="default"
                   type="submit"
-                  className="w-full"
+                  className="mt-4 w-full"
                   disabled={formRegister.formState.isSubmitting}
                 >
                   {formRegister.formState.isSubmitting ? (
