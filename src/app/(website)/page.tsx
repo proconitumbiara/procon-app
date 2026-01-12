@@ -47,13 +47,13 @@ export default async function Home() {
       id: "1",
       question: "O que é o Procon?",
       answer:
-        "O Procon (Programa de Proteção e Defesa do Consumidor) é um órgão público que tem como objetivo proteger os direitos dos consumidores, oferecendo orientação, mediação de conflitos e fiscalização de estabelecimentos comerciais.",
+        "O Procon é um órgão público municipal que tem como objetivo proteger os direitos dos consumidores, oferecendo orientação, mediação de conflitos e fiscalização de estabelecimentos comerciais.",
     },
     {
       id: "2",
       question: "Como posso fazer uma reclamação?",
       answer:
-        "Você pode fazer uma reclamação presencialmente em nossa sede, através do nosso site ou por telefone. É necessário apresentar documentos pessoais e comprovantes relacionados à sua reclamação.",
+        "Você pode fazer uma reclamação presencialmente em nossa sede. É necessário apresentar documentos pessoais, comprovante de endereço e provas relacionadas à sua reclamação.",
     },
     {
       id: "3",
