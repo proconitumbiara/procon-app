@@ -26,7 +26,11 @@ export const auth = betterAuth({
       verifications: schema.verificationsTable,
     },
   }),
-  trustedOrigins: ["http://localhost:3000", "http://192.168.1.12:3000"],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://192.168.1.12:3000",
+    "https://procon-app.vercel.app",
+  ],
   plugins: [
     customSession(async ({ user, session }) => {
       const [userData] = await Promise.all([
