@@ -15,6 +15,8 @@ import { getAllProjects } from "@/lib/data/content";
 
 const DEFAULT_PROJECT_IMAGE = "/LogoVertical.png";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProjetosPage() {
   const projects = await getAllProjects();
   const hasProjects = projects.length > 0;

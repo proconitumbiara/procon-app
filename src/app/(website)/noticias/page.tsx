@@ -15,6 +15,8 @@ import { getPublishedNews } from "@/lib/data/content";
 
 const DEFAULT_NEWS_IMAGE = "/LogoHorizontal.png";
 
+export const dynamic = 'force-dynamic';
+
 export default async function NoticiasPage() {
   const newsItems = await getPublishedNews();
   const hasNews = newsItems.length > 0;

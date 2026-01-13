@@ -18,6 +18,8 @@ import { searchNews, searchProjects, searchServices } from "@/lib/data/content";
 const DEFAULT_NEWS_IMAGE = "/LogoHorizontal.png";
 const DEFAULT_PROJECT_IMAGE = "/LogoVertical.png";
 
+export const dynamic = 'force-dynamic';
+
 interface BuscaPageProps {
   searchParams: Promise<{ q?: string }>;
 }

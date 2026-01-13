@@ -12,6 +12,8 @@ import Footer from "@/components/website/global/Footer";
 import Header from "@/components/website/global/Header";
 import { getServiceBySlug } from "@/lib/data/content";
 
+export const dynamic = 'force-dynamic';
+
 interface ServicoDetailPageProps {
   params: Promise<{ slug: string }>;
 }

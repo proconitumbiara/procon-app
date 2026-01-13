@@ -16,6 +16,8 @@ import PriceComparisonTable from "@/components/website/price-comparison-table";
 import { getPriceSearchBySlug } from "@/lib/data/content";
 import { formatCentavosToBRL } from "@/lib/formatters";
 
+export const dynamic = 'force-dynamic';
+
 interface PriceSearchDetailPageProps {
   params: Promise<{ slug: string }>;
 }

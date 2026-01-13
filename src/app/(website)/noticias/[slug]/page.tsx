@@ -13,6 +13,8 @@ import { getNewsBySlug } from "@/lib/data/content";
 
 const DEFAULT_NEWS_IMAGE = "/LogoVertical.png";
 
+export const dynamic = 'force-dynamic';
+
 interface NoticiaDetailPageProps {
   params: Promise<{ slug: string }>;
 }

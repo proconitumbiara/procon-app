@@ -13,6 +13,8 @@ import Footer from "@/components/website/global/Footer";
 import Header from "@/components/website/global/Header";
 import { getActiveServices } from "@/lib/data/content";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ServicosPage() {
   const services = await getActiveServices();
   const hasServices = services.length > 0;

@@ -15,6 +15,8 @@ import { getAllPriceSearches } from "@/lib/data/content";
 
 const DEFAULT_PRICE_SEARCH_IMAGE = "/LogoHorizontal.png";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PesquisasPage() {
   const priceSearches = await getAllPriceSearches();
   const hasPriceSearches = priceSearches.length > 0;

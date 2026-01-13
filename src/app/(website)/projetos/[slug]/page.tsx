@@ -13,6 +13,8 @@ import { getProjectBySlug } from "@/lib/data/content";
 
 const DEFAULT_PROJECT_IMAGE = "/LogoVertical.png";
 
+export const dynamic = 'force-dynamic';
+
 interface ProjetoDetailPageProps {
   params: Promise<{ slug: string }>;
 }
