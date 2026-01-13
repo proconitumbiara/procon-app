@@ -34,7 +34,7 @@ export async function GET(
   try {
     const { path } = await context.params;
 
-    // Verifica se a pasta requer autenticação
+    // Verifica se a pasta requer autenticação (para caminhos locais antigos)
     const folder = path[0];
     const requiresAuth = PROTECTED_FOLDERS.has(folder);
     const isPublicImage = PUBLIC_IMAGE_FOLDERS.has(folder);
@@ -61,12 +61,13 @@ export async function GET(
       }
     }
 
+    // Tentar servir do sistema de arquivos local (compatibilidade com arquivos antigos)
     const filePath = join(process.cwd(), "uploads", ...path);
     const extension = extname(filePath).toLowerCase();
     const contentType =
       CONTENT_TYPE_BY_EXTENSION[extension] ?? "application/octet-stream";
 
-    // Verifica se o arquivo existe
+    // Verifica se o arquivo existe localmente
     let fileBuffer: Buffer;
     try {
       await access(filePath, constants.F_OK);

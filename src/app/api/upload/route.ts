@@ -1,6 +1,6 @@
-import { mkdir, writeFile } from "fs/promises";
+import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
-import { extname, join } from "path";
+import { extname } from "path";
 
 import { auth } from "@/lib/auth";
 
@@ -85,21 +85,19 @@ export async function POST(request: NextRequest) {
     }
 
     const fileName = `${timestamp}_${randomPart}${extension}`;
-
-    const uploadDir = join(process.cwd(), "uploads", type);
-    const filePath = join(uploadDir, fileName);
-
-    await mkdir(uploadDir, { recursive: true });
+    const blobPath = `${type}/${fileName}`;
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
 
-    const fileUrl = `/uploads/${type}/${fileName}`;
+    const blob = await put(blobPath, buffer, {
+      access: "public",
+      contentType: file.type,
+    });
 
     return NextResponse.json({
       success: true,
-      fileUrl,
+      fileUrl: blob.url,
       fileName,
     });
   } catch (error) {
