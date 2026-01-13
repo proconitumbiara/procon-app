@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
@@ -69,113 +70,38 @@ export const generateResetPasswordLink = actionClient
     }
 
     try {
-      // Usar a API do BetterAuth para gerar o token de reset
-      // O BetterAuth usa forgetPassword para iniciar o processo de reset
-      const requestHeaders = await headers();
       const baseURL = process.env.NEXT_PUBLIC_APP_URL || "";
       const redirectTo = `${baseURL}/reset-password`;
 
-      // Chamar a API do BetterAuth para gerar o token
-      // O BetterAuth vai gerar o token e chamar sendResetPassword automaticamente
-      try {
-        await auth.api.forgetPassword({
-          body: {
-            email: targetUser.email,
-            redirectTo,
-          },
-          headers: requestHeaders,
-        });
-      } catch (apiError: unknown) {
-        console.error("Erro na chamada forgetPassword:", apiError);
-        const errorMessage =
-          apiError instanceof Error
-            ? apiError.message
-            : "Erro ao chamar API de reset de senha";
-        return {
-          error: {
-            type: ErrorTypes.GENERATION_ERROR,
-            message: errorMessage,
-          },
-        };
-      }
+      // Gerar token seguro para reset de senha
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+      const now = new Date();
 
-      // Aguardar um momento para garantir que o token foi inserido no banco
-      // O BetterAuth chama sendResetPassword de forma assíncrona
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Inserir token na tabela de verificações
+      await db.insert(verificationsTable).values({
+        id: randomBytes(16).toString("hex"),
+        identifier: targetUser.email,
+        value: token,
+        expiresAt,
+        createdAt: now,
+        updatedAt: now,
+      });
 
-      // Tentar buscar o token do cache primeiro (armazenado em sendResetPassword)
-      const cachedToken = resetTokensCache.get(targetUser.email);
+      // Construir URL de reset
+      const resetUrl = `${redirectTo}?token=${token}`;
 
-      let resetUrl: string;
-      let expiresAt: Date;
+      // Armazenar no cache (similar ao que o BetterAuth faz)
+      resetTokensCache.set(targetUser.email, {
+        url: resetUrl,
+        token,
+        expiresAt,
+      });
 
-      if (cachedToken) {
-        resetUrl = cachedToken.url;
-        expiresAt = cachedToken.expiresAt;
-      } else {
-        // Buscar todos os tokens recentes (pode haver tokens antigos também)
-        const allVerifications = await db.query.verificationsTable.findMany({
-          where: eq(verificationsTable.identifier, targetUser.email),
-        });
-
-        // Filtrar apenas tokens que não expiraram e ordenar por mais recente
-        const validVerifications = allVerifications
-          .filter((v) => new Date(v.expiresAt) > new Date())
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt || 0).getTime() -
-              new Date(a.createdAt || 0).getTime(),
-          );
-
-        if (validVerifications.length === 0) {
-          console.error(
-            "Nenhum token válido encontrado na tabela de verificações",
-          );
-
-          // Tentar buscar qualquer token, mesmo que antigo (para debug)
-          if (allVerifications.length > 0) {
-            const mostRecent = allVerifications.sort(
-              (a, b) =>
-                new Date(b.createdAt || 0).getTime() -
-                new Date(a.createdAt || 0).getTime(),
-            )[0];
-            console.error(
-              "Token mais recente encontrado (pode estar expirado):",
-              {
-                id: mostRecent.id,
-                identifier: mostRecent.identifier,
-                expiresAt: mostRecent.expiresAt,
-                createdAt: mostRecent.createdAt,
-                hasValue: !!mostRecent.value,
-              },
-            );
-          }
-
-          return {
-            error: {
-              type: ErrorTypes.GENERATION_ERROR,
-              message:
-                "Token não foi gerado corretamente. Nenhum token válido encontrado no banco de dados.",
-            },
-          };
-        }
-
-        const verification = validVerifications[0];
-
-        if (!verification || !verification.value) {
-          console.error("Token encontrado mas sem valor:", verification);
-          return {
-            error: {
-              type: ErrorTypes.GENERATION_ERROR,
-              message: "Token encontrado mas sem valor válido",
-            },
-          };
-        }
-
-        // Gerar URL completa com o token gerado pelo BetterAuth
-        resetUrl = `${baseURL}/reset-password?token=${verification.value}`;
-        expiresAt = verification.expiresAt;
-      }
+      // Limpar cache após 1 minuto
+      setTimeout(() => {
+        resetTokensCache.delete(targetUser.email);
+      }, 60000);
 
       return {
         data: {

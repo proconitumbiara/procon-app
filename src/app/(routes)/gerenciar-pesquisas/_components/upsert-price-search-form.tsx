@@ -70,8 +70,8 @@ const formSchema = z.object({
   summary: z.string().trim().optional(),
   description: z.string().trim().optional(),
   coverImageUrl: z.string().trim().optional(),
-  year: z.coerce
-    .number({ invalid_type_error: "Ano inválido." })
+  year: z
+    .number({ message: "Ano inválido." })
     .int()
     .min(2000, { message: "Ano mínimo 2000." })
     .max(2100, { message: "Ano máximo 2100." }),
@@ -95,13 +95,13 @@ const getDefaultValues = (
   priceSearch?: PriceSearchWithRelations,
   productId?: string,
   supplierId?: string,
-) => ({
+): FormValues => ({
   title: priceSearch?.title ?? "",
   slug: priceSearch?.slug ?? "",
   summary: priceSearch?.summary ?? "",
   description: priceSearch?.description ?? "",
   coverImageUrl: priceSearch?.coverImageUrl ?? "",
-  year: priceSearch?.year ?? new Date().getFullYear(),
+  year: (priceSearch?.year ?? new Date().getFullYear()) as number,
   emphasis: priceSearch?.emphasis ?? false,
   collectionDate: priceSearch?.collectionDate
     ? new Date(priceSearch.collectionDate).toISOString().split("T")[0]
@@ -426,7 +426,20 @@ const UpsertPriceSearchForm = ({
                     <FormItem>
                       <FormLabel>Ano da pesquisa</FormLabel>
                       <FormControl>
-                        <Input type="number" min={2000} max={2100} {...field} />
+                        <Input
+                          type="number"
+                          min={2000}
+                          max={2100}
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value),
+                            )
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -16,7 +16,7 @@ const itemSchema = z.object({
   supplierId: z.string().uuid({ message: "Fornecedor inválido." }),
   price: z
     .number({
-      invalid_type_error: "Preço inválido.",
+      message: "Preço inválido.",
     })
     .int()
     .nonnegative({ message: "Preço deve ser positivo." }),
@@ -37,7 +37,7 @@ export const upsertPriceSearchSchema = z.object({
   coverImageUrl: z.string().trim().optional(),
   emphasis: z.boolean().optional(),
   year: z
-    .number({ invalid_type_error: "Ano inválido." })
+    .number({ message: "Ano inválido." })
     .int()
     .min(2000, { message: "Ano inválido." }),
   collectionDate: z.string().trim().optional(),
@@ -48,4 +48,3 @@ export const upsertPriceSearchSchema = z.object({
 });
 
 export type UpsertPriceSearchInput = z.infer<typeof upsertPriceSearchSchema>;
-
