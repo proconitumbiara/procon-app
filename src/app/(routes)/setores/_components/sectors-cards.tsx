@@ -4,7 +4,7 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { deleteSector } from "@/actions/delete-sector";
+import { deleteSector } from "@/actions/sectors/delete-sector";
 import {
   AlertDialog,
   AlertDialogAction,

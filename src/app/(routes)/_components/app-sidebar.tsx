@@ -4,14 +4,11 @@ import {
   BookUser,
   BriefcaseBusinessIcon,
   ChartBarBig,
-  HammerIcon,
   Headset,
   LaptopMinimalCheck,
   ListCheck,
   ListOrdered,
   LogOutIcon,
-  Newspaper,
-  Search,
   Users,
 } from "lucide-react";
 import { Moon, Sun } from "lucide-react";
@@ -90,28 +87,6 @@ const itemsClients = [
   },
 ];
 
-const itemsWebSite = [
-  {
-    title: "Pesquisas",
-    url: "/gerenciar-pesquisas",
-    icon: Search,
-  },
-  {
-    title: "Notícias",
-    url: "/gerenciar-noticias",
-    icon: Newspaper,
-  },
-  {
-    title: "Projetos",
-    url: "/gerenciar-projetos",
-    icon: BriefcaseBusinessIcon,
-  },
-  {
-    title: "Serviços",
-    url: "/gerenciar-servicos",
-    icon: HammerIcon,
-  },
-];
 
 export function AppSidebar() {
   const router = useRouter();
@@ -128,7 +103,7 @@ export function AppSidebar() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/auth/sign-in");
+          router.push("/");
         },
       },
     });
@@ -151,26 +126,6 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {itemsEnterprise.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <Link href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {role === "administrator" && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Site</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {itemsWebSite.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={pathname === item.url}>
                       <Link href={item.url}>

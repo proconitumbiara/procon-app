@@ -1,7 +1,7 @@
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 
-import { cancelTreatmentAndTicket } from "@/actions/cancel-treatment-and-ticket";
+import { cancelTreatmentAndTicket } from "@/actions/treatments/cancel-treatment-and-ticket";
 import { Button } from "@/components/ui/button";
 import { DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 

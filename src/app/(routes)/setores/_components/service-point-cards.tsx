@@ -4,7 +4,7 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { deleteServicePoint } from "@/actions/delete-service-point";
+import { deleteServicePoint } from "@/actions/service-points/delete-service-point";
 import {
   AlertDialog,
   AlertDialogAction,

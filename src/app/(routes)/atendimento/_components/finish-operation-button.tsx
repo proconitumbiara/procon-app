@@ -4,7 +4,7 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { finishOperation } from "@/actions/finish-operation";
+import { finishOperation } from "@/actions/operations/finish-operation";
 import { Button } from "@/components/ui/button";
 
 interface FinishOperationButtonProps {

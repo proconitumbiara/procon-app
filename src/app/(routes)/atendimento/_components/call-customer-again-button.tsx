@@ -5,7 +5,7 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { callTheCustomerAgain } from "@/actions/call-the-customer-again";
+import { callTheCustomerAgain } from "@/actions/treatments/call-the-customer-again";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 

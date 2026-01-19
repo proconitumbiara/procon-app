@@ -3,13 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, Upload } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
-import { endService } from "@/actions/end-service";
-import { createComplaint } from "@/actions/upsert-complaint";
+import { endService } from "@/actions/treatments/end-service";
+import { createComplaint } from "@/actions/processes/upsert-complaint";
 import { Button } from "@/components/ui/button";
 import { DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

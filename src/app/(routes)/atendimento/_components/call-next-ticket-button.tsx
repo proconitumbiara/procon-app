@@ -4,7 +4,7 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { callNextTicket } from "@/actions/call-next-client";
+import { callNextTicket } from "@/actions/treatments/call-next-client";
 import { Button } from "@/components/ui/button";
 
 interface CallNextTicketButtonProps {

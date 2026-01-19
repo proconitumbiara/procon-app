@@ -42,6 +42,7 @@ next-env.d.ts
 
 #cursor
 general.mdc
+.vscode/
 
 docs/
 

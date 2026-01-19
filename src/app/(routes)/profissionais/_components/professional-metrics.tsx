@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Calendar, EqualApproximately, FileText, MonitorCheck, Pause, PhoneCall } from "lucide-react";
 import { useState } from "react";
 
-import { generateProfessionalMetricsPDF } from "@/actions/generate-professional-metrics-pdf";
+import { generateProfessionalMetricsPDF } from "@/actions/professionals/generate-professional-metrics-pdf";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

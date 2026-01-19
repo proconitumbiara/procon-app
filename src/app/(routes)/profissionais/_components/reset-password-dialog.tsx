@@ -13,7 +13,7 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { generateResetPasswordLink } from "@/actions/generate-reset-password-link";
+import { generateResetPasswordLink } from "@/actions/users/generate-reset-password-link";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,

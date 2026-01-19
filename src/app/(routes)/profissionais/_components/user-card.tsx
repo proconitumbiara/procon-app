@@ -4,7 +4,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { deleteUser } from "@/actions/delete-user";
+import { deleteUser } from "@/actions/users/delete-user";
 import {
     AlertDialog,
     AlertDialogAction,
