@@ -12,7 +12,7 @@ export const ErrorMessages = {
   [ErrorTypes.USER_NOT_FOUND]: "Usuário não encontrado",
   [ErrorTypes.USER_NOT_AUTHORIZED]:
     "Usuário não autorizado a realizar esta ação",
-  [ErrorTypes.GENERATION_ERROR]: "Erro ao gerar link de reset de senha",
+  [ErrorTypes.GENERATION_ERROR]: "Erro ao gerar código de reset de senha",
 } as const;
 
 export type ErrorType = keyof typeof ErrorTypes;
@@ -22,4 +22,3 @@ export const schema = z.object({
 });
 
 export type Schema = z.infer<typeof schema>;
-

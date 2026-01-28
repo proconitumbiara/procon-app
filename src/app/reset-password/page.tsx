@@ -2,12 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useAction } from "next-safe-action/hooks";
 
+import { resetPassword } from "@/actions/users/reset-password";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,10 +29,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { authClient } from "@/lib/auth.client";
 
 const resetPasswordSchema = z
   .object({
+    code: z
+      .string()
+      .trim()
+      .min(6, "Código deve ter 6 caracteres")
+      .max(6, "Código deve ter 6 caracteres")
+      .regex(/^[A-Z0-9]{6}$/i, "Código deve conter apenas letras e números"),
     password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres"),
     confirmPassword: z
       .string()
@@ -42,201 +50,220 @@ const resetPasswordSchema = z
 
 const ResetPasswordForm = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [tokenError, setTokenError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const token = searchParams.get("token");
 
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
+      code: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  useEffect(() => {
-    if (!token) {
-      setTokenError(
-        "Token não fornecido. Por favor, use o link fornecido pelo administrador.",
-      );
-    }
-  }, [token]);
+  const { execute, status } = useAction(resetPassword, {
+    onSuccess: (result) => {
+      if (result?.data?.error) {
+        toast.error(result.data.error.message);
+        return;
+      }
 
-  const onSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
-    if (!token) {
-      setTokenError("Token não encontrado na URL.");
-      return;
-    }
-
-    setTokenError(null);
-    setIsLoading(true);
-
-    try {
-      const { error } = await authClient.resetPassword({
-        newPassword: values.password,
-        token: token,
-      });
-
-      if (error) {
-        setTokenError(error.message || "Erro ao redefinir senha");
-        toast.error(error.message || "Erro ao redefinir senha");
-      } else {
+      if (result?.data?.success) {
         toast.success("Senha redefinida com sucesso!");
         setTimeout(() => {
           router.push("/");
         }, 2000);
       }
-    } catch {
-      const message = "Erro inesperado ao redefinir senha";
-      setTokenError(message);
+    },
+    onError: (error) => {
+      const message =
+        error.error?.serverError || "Erro inesperado ao redefinir senha";
       toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
+    execute({
+      code: values.code,
+      password: values.password,
+      confirmPassword: values.confirmPassword,
+    });
   };
 
-  if (!token) {
-    return (
-      <div className="flex min-h-svh flex-col items-center justify-center bg-white p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Token Inválido</CardTitle>
-            <CardDescription className="text-destructive">
-              O link de redefinição de senha não contém um token válido. Por
-              favor, solicite um novo link ao administrador.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/")}
-              className="w-full"
-            >
-              Voltar para Login
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
+  const isLoading = status === "executing";
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-white p-6">
-      <Card className="w-full max-w-md bg-white text-gray-900">
-        <CardHeader>
-          <CardTitle>Redefinir Senha</CardTitle>
-          <CardDescription>
-            Digite sua nova senha abaixo. O link expira em 15 minutos.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {tokenError && (
-            <CardDescription className="text-destructive mb-4">
-              {tokenError}
-            </CardDescription>
-          )}
+    <div
+      className="relative flex h-screen w-full flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/CapaAuthentication.png')",
+      }}
+    >
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#003173]/20 backdrop-blur-sm">
+        <Image
+          src="/Logo.svg"
+          alt="Procon Logo"
+          width={300}
+          height={0}
+          priority
+          className="absolute top-4 left-4 z-10"
+        />
+        <div className="h-auto w-full max-w-md rounded-md">
+          <Card className="h-full w-full overflow-hidden border-none bg-white/20 shadow-none backdrop-blur-sm">
+            <CardContent className="h-full w-full space-y-4 text-center">
+              <CardHeader className="flex flex-col items-center justify-center">
+                <CardTitle className="text-2xl font-bold text-white">
+                  Redefinir Senha
+                </CardTitle>
+                <CardDescription className="text-base font-light text-white">
+                  Digite o código recebido e sua nova senha
+                </CardDescription>
+              </CardHeader>
+              <div className="w-full space-y-4">
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-semibold text-white">
+                              Código de Reset
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Digite o código de 6 dígitos"
+                                {...field}
+                                disabled={isLoading}
+                                className="focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
+                                maxLength={6}
+                                onChange={(e) => {
+                                  const value = e.target.value.toUpperCase();
+                                  field.onChange(value);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nova Senha</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Digite sua nova senha"
-                          {...field}
-                          disabled={isLoading}
-                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                        <Button
-                          type="button"
-                          size="icon"
-                          className="text-primary absolute top-0 right-0 h-full cursor-pointer border-none bg-transparent shadow-none hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                          disabled={isLoading}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-semibold text-white">
+                              Nova Senha
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  type={showPassword ? "text" : "password"}
+                                  placeholder="Digite sua nova senha"
+                                  {...field}
+                                  disabled={isLoading}
+                                  className="focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
+                                />
+                                <button
+                                  type="button"
+                                  className="absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent text-white shadow-none hover:bg-transparent"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  disabled={isLoading}
+                                  tabIndex={-1}
+                                >
+                                  {showPassword ? (
+                                    <EyeOff size={20} />
+                                  ) : (
+                                    <Eye size={20} />
+                                  )}
+                                </button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirmar Nova Senha</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirme sua nova senha"
-                          {...field}
-                          disabled={isLoading}
-                          className="text-primary border-1 border-gray-200 bg-white shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                        <Button
-                          type="button"
-                          size="icon"
-                          className="text-primary absolute top-0 right-0 h-full cursor-pointer border-none bg-transparent shadow-none hover:bg-transparent"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
-                          disabled={isLoading}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Redefinindo...
-                  </>
-                ) : (
-                  <span className="cursor-pointer">Redefinir Senha</span>
-                )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter>
-          <Button
-            variant="link"
-            onClick={() => router.push("/")}
-            className="w-full cursor-pointer"
-            disabled={isLoading}
-          >
-            Voltar para Login
-          </Button>
-        </CardFooter>
-      </Card>
+                      <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-semibold text-white">
+                              Confirmar Nova Senha
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  type={
+                                    showConfirmPassword ? "text" : "password"
+                                  }
+                                  placeholder="Confirme sua nova senha"
+                                  {...field}
+                                  disabled={isLoading}
+                                  className="focus:text-primary border border-white bg-transparent text-white shadow-none placeholder:text-white focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white"
+                                />
+                                <button
+                                  type="button"
+                                  className="absolute top-0 right-2 h-full cursor-pointer border-none bg-transparent text-white shadow-none hover:bg-transparent"
+                                  onClick={() =>
+                                    setShowConfirmPassword(!showConfirmPassword)
+                                  }
+                                  disabled={isLoading}
+                                  tabIndex={-1}
+                                >
+                                  {showConfirmPassword ? (
+                                    <EyeOff size={20} />
+                                  ) : (
+                                    <Eye size={20} />
+                                  )}
+                                </button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <CardFooter className="flex flex-col gap-2 p-0">
+                      <Button
+                        variant="default"
+                        type="submit"
+                        className="mt-4 w-full"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Redefinindo...
+                          </>
+                        ) : (
+                          "Redefinir Senha"
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="link"
+                        onClick={() => router.push("/")}
+                        className="w-full cursor-pointer text-white hover:text-white/80"
+                        disabled={isLoading}
+                      >
+                        Voltar para Login
+                      </Button>
+                    </CardFooter>
+                  </form>
+                </Form>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
@@ -245,15 +272,24 @@ const ResetPasswordPage = () => {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-svh flex-col items-center justify-center bg-white p-6">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Carregando...</CardTitle>
-              <CardDescription>
-                Aguarde enquanto carregamos a página de redefinição de senha.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+        <div
+          className="relative flex h-screen w-full flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/CapaAuthentication.png')",
+          }}
+        >
+          <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#003173]/20 backdrop-blur-sm">
+            <Card className="h-full w-full max-w-md overflow-hidden border-none bg-white/20 shadow-none backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-white">
+                  Carregando...
+                </CardTitle>
+                <CardDescription className="text-base font-light text-white">
+                  Aguarde enquanto carregamos a página de redefinição de senha.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
         </div>
       }
     >

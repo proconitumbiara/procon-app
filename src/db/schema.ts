@@ -230,6 +230,18 @@ export const registrationCodesTable = pgTable("registration_codes", {
   usedAt: timestamp("used_at"),
 });
 
+//Tabela para armazenar códigos de reset de senha
+export const resetCodesTable = pgTable("reset_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull().unique(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  usedAt: timestamp("used_at"),
+});
+
 //Relationships
 
 //Users table relationships

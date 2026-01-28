@@ -133,7 +133,7 @@ const LoginForm = () => {
                   )}
                 />
               </div>
-              <CardFooter className="p-0">
+              <CardFooter className="flex flex-col gap-2 p-0">
                 <Button
                   variant="default"
                   type="submit"
@@ -148,6 +148,15 @@ const LoginForm = () => {
                   ) : (
                     "Entrar"
                   )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={() => router.push("/reset-password")}
+                  className="w-full cursor-pointer text-white hover:text-white/80"
+                  disabled={formLogin.formState.isSubmitting}
+                >
+                  Esqueci minha senha
                 </Button>
               </CardFooter>
             </form>

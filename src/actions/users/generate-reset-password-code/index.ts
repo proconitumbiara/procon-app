@@ -1,17 +1,26 @@
 "use server";
 
-import { randomBytes } from "crypto";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { accountsTable, usersTable, verificationsTable } from "@/db/schema";
-import { auth, resetTokensCache } from "@/lib/auth";
+import { accountsTable, resetCodesTable, usersTable } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
 import { ErrorMessages, ErrorTypes, schema } from "./schema";
 
-export const generateResetPasswordLink = actionClient
+// Função para gerar código alfanumérico de 6 dígitos
+function generateCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+export const generateResetPasswordCode = actionClient
   .schema(schema)
   .action(async ({ parsedInput }) => {
     const session = await auth.api.getSession({
@@ -70,55 +79,61 @@ export const generateResetPasswordLink = actionClient
     }
 
     try {
-      const baseURL = process.env.NEXT_PUBLIC_APP_URL || "";
-      const redirectTo = `${baseURL}/reset-password`;
+      // Gerar código único
+      let code: string;
+      let attempts = 0;
+      const maxAttempts = 10;
 
-      // Gerar token seguro para reset de senha
-      const token = randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
-      const now = new Date();
+      do {
+        code = generateCode();
+        const existingCode = await db.query.resetCodesTable.findFirst({
+          where: eq(resetCodesTable.code, code),
+        });
 
-      // Inserir token na tabela de verificações
-      await db.insert(verificationsTable).values({
-        id: randomBytes(16).toString("hex"),
-        identifier: targetUser.email,
-        value: token,
-        expiresAt,
-        createdAt: now,
-        updatedAt: now,
-      });
+        if (!existingCode) {
+          break;
+        }
 
-      // Construir URL de reset
-      const resetUrl = `${redirectTo}?token=${token}`;
+        attempts++;
+        if (attempts >= maxAttempts) {
+          return {
+            error: {
+              type: ErrorTypes.GENERATION_ERROR,
+              message:
+                "Não foi possível gerar um código único após várias tentativas",
+            },
+          };
+        }
+      } while (true);
 
-      // Armazenar no cache (similar ao que o BetterAuth faz)
-      resetTokensCache.set(targetUser.email, {
-        url: resetUrl,
-        token,
-        expiresAt,
-      });
+      // Calcular data de expiração (1 hora a partir de agora)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1);
 
-      // Limpar cache após 1 minuto
-      setTimeout(() => {
-        resetTokensCache.delete(targetUser.email);
-      }, 60000);
+      // Salvar código no banco
+      const [resetCode] = await db
+        .insert(resetCodesTable)
+        .values({
+          code,
+          userId: targetUser.id,
+          expiresAt,
+        })
+        .returning({
+          id: resetCodesTable.id,
+          code: resetCodesTable.code,
+          expiresAt: resetCodesTable.expiresAt,
+          createdAt: resetCodesTable.createdAt,
+        });
 
       return {
-        data: {
-          resetUrl,
-          expiresAt,
-        },
+        success: true,
+        data: resetCode,
       };
-    } catch (error: unknown) {
-      console.error("Erro ao gerar link de reset:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : ErrorMessages[ErrorTypes.GENERATION_ERROR];
+    } catch (error) {
       return {
         error: {
           type: ErrorTypes.GENERATION_ERROR,
-          message: errorMessage,
+          message: ErrorMessages[ErrorTypes.GENERATION_ERROR],
         },
       };
     }

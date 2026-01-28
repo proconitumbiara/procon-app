@@ -7,13 +7,6 @@ import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { usersTable } from "@/db/schema";
 
-const resetTokensCache = new Map<
-  string,
-  { url: string; token: string; expiresAt: Date }
->();
-
-export { resetTokensCache };
-
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL,
   basePath: "/api/auth",
@@ -83,15 +76,9 @@ export const auth = betterAuth({
     resetPassword: {
       enabled: true,
     },
-    sendResetPassword: async ({ user, url, token }) => {
-      resetTokensCache.set(user.email, {
-        url,
-        token,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-      });
-      setTimeout(() => {
-        resetTokensCache.delete(user.email);
-      }, 60000);
+    sendResetPassword: async () => {
+      // Reset de senha agora é feito via código de 6 dígitos
+      // Esta função é mantida para compatibilidade com betterAuth
     },
   },
 });
