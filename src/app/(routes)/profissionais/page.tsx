@@ -22,6 +22,7 @@ import ProfessionalHeader from "./_components/professional-header";
 import ProfessionalMetrics from "./_components/professional-metrics";
 import ProfessionalSelector from "./_components/professional-selector";
 import TreatmentsList from "./_components/treatments-list";
+import { PageActions } from "@/components/ui/page-container";
 
 interface ProfessionalMetricsData {
   totalOperations: number;
@@ -188,10 +189,13 @@ const AdminsProfessionals = () => {
             Visualize e gerencie os dados dos profissionais.
           </PageDescription>
         </PageHeaderContent>
+        <PageActions>
+          {/* Componente de Geração de Código (apenas para admins) */}
+          {isAdmin && <GenerateCodeButton />}
+        </PageActions>
       </PageHeader>
       <PageContent className="space-y-6">
-        {/* Componente de Geração de Código (apenas para admins) */}
-        {isAdmin && <GenerateCodeButton />}
+
 
         {/* Seletor de Profissional */}
         <ProfessionalSelector
