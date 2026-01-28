@@ -1,14 +1,17 @@
 "use client";
 
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar, EqualApproximately, FileText, MonitorCheck, Pause, PhoneCall } from "lucide-react";
 import { useState } from "react";
+import { DateRange } from "react-day-picker";
 
 import { generateProfessionalMetricsPDF } from "@/actions/professionals/generate-professional-metrics-pdf";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getEndOfDayInSaoPauloUTC, getStartOfDayInSaoPauloUTC } from "@/lib/timezone-utils";
 import { cn } from "@/lib/utils";
 
 interface ProfessionalMetricsData {
@@ -27,13 +30,13 @@ interface ProfessionalMetricsData {
 
 interface ProfessionalMetricsProps {
     metrics: ProfessionalMetricsData;
-    selectedDate?: Date;
-    onDateSelect: (date: Date | undefined) => void;
+    selectedDateRange?: DateRange;
+    onDateRangeSelect: (range: DateRange | undefined) => void;
     professionalId: string;
     professionalName: string;
 }
 
-const ProfessionalMetrics = ({ metrics, selectedDate, onDateSelect, professionalId, professionalName }: ProfessionalMetricsProps) => {
+const ProfessionalMetrics = ({ metrics, selectedDateRange, onDateRangeSelect, professionalId, professionalName }: ProfessionalMetricsProps) => {
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
@@ -49,29 +52,35 @@ const ProfessionalMetrics = ({ metrics, selectedDate, onDateSelect, professional
         return `${hours}h ${remainingMinutes}min`;
     };
 
-    const formatDate = (date: Date) => {
-        return date.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+    const formatDateRange = (range: DateRange | undefined): string => {
+        if (!range?.from) {
+            return "Selecionar período";
+        }
+        const dateOnly = (d: Date) => format(d, "dd/MM/yyyy", { locale: ptBR });
+        if (range.from && range.to) {
+            return `${dateOnly(range.from)} - ${dateOnly(range.to)}`;
+        }
+        return dateOnly(range.from);
     };
 
     const handleGeneratePDF = async () => {
         setIsGeneratingPDF(true);
         try {
-            // Criar intervalo de data correto
+            // Criar intervalo de data correto convertendo para UTC
             let fromDate: Date | undefined = undefined;
             let toDate: Date | undefined = undefined;
 
-            if (selectedDate) {
-                // Início do dia selecionado
-                fromDate = new Date(selectedDate);
-                fromDate.setHours(0, 0, 0, 0);
+            if (selectedDateRange?.from) {
+                // Converter início do período para UTC (considerando horário de São Paulo)
+                fromDate = getStartOfDayInSaoPauloUTC(selectedDateRange.from);
 
-                // Fim do dia selecionado
-                toDate = new Date(selectedDate);
-                toDate.setHours(23, 59, 59, 999);
+                if (selectedDateRange.to) {
+                    // Converter fim do período para UTC
+                    toDate = getEndOfDayInSaoPauloUTC(selectedDateRange.to);
+                } else {
+                    // Se só tem data inicial, usar fim do mesmo dia
+                    toDate = getEndOfDayInSaoPauloUTC(selectedDateRange.from);
+                }
             }
 
             const result = await generateProfessionalMetricsPDF({
@@ -132,54 +141,59 @@ const ProfessionalMetrics = ({ metrics, selectedDate, onDateSelect, professional
 
     return (
         <div className="space-y-6">
-            {/* Seletor de Data */}
-            <div className="flex items-center gap-4">
+            {/* Seletor de Período */}
+            <div className="flex justify-between items-center gap-4">
                 <h3 className="text-lg font-semibold">Métricas do Profissional</h3>
-                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                    <PopoverTrigger asChild>
+                <div className="flex justify-between items-center gap-2">
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className={cn(
+                                    "w-[350px] justify-start text-left font-normal",
+                                    !selectedDateRange?.from && "text-muted-foreground"
+                                )}
+                            >
+                                <Calendar className="mr-2 h-4 w-4" />
+                                {formatDateRange(selectedDateRange)}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                                mode="range"
+                                selected={selectedDateRange}
+                                onSelect={(range) => {
+                                    onDateRangeSelect(range);
+                                    // Fechar apenas quando ambas as datas estiverem selecionadas
+                                    if (range?.from && range?.to) {
+                                        setIsCalendarOpen(false);
+                                    }
+                                }}
+                                initialFocus
+                                locale={ptBR}
+                                numberOfMonths={2}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    {selectedDateRange?.from && (
                         <Button
                             variant="outline"
-                            className={cn(
-                                "w-[280px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground"
-                            )}
+                            size="sm"
+                            onClick={() => onDateRangeSelect(undefined)}
                         >
-                            <Calendar className="mr-2 h-4 w-4" />
-                            {selectedDate ? formatDate(selectedDate) : "Selecionar data"}
+                            Ver todos os dados
                         </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                        <CalendarComponent
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => {
-                                onDateSelect(date);
-                                setIsCalendarOpen(false);
-                            }}
-                            initialFocus
-                            locale={ptBR}
-                        />
-                    </PopoverContent>
-                </Popover>
-                {selectedDate && (
+                    )}
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => onDateSelect(undefined)}
+                        onClick={handleGeneratePDF}
+                        disabled={isGeneratingPDF}
+                        className="ml-auto"
                     >
-                        Ver todos os dados
+                        {isGeneratingPDF ? "Gerando Relatório..." : "Gerar Relatório"}
                     </Button>
-                )}
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGeneratePDF}
-                    disabled={isGeneratingPDF}
-                    className="ml-auto"
-                >
-                    <FileText className="mr-2 h-4 w-4" />
-                    {isGeneratingPDF ? "Gerando PDF..." : "Gerar PDF"}
-                </Button>
+                </div>
             </div>
 
             {/* Cards de Métricas */}

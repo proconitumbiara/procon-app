@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { formatDateInSaoPaulo } from "@/lib/timezone-utils";
 
 import TreatmentResolutionDialog from "./treatment-resolution-dialog";
 
@@ -48,8 +49,7 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
     };
 
     const formatDate = (date: Date | string) => {
-        const dateObj = date instanceof Date ? date : new Date(date);
-        return dateObj.toLocaleDateString('pt-BR', {
+        return formatDateInSaoPaulo(date, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',

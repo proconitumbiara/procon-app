@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DateRange } from "react-day-picker";
 
 import {
   PageContainer,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/page-container";
 import { usersTable } from "@/db/schema";
 import { authClient } from "@/lib/auth.client";
+import { getEndOfDayInSaoPauloUTC, getStartOfDayInSaoPauloUTC } from "@/lib/timezone-utils";
 
 import GenerateCodeButton from "./_components/generate-code-button";
 import OperationsList from "./_components/operations-list";
@@ -84,7 +86,7 @@ const AdminsProfessionals = () => {
     operations: [],
     treatments: [],
   });
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
   const isAdmin = session.data?.user?.role === "administrator";
@@ -106,16 +108,24 @@ const AdminsProfessionals = () => {
     loadProfessionals();
   }, []);
 
-  // Carregar métricas quando profissional ou data mudar
+  // Carregar métricas quando profissional ou período mudar
   useEffect(() => {
     if (!selectedProfessionalId) return;
 
     const loadMetrics = async () => {
       setLoading(true);
       try {
-        const url = selectedDate
-          ? `/api/professionals/${selectedProfessionalId}/metrics?date=${selectedDate.toISOString()}`
-          : `/api/professionals/${selectedProfessionalId}/metrics`;
+        let url = `/api/professionals/${selectedProfessionalId}/metrics`;
+
+        if (selectedDateRange?.from) {
+          // Converter datas do período para UTC antes de enviar
+          const fromUTC = getStartOfDayInSaoPauloUTC(selectedDateRange.from);
+          const toUTC = selectedDateRange.to
+            ? getEndOfDayInSaoPauloUTC(selectedDateRange.to)
+            : getEndOfDayInSaoPauloUTC(selectedDateRange.from);
+
+          url += `?from=${fromUTC.toISOString()}&to=${toUTC.toISOString()}`;
+        }
 
         const response = await fetch(url);
         if (response.ok) {
@@ -130,7 +140,7 @@ const AdminsProfessionals = () => {
     };
 
     loadMetrics();
-  }, [selectedProfessionalId, selectedDate]);
+  }, [selectedProfessionalId, selectedDateRange]);
 
   // Atualizar profissional selecionado
   useEffect(() => {
@@ -146,11 +156,11 @@ const AdminsProfessionals = () => {
 
   const handleProfessionalSelect = (professionalId: string) => {
     setSelectedProfessionalId(professionalId);
-    setSelectedDate(undefined); // Reset date when changing professional
+    setSelectedDateRange(undefined); // Reset date range when changing professional
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    setSelectedDateRange(range);
   };
 
   const handleUpdateSuccess = () => {
@@ -202,8 +212,8 @@ const AdminsProfessionals = () => {
         {selectedProfessional && (
           <ProfessionalMetrics
             metrics={metrics}
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
+            selectedDateRange={selectedDateRange}
+            onDateRangeSelect={handleDateRangeSelect}
             professionalId={selectedProfessional.id}
             professionalName={selectedProfessional.name}
           />

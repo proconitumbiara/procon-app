@@ -9,25 +9,15 @@ export async function GET(
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get("date");
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
 
     let dateFilter;
-    if (date) {
-      const selectedDate = new Date(date);
+    if (fromParam && toParam) {
+      // As datas já vêm em UTC do frontend
       dateFilter = {
-        from: new Date(
-          selectedDate.getFullYear(),
-          selectedDate.getMonth(),
-          selectedDate.getDate(),
-        ),
-        to: new Date(
-          selectedDate.getFullYear(),
-          selectedDate.getMonth(),
-          selectedDate.getDate(),
-          23,
-          59,
-          59,
-        ),
+        from: new Date(fromParam),
+        to: new Date(toParam),
       };
     }
 

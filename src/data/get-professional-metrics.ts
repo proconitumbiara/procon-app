@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, lte, or } from "drizzle-orm";
 
 import { db } from "@/db";
 import { operationsTable, pausesTable, treatmentsTable } from "@/db/schema";
@@ -18,9 +18,9 @@ export const getProfessionalMetrics = async ({
   const dateFilter =
     from && to
       ? and(
-        gte(operationsTable.createdAT, from),
-        lte(operationsTable.createdAT, to),
-      )
+          gte(operationsTable.createdAT, from),
+          lte(operationsTable.createdAT, to),
+        )
       : undefined;
 
   // Buscar operações do profissional
@@ -29,6 +29,20 @@ export const getProfessionalMetrics = async ({
     .from(operationsTable)
     .where(and(eq(operationsTable.userId, professionalId), dateFilter));
 
+  // Se há filtro de data, também filtrar tratamentos e pausas pelo período
+  const treatmentDateFilter =
+    from && to
+      ? and(
+          gte(treatmentsTable.createdAT, from),
+          lte(treatmentsTable.createdAT, to),
+        )
+      : undefined;
+
+  const pauseDateFilter =
+    from && to
+      ? and(gte(pausesTable.createdAT, from), lte(pausesTable.createdAT, to))
+      : undefined;
+
   // Buscar tratamentos e pausas para cada operação
   const operationsWithDetails = await Promise.all(
     operations.map(async (operation) => {
@@ -36,11 +50,18 @@ export const getProfessionalMetrics = async ({
         db
           .select()
           .from(treatmentsTable)
-          .where(eq(treatmentsTable.operationId, operation.id)),
+          .where(
+            and(
+              eq(treatmentsTable.operationId, operation.id),
+              treatmentDateFilter,
+            ),
+          ),
         db
           .select()
           .from(pausesTable)
-          .where(eq(pausesTable.operationId, operation.id)),
+          .where(
+            and(eq(pausesTable.operationId, operation.id), pauseDateFilter),
+          ),
       ]);
 
       return {
@@ -71,10 +92,10 @@ export const getProfessionalMetrics = async ({
   const averageOperationTime =
     operationDurations.length > 0
       ? Math.round(
-        operationDurations.reduce((acc, duration) => acc + duration, 0) /
-        operationDurations.length /
-        60000,
-      ) // em minutos
+          operationDurations.reduce((acc, duration) => acc + duration, 0) /
+            operationDurations.length /
+            60000,
+        ) // em minutos
       : 0;
 
   // Calcular pausas
@@ -108,11 +129,11 @@ export const getProfessionalMetrics = async ({
   const averagePauseTime =
     totalPauses > 0
       ? Math.round(
-        allPauses
-          .filter((p) => p.duration)
-          .reduce((acc, pause) => acc + (pause.duration || 0), 0) /
-        totalPauses,
-      )
+          allPauses
+            .filter((p) => p.duration)
+            .reduce((acc, pause) => acc + (pause.duration || 0), 0) /
+            totalPauses,
+        )
       : 0;
 
   // Calcular atendimentos
@@ -130,9 +151,9 @@ export const getProfessionalMetrics = async ({
   const averageTreatmentTime =
     treatmentDurations.length > 0
       ? Math.round(
-        treatmentDurations.reduce((acc, duration) => acc + duration, 0) /
-        treatmentDurations.length,
-      )
+          treatmentDurations.reduce((acc, duration) => acc + duration, 0) /
+            treatmentDurations.length,
+        )
       : 0;
 
   return {

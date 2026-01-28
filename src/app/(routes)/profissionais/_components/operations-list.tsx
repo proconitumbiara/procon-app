@@ -10,6 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { formatDateInSaoPaulo } from "@/lib/timezone-utils";
 
 interface Operation {
   id: string;
@@ -63,8 +64,7 @@ const OperationsList = ({ operations }: OperationsListProps) => {
   };
 
   const formatDate = (date: Date | string) => {
-    const dateObj = date instanceof Date ? date : new Date(date);
-    return dateObj.toLocaleDateString("pt-BR", {
+    return formatDateInSaoPaulo(date, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
