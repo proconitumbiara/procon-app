@@ -1,8 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/lib/auth";
-
 const PUBLIC_PATHS = [
   "/",
   "/sign-up",
@@ -11,22 +9,25 @@ const PUBLIC_PATHS = [
   "/api/auth",
 ];
 
+// Nome padrão do cookie de sessão do better-auth
+const SESSION_COOKIE_NAME = "better-auth.session_token";
+
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(path + "/"),
   );
 }
 
-export async function middleware(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
-  const session = await auth.api.getSession({ headers: req.headers });
+  const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
 
-  if (!session?.user) {
+  if (!sessionCookie?.value) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
