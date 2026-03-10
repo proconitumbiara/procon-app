@@ -1,0 +1,46 @@
+"use server";
+
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+
+import { db } from "@/db";
+import { clientsTable } from "@/db/schema";
+import { authActionClient } from "@/lib/next-safe-action";
+
+import {
+  ErrorMessages,
+  ErrorTypes,
+  InsertClientSchema,
+  UpsertClientschema,
+} from "./schema";
+
+export const updateUser = authActionClient
+  .schema(UpsertClientschema)
+  .action(async ({ parsedInput }) => {
+    await db
+      .update(clientsTable)
+      .set({
+        name: parsedInput.name,
+        register: parsedInput.register,
+        phoneNumber: parsedInput.phoneNumber,
+        ...(parsedInput.dateOfBirth && {
+          dateOfBirth: parsedInput.dateOfBirth,
+        }),
+      })
+      .where(eq(clientsTable.id, parsedInput.id));
+
+    revalidatePath("/consumidores");
+  });
+
+export const insertClient = authActionClient
+  .schema(InsertClientSchema)
+  .action(async ({ parsedInput }) => {
+    await db.insert(clientsTable).values({
+      name: parsedInput.name,
+      register: parsedInput.register,
+      phoneNumber: parsedInput.phoneNumber,
+      dateOfBirth: parsedInput.dateOfBirth || null,
+    });
+
+    revalidatePath("/consumidores");
+  });

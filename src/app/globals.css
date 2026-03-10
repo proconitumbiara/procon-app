@@ -1,0 +1,239 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ============================== */
+/* PALETA CLARA */
+/* ============================== */
+:root {
+  --radius: 0.625rem;
+
+  /* Fundo geral */
+  --background: #f8fafc;
+  --foreground: #192f58;
+
+  /* Cartões e popovers */
+  --card: #ffffff;
+  --card-foreground: #192f58;
+  --popover: #ffffff;
+  --popover-foreground: #192f58;
+
+  /* Primária (vermelho Synqia) */
+  --primary: #e11d27;
+  --primary-foreground: #ffffff;
+
+  /* Secundária (azul escuro Synqia) */
+  --secondary: #192f58;
+  --secondary-foreground: #ffffff;
+
+  /* Tons neutros */
+  --muted: #e5e7eb;
+  --muted-foreground: #475569;
+
+  --accent: #e11d27;
+  --accent-foreground: #ffffff;
+
+  --destructive: #dc2626;
+
+  /* Bordas, inputs e anéis */
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #e11d27;
+
+  /* Gráficos */
+  --chart-1: #e11d27;
+  --chart-2: #192f58;
+  --chart-3: #475569;
+  --chart-4: #f97316;
+  --chart-5: #0ea5e9;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #192f58;
+  --sidebar-primary: #e11d27;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #192f58;
+  --sidebar-border: #cbd5e1;
+  --sidebar-ring: #e11d27;
+}
+
+/* ============================== */
+/* PALETA ESCURA */
+/* ============================== */
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+
+  --primary: #e11d27;
+  --primary-foreground: #ffffff;
+
+  --secondary: #192f58;
+  --secondary-foreground: #ffffff;
+
+  --muted: #334155;
+  --muted-foreground: #cbd5e1;
+
+  --accent: #e11d27;
+  --accent-foreground: #ffffff;
+
+  --destructive: #f87171;
+
+  --border: #334155;
+  --input: #334155;
+  --ring: #e11d27;
+
+  --chart-1: #e11d27;
+  --chart-2: #2563eb;
+  --chart-3: #10b981;
+  --chart-4: #fbbf24;
+  --chart-5: #3b82f6;
+
+  --sidebar: #1e293b;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #e11d27;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #475569;
+  --sidebar-ring: #e11d27;
+}
+
+/* ============================== */
+/* BASE E ACESSIBILIDADE */
+/* ============================== */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Skip link */
+.skip-link {
+  @apply bg-primary text-primary-foreground absolute -top-10 left-4 z-[100] rounded-md px-4 py-2 font-medium transition-all;
+  @apply focus:ring-primary focus:top-4 focus:ring-2 focus:ring-offset-2 focus:outline-none;
+}
+
+/* Foco visível */
+*:focus-visible {
+  @apply outline-primary outline-2 outline-offset-2;
+}
+
+/* Links */
+a:not([class*="no-underline"]):not([class*="button"]):not([class*="btn"]) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover:not([class*="no-underline"]),
+a:focus:not([class*="no-underline"]) {
+  text-decoration-thickness: 2px;
+}
+
+/* Movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Alto contraste */
+.high-contrast,
+.high-contrast * {
+  background-color: #000 !important;
+  color: #ffd700 !important;
+  border-color: #ffd700 !important;
+}
+
+.high-contrast a,
+.high-contrast button,
+.high-contrast [role="button"],
+.high-contrast [role="link"] {
+  color: #ffd700 !important;
+  border-color: #ffd700 !important;
+}
+
+.high-contrast a:hover,
+.high-contrast a:focus,
+.high-contrast button:hover,
+.high-contrast button:focus,
+.high-contrast [role="button"]:hover,
+.high-contrast [role="button"]:focus {
+  background-color: #ffd700 !important;
+  color: #000 !important;
+  outline: 2px solid #ffd700 !important;
+  outline-offset: 2px !important;
+}
+
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  background-color: #000 !important;
+  color: #ffd700 !important;
+  border: 2px solid #ffd700 !important;
+}
+
+.high-contrast input:focus,
+.high-contrast textarea:focus,
+.high-contrast select:focus {
+  outline: 3px solid #ffd700 !important;
+  outline-offset: 2px !important;
+}
+
+/* Fonte grande */
+.large-font {
+  font-size: 110% !important;
+}
