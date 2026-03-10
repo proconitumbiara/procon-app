@@ -37,11 +37,6 @@ const StartOperationForm = ({ onSuccess, sectors }: StartOperationFormProps) => 
 
     const { execute, status } = useAction(startOperation, {
         onSuccess: (result) => {
-            if (result.data?.error) {
-                toast.error(result.data.error.message);
-                setError(result.data.error.message);
-                return;
-            }
             toast.success("Operação iniciada com sucesso!");
             setError(null);
             onSuccess?.();

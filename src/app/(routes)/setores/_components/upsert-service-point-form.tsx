@@ -36,11 +36,6 @@ const UpsertServicePointForm = ({ servicePoint, onSuccess }: UpsertServicePointF
 
     const { execute, status } = useAction(upsertServicePoint, {
         onSuccess: (result) => {
-            if (result.data?.error) {
-                toast.error(result.data.error.message);
-                setError(result.data.error.message);
-                return;
-            }
             toast.success(servicePoint ? "Ponto de atendimento atualizado com sucesso!" : "Ponto de atendimento adicionado com sucesso!");
             setError(null);
             onSuccess?.();
@@ -95,8 +90,8 @@ const UpsertServicePointForm = ({ servicePoint, onSuccess }: UpsertServicePointF
                             <FormItem>
                                 <FormLabel>Preferência de Atendimento</FormLabel>
                                 <FormControl>
-                                    <Select 
-                                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                                    <Select
+                                        onValueChange={(value) => field.onChange(parseInt(value))}
                                         value={field.value.toString()}
                                     >
                                         <SelectTrigger>

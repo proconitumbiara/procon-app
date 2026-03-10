@@ -185,7 +185,12 @@ const AdminsProfessionals = () => {
 
         {/* Seletor de Profissional */}
         <ProfessionalSelector
-          professionals={professionals}
+          professionals={professionals.map(professional => ({
+            ...professional,
+            emailVerified: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }))}
           selectedProfessionalId={selectedProfessionalId}
           onProfessionalSelect={handleProfessionalSelect}
         />
@@ -193,7 +198,12 @@ const AdminsProfessionals = () => {
         {/* Cabeçalho do Profissional */}
         {selectedProfessional && (
           <ProfessionalHeader
-            professional={selectedProfessional}
+            professional={selectedProfessional && {
+              ...selectedProfessional,
+              emailVerified: false,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }}
             onUpdateSuccess={handleUpdateSuccess}
           />
         )}

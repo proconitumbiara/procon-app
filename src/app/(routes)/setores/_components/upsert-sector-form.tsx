@@ -34,11 +34,6 @@ const UpsertSectorForm = ({ sector, onSuccess }: UpsertSectorFormProps) => {
 
     const { execute, status } = useAction(upsertSector, {
         onSuccess: (result) => {
-            if (result.data?.error) {
-                toast.error(result.data.error.message);
-                setError(result.data.error.message);
-                return;
-            }
             toast.success(sector ? "Setor atualizado com sucesso!" : "Setor adicionado com sucesso!");
             setError(null);
             onSuccess?.();
