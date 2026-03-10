@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
@@ -13,6 +13,22 @@ export const startOperation = authActionClient
   .schema(schema)
   .action(async ({ parsedInput, ctx }) => {
     const { session } = ctx;
+
+    const existingOperation = await db.query.operationsTable.findFirst({
+      where: and(
+        eq(operationsTable.userId, session.user.id),
+        eq(operationsTable.status, "operating"),
+      ),
+    });
+
+    if (existingOperation) {
+      return {
+        error: {
+          type: ErrorTypes.OPERATION_ALREADY_ACTIVE,
+          message: ErrorMessages[ErrorTypes.OPERATION_ALREADY_ACTIVE],
+        },
+      };
+    }
 
     await db.insert(operationsTable).values({
       status: "operating",
