@@ -17,6 +17,7 @@ export const PAUSE_REASONS = [
   "Reunião",
   "Pessoal",
   "Organização de processos",
+  "Busca de processos",
   "Eventos",
   "Problema técnico",
 ] as const;
