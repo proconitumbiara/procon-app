@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
+import { ticketsTable } from "@/db/schema";
 
 import TicketsFilters from "./_components/tickets-filters";
 
@@ -24,28 +26,29 @@ const PendingAppointments = async () => {
     redirect("/");
   }
 
-  // Buscar tickets, clientes e setores separadamente
-  const [ticketsRaw, clients, sectors] = await Promise.all([
-    db.query.ticketsTable.findMany(),
-    db.query.clientsTable.findMany(),
-    db.query.sectorsTable.findMany(),
-  ]);
+  // Apenas tickets pendentes, com client e sector (uma query; retorna só o necessário)
+  const ticketsRaw = await db.query.ticketsTable.findMany({
+    where: eq(ticketsTable.status, "pending"),
+    orderBy: (t, { asc }) => [asc(t.createdAt)],
+    with: {
+      client: true,
+      sector: true,
+    },
+  });
 
-  // Mapas para lookup rápido
-  const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
-  const sectorMap = Object.fromEntries(sectors.map((s) => [s.id, s.name]));
-
-  // Mapear para o formato da tabela
   const tickets = ticketsRaw.map((ticket) => ({
     id: ticket.id,
     status: ticket.status,
     priority: ticket.priority ?? 0,
-    clientName: clientMap[ticket.clientId] || "-",
+    clientName: ticket.client?.name ?? "-",
     clientId: ticket.clientId,
-    sectorName: sectorMap[ticket.sectorId] || "-",
+    sectorName: ticket.sector?.name ?? "-",
     sectorId: ticket.sectorId,
     createdAt: new Date(ticket.createdAt),
   }));
+
+  // Setores (apenas para filtros na UI; lista pequena)
+  const sectors = await db.query.sectorsTable.findMany();
 
   return (
     <PageContainer>

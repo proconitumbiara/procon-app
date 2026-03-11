@@ -67,14 +67,14 @@ export const callTheCustomerAgain = authActionClient.action(
       return { error: "Setor não encontrado" };
     }
 
-    await sendToPanel({
+    void sendToPanel({
       nome: client.name,
       guiche: `${servicePoint.name} - ${sector.name}`,
       prioridade: treatment.ticket
         ? getPriorityLabel(treatment.ticket.priority)
         : "Comum",
       chamadoEm: new Date().toISOString(),
-    });
+    }).catch((err) => console.error("[callTheCustomerAgain] sendToPanel:", err));
 
     return { success: true };
   },

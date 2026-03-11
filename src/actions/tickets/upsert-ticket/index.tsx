@@ -35,9 +35,9 @@ export const updateTicket = authActionClient
 
     revalidatePath("/atendimentos-pendentes");
 
-    await pusherServer.trigger("tickets", "ticket-updated", {
+    void pusherServer.trigger("tickets", "ticket-updated", {
       ticketId: parsedInput.id,
-    });
+    }).catch((err) => console.error("[updateTicket] Pusher:", err));
   });
 
 export const createTicket = authActionClient
@@ -68,9 +68,9 @@ export const createTicket = authActionClient
     revalidatePath("/atendimento");
     revalidatePath("/atendimentos-pendentes");
 
-    await pusherServer.trigger("tickets", "ticket-created", {
+    void pusherServer.trigger("tickets", "ticket-created", {
       ticketId: newTicket.id,
-    });
+    }).catch((err) => console.error("[createTicket] Pusher:", err));
 
     return { data: newTicket };
   });

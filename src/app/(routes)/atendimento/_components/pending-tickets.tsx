@@ -9,20 +9,11 @@ import { useTicketsWebSocket } from "@/hooks/use-tickets-websocket";
 import CallNextTicketButton from "./call-next-ticket-button";
 import { ticketsTableColumns, TicketTableRow } from "./tickets-table-columns";
 
-const fetchTickets = async () => {
-    const res = await fetch("/api/tickets?status=pending", { credentials: "same-origin" });
+const fetchPendingTicketsWithNames = async () => {
+    const res = await fetch("/api/tickets/pending-with-names", { credentials: "same-origin" });
     if (!res.ok) {
         if (res.status === 401) throw new Error("unauthorized");
         throw new Error("Erro ao buscar tickets");
-    }
-    return res.json();
-};
-
-const fetchClientsAndSectors = async () => {
-    const res = await fetch("/api/clients", { credentials: "same-origin" });
-    if (!res.ok) {
-        if (res.status === 401) throw new Error("unauthorized");
-        throw new Error("Erro ao buscar clientes/setores");
     }
     return res.json();
 };
@@ -35,23 +26,29 @@ export default function PendingTickets() {
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const [ticketsData, clientsSectorsData] = await Promise.all([
-                fetchTickets(),
-                fetchClientsAndSectors(),
-            ]);
-            const clientsMap = Object.fromEntries((clientsSectorsData.clients || []).map((c: { id: string; name: string }) => [c.id, c.name]));
-            const sectorsMap = Object.fromEntries((clientsSectorsData.sectors || []).map((s: { id: string; name: string }) => [s.id, s.name]));
-            const tickets = (ticketsData.tickets || []);
-            const mapped: TicketTableRow[] = tickets.map((ticket: { id: string; status: string; priority: number; clientId: string; sectorId: string; createdAt: string }) => ({
-                id: ticket.id,
-                status: ticket.status,
-                priority: ticket.priority ?? 0,
-                clientName: clientsMap[ticket.clientId] || ticket.clientId,
-                clientId: ticket.clientId,
-                sectorName: sectorsMap[ticket.sectorId] || ticket.sectorId,
-                sectorId: ticket.sectorId,
-                createdAt: new Date(ticket.createdAt),
-            })).sort((a: TicketTableRow, b: TicketTableRow) => a.createdAt.getTime() - b.createdAt.getTime());
+            const data = await fetchPendingTicketsWithNames();
+            const tickets = data.tickets ?? [];
+            const mapped: TicketTableRow[] = tickets.map(
+                (ticket: {
+                    id: string;
+                    status: string;
+                    priority: number;
+                    clientId: string;
+                    clientName: string;
+                    sectorId: string;
+                    sectorName: string;
+                    createdAt: string;
+                }) => ({
+                    id: ticket.id,
+                    status: ticket.status,
+                    priority: ticket.priority ?? 0,
+                    clientName: ticket.clientName ?? "-",
+                    clientId: ticket.clientId,
+                    sectorName: ticket.sectorName ?? "-",
+                    sectorId: ticket.sectorId,
+                    createdAt: new Date(ticket.createdAt),
+                }),
+            );
             setTableData(mapped);
             setLoading(false);
         } catch (err: unknown) {

@@ -12,24 +12,28 @@ import StartOperationButton from "./_components/start-operation-button";
 
 
 const ProfessionalServices = async () => {
-
-    const session = await auth.api.getSession({
+    const sessionPromise = auth.api.getSession({
         headers: await headers(),
     });
+    const sectorsPromise = db.query.sectorsTable.findMany({
+        with: {
+            servicePoints: true,
+        },
+    });
+    const operationsPromise = db.query.operationsTable.findMany();
+
+    const [session, sectors, operations] = await Promise.all([
+        sessionPromise,
+        sectorsPromise,
+        operationsPromise,
+    ]);
 
     if (!session?.user) {
         redirect("/");
     }
 
-    const sectors = await db.query.sectorsTable.findMany({
-        with: {
-            servicePoints: true,
-        }
-    });
-
-    const operations = await db.query.operationsTable.findMany()
     const operatingOperation = operations.find(
-        (op) => op.status === "operating" && op.userId === session.user.id
+        (op) => op.status === "operating" && op.userId === session.user.id,
     );
 
     return (
@@ -46,7 +50,7 @@ const ProfessionalServices = async () => {
             <PageContent>
                 <div className="flex gap-2 w-full h-full">
                     <OngoingOperationCard operations={operations} />
-                    <ServiceInProgressCard />
+                    <ServiceInProgressCard operatingOperationId={operatingOperation?.id ?? null} />
                 </div>
                 <div className="flex gap-2 w-full h-full items-center justify-center">
                     <PendingTickets />

@@ -5,10 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import {
-  clientsTable,
   operationsTable,
-  sectorsTable,
-  servicePointsTable,
   ticketsTable,
   treatmentsTable,
 } from "@/db/schema";
@@ -22,20 +19,40 @@ import { sendLastCalledClients } from "./send-last-called-clients";
 export const callNextTicket = authActionClient.action(async ({ ctx }) => {
   const { session } = ctx;
 
+  // 1) Operação ativa com servicePoint e sector (uma query)
   const operation = await db.query.operationsTable.findFirst({
     where: and(
       eq(operationsTable.userId, session.user.id),
       eq(operationsTable.status, "operating"),
     ),
+    with: {
+      servicePoint: {
+        with: {
+          sector: true,
+        },
+      },
+    },
   });
-  if (!operation) {
+  if (!operation?.servicePoint?.sector) {
+    if (!operation) {
+      return {
+        error: {
+          type: ErrorTypes.NO_ACTIVE_OPERATION,
+          message: ErrorMessages[ErrorTypes.NO_ACTIVE_OPERATION],
+        },
+      };
+    }
     return {
       error: {
-        type: ErrorTypes.NO_ACTIVE_OPERATION,
-        message: ErrorMessages[ErrorTypes.NO_ACTIVE_OPERATION],
+        type: ErrorTypes.SERVICE_POINT_NOT_FOUND,
+        message: ErrorMessages[ErrorTypes.SERVICE_POINT_NOT_FOUND],
       },
     };
   }
+
+  const servicePoint = operation.servicePoint;
+  const sector = operation.servicePoint.sector;
+  const sectorId = sector.id;
 
   const existingTreatment = await db.query.treatmentsTable.findFirst({
     where: and(
@@ -53,55 +70,33 @@ export const callNextTicket = authActionClient.action(async ({ ctx }) => {
     };
   }
 
-  const servicePoint = await db.query.servicePointsTable.findFirst({
-    where: eq(servicePointsTable.id, operation.servicePointId),
-  });
-  if (!servicePoint) {
-    return {
-      error: {
-        type: ErrorTypes.SERVICE_POINT_NOT_FOUND,
-        message: ErrorMessages[ErrorTypes.SERVICE_POINT_NOT_FOUND],
-      },
-    };
-  }
-
-  const sectorId = servicePoint.sectorId;
-  const sector = await db.query.sectorsTable.findFirst({
-    where: eq(sectorsTable.id, sectorId),
-  });
-  if (!sector) {
-    return {
-      error: {
-        type: ErrorTypes.SECTOR_NOT_FOUND,
-        message: ErrorMessages[ErrorTypes.SECTOR_NOT_FOUND],
-      },
-    };
-  }
-
   const preferredPriority = servicePoint.preferredPriority ?? 0;
   const fallbackPriority = preferredPriority === 1 ? 0 : 1;
 
-  let ticket = await db.query.ticketsTable.findFirst({
+  // 2) Próximo ticket com client (uma query; fallback de priority em segunda query se necessário)
+  let ticketWithClient = await db.query.ticketsTable.findFirst({
     where: and(
       eq(ticketsTable.status, "pending"),
       eq(ticketsTable.sectorId, sectorId),
       eq(ticketsTable.priority, preferredPriority),
     ),
     orderBy: (t) => asc(t.createdAt),
+    with: { client: true },
   });
 
-  if (!ticket) {
-    ticket = await db.query.ticketsTable.findFirst({
+  if (!ticketWithClient) {
+    ticketWithClient = await db.query.ticketsTable.findFirst({
       where: and(
         eq(ticketsTable.status, "pending"),
         eq(ticketsTable.sectorId, sectorId),
         eq(ticketsTable.priority, fallbackPriority),
       ),
       orderBy: (t) => asc(t.createdAt),
+      with: { client: true },
     });
   }
 
-  if (!ticket) {
+  if (!ticketWithClient) {
     return {
       error: {
         type: ErrorTypes.NO_PENDING_TICKET,
@@ -110,21 +105,7 @@ export const callNextTicket = authActionClient.action(async ({ ctx }) => {
     };
   }
 
-  await db.insert(treatmentsTable).values({
-    ticketId: ticket.id,
-    operationId: operation.id,
-  });
-
-  await db
-    .update(ticketsTable)
-    .set({ status: "in-attendance" })
-    .where(eq(ticketsTable.id, ticket.id));
-
-  await sendLastCalledClients();
-
-  const client = await db.query.clientsTable.findFirst({
-    where: eq(clientsTable.id, ticket.clientId),
-  });
+  const client = ticketWithClient.client;
   if (!client) {
     return {
       error: {
@@ -134,15 +115,31 @@ export const callNextTicket = authActionClient.action(async ({ ctx }) => {
     };
   }
 
-  await sendToPanel({
-    nome: client.name,
-    guiche: `${servicePoint.name} - ${sector.name}`,
-    prioridade: getPriorityLabel(ticket.priority),
-    chamadoEm: new Date().toISOString(),
+  await db.insert(treatmentsTable).values({
+    ticketId: ticketWithClient.id,
+    operationId: operation.id,
   });
+
+  await db
+    .update(ticketsTable)
+    .set({ status: "in-attendance" })
+    .where(eq(ticketsTable.id, ticketWithClient.id));
 
   revalidatePath("/atendimento");
   revalidatePath("/atendimentos-pendentes");
+
+  // Pusher em background (não bloquear resposta ao usuário)
+  void sendLastCalledClients().catch((err) => {
+    console.error("[callNextTicket] sendLastCalledClients:", err);
+  });
+  void sendToPanel({
+    nome: client.name,
+    guiche: `${servicePoint.name} - ${sector.name}`,
+    prioridade: getPriorityLabel(ticketWithClient.priority),
+    chamadoEm: new Date().toISOString(),
+  }).catch((err) => {
+    console.error("[callNextTicket] sendToPanel:", err);
+  });
 
   return { success: true };
 });

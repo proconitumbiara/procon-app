@@ -1,63 +1,47 @@
 import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { db } from "@/db";
-import { clientsTable, operationsTable, ticketsTable, treatmentsTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { treatmentsTable } from "@/db/schema";
 
 import CallCustomerAgainButton from "./call-customer-again-button";
 import FinishServiceButton from "./finish-service-button";
 
-const ServiceInProgressCard = async () => {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-    if (!session?.user) {
-        return (
-            <div className="flex flex-col gap-4 w-full h-full max-h-[80vh] items-center justify-center">
-                <p className="text-sm text-muted-foreground">Usuário não autenticado.</p>
-            </div>
-        );
-    }
+interface ServiceInProgressCardProps {
+    /** Id da operação em andamento do usuário (vinda da página). Quando null, o card não busca treatment. */
+    operatingOperationId: string | null;
+}
 
-    // Buscar operação em andamento do usuário logado
-    const operation = await db.query.operationsTable.findFirst({
-        where: and(
-            eq(operationsTable.userId, session.user.id),
-            eq(operationsTable.status, "operating")
-        ),
-    });
-
-    if (!operation) {
+const ServiceInProgressCard = async ({ operatingOperationId }: ServiceInProgressCardProps) => {
+    if (!operatingOperationId) {
         return (
             <Card className="w-full h-full text-sm text-muted-foreground text-center hidden">Nenhuma operação em andamento.</Card>
         );
     }
 
-    // Buscar atendimento (treatment) em andamento para a operação
-    const treatment = await db.query.treatmentsTable.findFirst({
+    // Uma única query: treatment em serviço para a operação, com ticket e client
+    const treatmentWithTicketAndClient = await db.query.treatmentsTable.findFirst({
         where: and(
-            eq(treatmentsTable.operationId, operation.id),
-            eq(treatmentsTable.status, "in_service")
+            eq(treatmentsTable.operationId, operatingOperationId),
+            eq(treatmentsTable.status, "in_service"),
         ),
+        with: {
+            ticket: {
+                with: {
+                    client: true,
+                },
+            },
+        },
     });
+
+    const treatment = treatmentWithTicketAndClient;
+    const ticket = treatment?.ticket ?? null;
+    const client = ticket?.client ?? null;
 
     if (!treatment) {
         return (
             <Card className="w-full h-full text-sm text-muted-foreground text-center">Nenhum atendimento em andamento.</Card>
         );
-    }
-
-    // Buscar ticket e cliente associados ao atendimento
-    const ticket = await db.query.ticketsTable.findFirst({
-        where: eq(ticketsTable.id, treatment.ticketId),
-    });
-    let client = null;
-    if (ticket) {
-        client = await db.query.clientsTable.findFirst({
-            where: eq(clientsTable.id, ticket.clientId),
-        });
     }
 
     // Formatar data e horário de início

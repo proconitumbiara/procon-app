@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   date,
+  index,
   integer,
   pgTable,
   text,
@@ -84,20 +85,26 @@ export const servicePointsTable = pgTable("service_points", {
     .references(() => sectorsTable.id, { onDelete: "cascade" }),
 });
 
-export const operationsTable = pgTable("operations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  status: text("status").notNull().default("active"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  userId: text("user_id")
-    .notNull()
-    .references(() => usersTable.id, { onDelete: "cascade" }),
-  servicePointId: uuid("service_point_id")
-    .notNull()
-    .references(() => servicePointsTable.id, { onDelete: "cascade" }),
-});
+export const operationsTable = pgTable(
+  "operations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    servicePointId: uuid("service_point_id")
+      .notNull()
+      .references(() => servicePointsTable.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("operations_user_id_status_idx").on(table.userId, table.status),
+  ],
+);
 
 export const clientsTable = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -111,37 +118,57 @@ export const clientsTable = pgTable("clients", {
     .$onUpdate(() => new Date()),
 });
 
-export const ticketsTable = pgTable("tickets", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  status: text("status").notNull().default("pending"),
-  priority: integer("priority").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  sectorId: uuid("sector_id")
-    .notNull()
-    .references(() => sectorsTable.id, { onDelete: "cascade" }),
-  clientId: uuid("client_id")
-    .notNull()
-    .references(() => clientsTable.id, { onDelete: "cascade" }),
-});
+export const ticketsTable = pgTable(
+  "tickets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    status: text("status").notNull().default("pending"),
+    priority: integer("priority").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    sectorId: uuid("sector_id")
+      .notNull()
+      .references(() => sectorsTable.id, { onDelete: "cascade" }),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clientsTable.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("tickets_status_sector_id_priority_idx").on(
+      table.status,
+      table.sectorId,
+      table.priority,
+    ),
+    index("tickets_status_idx").on(table.status),
+  ],
+);
 
-export const treatmentsTable = pgTable("treatments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  status: text("status").notNull().default("in_service"),
-  duration: integer("duration"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  ticketId: uuid("ticket_id")
-    .notNull()
-    .references(() => ticketsTable.id, { onDelete: "cascade" }),
-  operationId: uuid("operation_id")
-    .notNull()
-    .references(() => operationsTable.id, { onDelete: "cascade" }),
-});
+export const treatmentsTable = pgTable(
+  "treatments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    status: text("status").notNull().default("in_service"),
+    duration: integer("duration"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => ticketsTable.id, { onDelete: "cascade" }),
+    operationId: uuid("operation_id")
+      .notNull()
+      .references(() => operationsTable.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("treatments_operation_id_status_idx").on(
+      table.operationId,
+      table.status,
+    ),
+  ],
+);
 
 export const registrationCodesTable = pgTable("registration_codes", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -205,6 +232,10 @@ export const ticketsTableRelations = relations(ticketsTable, ({ one }) => ({
   client: one(clientsTable, {
     fields: [ticketsTable.clientId],
     references: [clientsTable.id],
+  }),
+  sector: one(sectorsTable, {
+    fields: [ticketsTable.sectorId],
+    references: [sectorsTable.id],
   }),
   treatment: one(treatmentsTable),
 }));

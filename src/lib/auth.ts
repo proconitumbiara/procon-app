@@ -28,6 +28,8 @@ export const auth = betterAuth({
       : []),
   ],
   plugins: [
+    // customSession: enriquece user com role, phoneNumber, cpf (uma query por getSession).
+    // Mantido em toda leitura pois role é usado em adminActionClient e UI pode usar phone/cpf.
     customSession(async ({ user, session }) => {
       const [userData] = await Promise.all([
         db.query.usersTable.findFirst({
