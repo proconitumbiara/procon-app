@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const operation = await db.query.operationsTable.findFirst({
         where: and(
             eq(operationsTable.userId, session.user.id),
-            eq(operationsTable.status, "operating"),
+            inArray(operationsTable.status, ["operating", "in-attendance"]),
         ),
     });
 

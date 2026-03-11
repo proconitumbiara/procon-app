@@ -57,10 +57,7 @@ const getDashboard = async ({ from, to }: Params) => {
       .select({ total: count(clientsTable.id) })
       .from(clientsTable)
       .where(
-        and(
-          gte(clientsTable.createdAt, from),
-          lte(clientsTable.createdAt, to),
-        ),
+        and(gte(clientsTable.createdAt, from), lte(clientsTable.createdAt, to)),
       ),
 
     // Total de tickets cancelados no período
@@ -143,9 +140,7 @@ const getDashboard = async ({ from, to }: Params) => {
       })
       .from(treatmentsTable)
       .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
-      .where(
-        and(dateFilter, isNotNull(ticketsTable.finishedAt)),
-      ),
+      .where(and(dateFilter, isNotNull(ticketsTable.finishedAt))),
   ]);
 
   return {

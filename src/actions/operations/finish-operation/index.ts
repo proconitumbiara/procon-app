@@ -26,11 +26,13 @@ export const finishOperation = authActionClient
       };
     }
 
+    const now = new Date();
     await db
       .update(operationsTable)
       .set({
         status: "finished",
-        updatedAt: new Date(),
+        finishedAt: now,
+        updatedAt: now,
       })
       .where(eq(operationsTable.id, parsedInput.operationId));
 

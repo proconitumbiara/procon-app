@@ -26,10 +26,19 @@ const OngoingOperationCard = async ({
   });
   const userId = session?.user?.id;
 
-  // Filtra a operação do usuário logado com status 'operating'
+  const ACTIVE_STATUSES = ["operating", "in-attendance", "paused"] as const;
   const operatingOperation = operations.find(
-    (op) => op.status === "operating" && op.userId === userId,
+    (op) => op.userId === userId && ACTIVE_STATUSES.includes(op.status as (typeof ACTIVE_STATUSES)[number]),
   );
+
+  const statusLabel =
+    operatingOperation?.status === "operating"
+      ? "Operando"
+      : operatingOperation?.status === "in-attendance"
+        ? "Em atendimento"
+        : operatingOperation?.status === "paused"
+          ? "paused"
+          : operatingOperation?.status ?? "";
 
   let userName = "";
   let servicePointName = "";
@@ -52,7 +61,7 @@ const OngoingOperationCard = async ({
       {/* Mobile */}
       <Card className="block lg:hidden relative h-full w-full flex-col">
         {/* Bola verde no canto superior direito */}
-        {operatingOperation && (
+        {operatingOperation && operatingOperation.status !== "paused" && (
           <span
             className="absolute top-3 right-3 h-4 w-4 rounded-full border border-white bg-green-500 shadow"
             title="Online"
@@ -64,9 +73,7 @@ const OngoingOperationCard = async ({
               <div className="flex flex-row gap-2">
                 <p className="flex flex-col text-muted-foreground text-sm">
                   <span className="text-primary font-semibold">Status:</span>{" "}
-                  {operatingOperation.status === "operating"
-                    ? "Operando"
-                    : operatingOperation.status}
+                  {statusLabel}
                 </p>
                 <div className="h-4" />
                 <p className="flex flex-col text-muted-foreground text-sm">
@@ -98,7 +105,7 @@ const OngoingOperationCard = async ({
       {/* Desktop */}
       <Card className="hidden lg:flex relative h-full w-full flex-col">
         {/* Bola verde no canto superior direito */}
-        {operatingOperation && (
+        {operatingOperation && operatingOperation.status !== "paused" && (
           <span
             className="absolute top-3 right-3 h-4 w-4 rounded-full border border-white bg-green-500 shadow"
             title="Online"
@@ -113,9 +120,7 @@ const OngoingOperationCard = async ({
               <div className="flex flex-row gap-2">
                 <p className="text-muted-foreground text-sm">
                   <span className="text-primary font-semibold">Status:</span>{" "}
-                  {operatingOperation.status === "operating"
-                    ? "Operando"
-                    : operatingOperation.status}
+                  {statusLabel}
                 </p>
                 <div className="h-4 border-l border-gray-300" />
                 <p className="text-muted-foreground text-sm">
@@ -139,11 +144,12 @@ const OngoingOperationCard = async ({
             </div>
           )}
         </CardContent>
-        {operatingOperation && (
-          <CardFooter className="flex w-full flex-row items-center justify-center gap-4">
-            <FinishOperationButton operationId={operatingOperation.id} />
-          </CardFooter>
-        )}
+        {operatingOperation &&
+          operatingOperation.status !== "paused" && (
+            <CardFooter className="flex w-full flex-row items-center justify-center gap-4">
+              <FinishOperationButton operationId={operatingOperation.id} />
+            </CardFooter>
+          )}
       </Card>
     </>
   );

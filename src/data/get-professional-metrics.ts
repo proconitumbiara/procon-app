@@ -1,7 +1,7 @@
 import { and, eq, gte, lte } from "drizzle-orm";
 
 import { db } from "@/db";
-import { operationsTable, treatmentsTable } from "@/db/schema";
+import { operationsTable, pausesTable, treatmentsTable } from "@/db/schema";
 
 interface ProfessionalMetricsParams {
   professionalId: string;
@@ -30,11 +30,22 @@ export const getProfessionalMetrics = async ({
         )
       : undefined;
 
+  const pauseDateFilter =
+    from && to
+      ? and(
+          gte(pausesTable.createdAt, from),
+          lte(pausesTable.createdAt, to),
+        )
+      : undefined;
+
   const operationsWithTreatments = await db.query.operationsTable.findMany({
     where: and(eq(operationsTable.userId, professionalId), dateFilter),
     with: {
       treatments: {
         where: treatmentDateFilter,
+      },
+      pauses: {
+        where: pauseDateFilter,
       },
     },
   });
@@ -83,11 +94,20 @@ export const getProfessionalMetrics = async ({
         )
       : 0;
 
+  const allPauses = operationsWithTreatments.flatMap((op) => op.pauses);
+  const totalPauses = allPauses.length;
+  const averagePausesPerOperation =
+    totalOperations > 0
+      ? Math.round((totalPauses / totalOperations) * 10) / 10
+      : 0;
+
   return {
     totalOperations,
     averageOperationTime,
     totalTreatments,
     averageTreatmentTime,
+    totalPauses,
+    averagePausesPerOperation,
     operations: operationsWithTreatments,
     treatments: allTreatments,
   };

@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
-import { ticketsTable, treatmentsTable } from "@/db/schema";
+import { operationsTable, ticketsTable, treatmentsTable } from "@/db/schema";
 import { authActionClient } from "@/lib/next-safe-action";
 
 import { EndServiceSchema } from "./schema";
@@ -56,6 +56,11 @@ export const endService = authActionClient
         duration: durationMinutes,
       })
       .where(eq(treatmentsTable.id, treatment.id));
+
+    await db
+      .update(operationsTable)
+      .set({ status: "operating" })
+      .where(eq(operationsTable.id, treatment.operationId));
 
     revalidatePath("/atendimento");
   });

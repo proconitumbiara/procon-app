@@ -2,7 +2,7 @@
 
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, EqualApproximately, MonitorCheck, PhoneCall } from "lucide-react";
+import { Calendar, EqualApproximately, MonitorCheck, Pause, PhoneCall } from "lucide-react";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 
@@ -19,6 +19,8 @@ interface ProfessionalMetricsData {
     averageOperationTime: number;
     totalTreatments: number;
     averageTreatmentTime: number;
+    totalPauses: number;
+    averagePausesPerOperation: number;
 }
 
 interface ProfessionalMetricsProps {
@@ -190,7 +192,7 @@ const ProfessionalMetrics = ({ metrics, selectedDateRange, onDateRangeSelect, pr
             </div>
 
             {/* Cards de Métricas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Operações */}
                 <Card>
                     <CardHeader className="flex flex-row items-center space-y-0 gap-2 pb-2">
@@ -213,12 +215,28 @@ const ProfessionalMetrics = ({ metrics, selectedDateRange, onDateRangeSelect, pr
                         <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
                             <PhoneCall className="text-primary h-4 w-4" />
                         </div>
-                        <CardTitle className="text-sm font-medium"> Atendimentos</CardTitle>
+                        <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{metrics.totalTreatments}</div>
                         <p className="text-xs text-muted-foreground">
                             Tempo médio: {formatTime(metrics.averageTreatmentTime)}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* Pausas */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center space-y-0 gap-2 pb-2">
+                        <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
+                            <Pause className="text-primary h-4 w-4" />
+                        </div>
+                        <CardTitle className="text-sm font-medium">Pausas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{metrics.totalPauses}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Média por operação: {metrics.averagePausesPerOperation.toFixed(1)}
                         </p>
                     </CardContent>
                 </Card>

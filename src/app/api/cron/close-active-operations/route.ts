@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   const activeOperations = await db.query.operationsTable.findMany({
-    where: eq(operationsTable.status, "operating"),
+    where: inArray(operationsTable.status, ["operating", "in-attendance"]),
   });
 
   if (activeOperations.length === 0) {

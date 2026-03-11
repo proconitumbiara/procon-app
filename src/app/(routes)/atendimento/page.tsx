@@ -6,6 +6,8 @@ import { db } from "@/db";
 import { auth } from "@/lib/auth";
 
 import OngoingOperationCard from "./_components/ongoing-operation-card";
+import PauseOperationButton from "./_components/pause-operation-button";
+import PausedOperationOverlay from "./_components/paused-operation-overlay";
 import PendingTickets from "./_components/pending-tickets";
 import ServiceInProgressCard from "./_components/service-in-progress-card";
 import StartOperationButton from "./_components/start-operation-button";
@@ -20,7 +22,9 @@ const ProfessionalServices = async () => {
             servicePoints: true,
         },
     });
-    const operationsPromise = db.query.operationsTable.findMany();
+    const operationsPromise = db.query.operationsTable.findMany({
+        with: { pauses: true },
+    });
 
     const [session, sectors, operations] = await Promise.all([
         sessionPromise,
@@ -32,9 +36,23 @@ const ProfessionalServices = async () => {
         redirect("/");
     }
 
-    const operatingOperation = operations.find(
-        (op) => op.status === "operating" && op.userId === session.user.id,
+    const currentUserOperation = operations.find(
+        (op) =>
+            op.userId === session.user.id &&
+            ["operating", "in-attendance", "paused"].includes(op.status),
     );
+
+    const activePause =
+        currentUserOperation?.status === "paused" && currentUserOperation.pauses
+            ? currentUserOperation.pauses.find((p) => p.status === "in_progress") ?? null
+            : null;
+
+    const hasActiveOperation = !!currentUserOperation;
+    const canPause = currentUserOperation?.status === "operating";
+    const operatingOperationId =
+        currentUserOperation && currentUserOperation.status !== "paused"
+            ? currentUserOperation.id
+            : null;
 
     return (
         <>
@@ -61,19 +79,31 @@ const ProfessionalServices = async () => {
                         <PageDescription>Inicie uma operação de atendimento.</PageDescription>
                     </PageHeaderContent>
                     <PageActions>
-                        <StartOperationButton sectors={sectors} disabled={!!operatingOperation} />
+                        <StartOperationButton sectors={sectors} disabled={hasActiveOperation} />
+                        <PauseOperationButton disabled={!canPause} />
                     </PageActions>
                 </PageHeader>
                 <PageContent>
                     <div className="flex flex-col md:flex-row gap-2 w-full h-full">
                         <OngoingOperationCard operations={operations} />
-                        <ServiceInProgressCard operatingOperationId={operatingOperation?.id ?? null} />
+                        <ServiceInProgressCard operatingOperationId={operatingOperationId} />
                     </div>
                     <div className="flex gap-2 w-full h-full items-center justify-center">
                         <PendingTickets />
                     </div>
                 </PageContent>
             </PageContainer>
+            <PausedOperationOverlay
+                isPaused={currentUserOperation?.status === "paused"}
+                pause={
+                    activePause
+                        ? {
+                            id: activePause.id,
+                            createdAt: activePause.createdAt,
+                        }
+                        : null
+                }
+            />
         </>
     );
 }

@@ -91,6 +91,7 @@ export const operationsTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     status: text("status").notNull().default("active"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    finishedAt: timestamp("finished_at"),
     updatedAt: timestamp("updated_at")
       .defaultNow()
       .$onUpdate(() => new Date()),
@@ -102,7 +103,11 @@ export const operationsTable = pgTable(
       .references(() => servicePointsTable.id, { onDelete: "cascade" }),
   },
   (table) => [
-    index("operations_user_id_status_idx").on(table.userId, table.status),
+    index("operations_user_id_status_idx").on(
+      table.userId,
+      table.status,
+      table.finishedAt,
+    ),
   ],
 );
 
@@ -193,6 +198,30 @@ export const resetCodesTable = pgTable("reset_codes", {
   usedAt: timestamp("used_at"),
 });
 
+export const pausesTable = pgTable(
+  "pauses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reason: text("reason").notNull(),
+    operationId: uuid("operation_id")
+      .notNull()
+      .references(() => operationsTable.id, { onDelete: "cascade" }),
+    duration: integer("duration").notNull(),
+    status: text("status").notNull().default("in_progress"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    finishedAt: timestamp("finished_at"),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("pauses_operation_id_duration_idx").on(
+      table.operationId,
+      table.duration,
+    ),
+  ],
+);
+
 export const usersTableRelations = relations(usersTable, ({ many }) => ({
   operations: many(operationsTable),
 }));
@@ -213,8 +242,16 @@ export const operationsTableRelations = relations(
       references: [servicePointsTable.id],
     }),
     treatments: many(treatmentsTable),
+    pauses: many(pausesTable),
   }),
 );
+
+export const pausesTableRelations = relations(pausesTable, ({ one }) => ({
+  operation: one(operationsTable, {
+    fields: [pausesTable.operationId],
+    references: [operationsTable.id],
+  }),
+}));
 
 export const clientsTableRelations = relations(clientsTable, ({ many }) => ({
   tickets: many(ticketsTable),

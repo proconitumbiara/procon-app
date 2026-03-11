@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Clock, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Pause, Users } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,12 @@ interface Operation {
     id: string;
     duration: number | null;
     status: string;
+  }>;
+  pauses: Array<{
+    id: string;
+    reason: string;
+    duration: number;
+    createdAt: Date | string;
   }>;
 }
 
@@ -215,6 +221,36 @@ const OperationsList = ({ operations }: OperationsListProps) => {
                               </span>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {operation.pauses && operation.pauses.length > 0 && (
+                      <div>
+                        <h4 className="mb-2 text-sm font-medium flex items-center gap-2">
+                          <Pause className="h-4 w-4" />
+                          Pausas realizadas:
+                        </h4>
+                        <div className="space-y-1">
+                          {operation.pauses
+                            .sort((a, b) => {
+                              const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+                              const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+                              return dateA.getTime() - dateB.getTime();
+                            })
+                            .map((pause) => (
+                              <div
+                                key={pause.id}
+                                className="bg-background flex flex-col gap-1 rounded p-2 text-xs"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">{pause.reason}</span>
+                                  <span className="text-muted-foreground">
+                                    {formatTime(pause.duration)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     )}

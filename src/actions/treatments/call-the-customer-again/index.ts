@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -19,7 +19,7 @@ export const callTheCustomerAgain = authActionClient.action(
     const operation = await db.query.operationsTable.findFirst({
       where: and(
         eq(operationsTable.userId, session.user.id),
-        eq(operationsTable.status, "operating"),
+        inArray(operationsTable.status, ["operating", "in-attendance"]),
       ),
       with: {
         servicePoint: {

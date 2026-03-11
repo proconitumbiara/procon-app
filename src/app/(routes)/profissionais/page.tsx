@@ -14,6 +14,7 @@ import {
 import { authClient } from "@/lib/auth.client";
 import { getEndOfDayInSaoPauloUTC, getStartOfDayInSaoPauloUTC } from "@/lib/timezone-utils";
 
+import DayHistory from "./_components/day-history";
 import GenerateCodeButton from "./_components/generate-code-button";
 import OperationsList from "./_components/operations-list";
 import ProfessionalHeader from "./_components/professional-header";
@@ -36,6 +37,8 @@ interface ProfessionalMetricsData {
   averageOperationTime: number;
   totalTreatments: number;
   averageTreatmentTime: number;
+  totalPauses: number;
+  averagePausesPerOperation: number;
   operations: Array<{
     id: string;
     status: string;
@@ -47,6 +50,12 @@ interface ProfessionalMetricsData {
       status: string;
       createdAt: Date | string;
       updatedAt: Date | string;
+    }>;
+    pauses: Array<{
+      id: string;
+      reason: string;
+      duration: number;
+      createdAt: Date | string;
     }>;
   }>;
   treatments: Array<{
@@ -70,6 +79,8 @@ const AdminsProfessionals = () => {
     averageOperationTime: 0,
     totalTreatments: 0,
     averageTreatmentTime: 0,
+    totalPauses: 0,
+    averagePausesPerOperation: 0,
     operations: [],
     treatments: [],
   });
@@ -219,11 +230,12 @@ const AdminsProfessionals = () => {
           />
         )}
 
-        {/* Listas de Operações e Atendimentos */}
+        {/* Listas de Operações, Atendimentos e Histórico do dia */}
         {selectedProfessional && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <OperationsList operations={metrics.operations} />
             <TreatmentsList treatments={metrics.treatments} />
+            <DayHistory operations={metrics.operations} />
           </div>
         )}
 
