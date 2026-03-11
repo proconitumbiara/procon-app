@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
-import { ticketsTable, treatmentsTable } from "@/db/schema";
+import { operationsTable, ticketsTable, treatmentsTable } from "@/db/schema";
 import { authActionClient } from "@/lib/next-safe-action";
 
 import { CancelTreatmentAndTicketSchema } from "./schema";
@@ -56,13 +56,18 @@ export const cancelTreatmentAndTicket = authActionClient
 
     await db
       .update(ticketsTable)
-      .set({ status: "cancelled" })
+      .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(ticketsTable.id, parsedInput.ticketId));
 
     await db
       .update(treatmentsTable)
-      .set({ status: "cancelled", duration: durationMinutes })
+      .set({ status: "cancelled", duration: durationMinutes, updatedAt: new Date() })
       .where(eq(treatmentsTable.id, treatment.id));
+
+    await db
+      .update(operationsTable)
+      .set({ status: "operating", updatedAt: new Date() })
+      .where(eq(operationsTable.id, treatment.operationId));
 
     revalidatePath("/atendimento");
     revalidatePath("/atendimentos-pendentes");

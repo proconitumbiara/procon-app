@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="w-full pb-20 sm:pb-0">{children}</main>
       <EndOfShiftAlert />
       <MobileBottomNav />
-      {/* <PendingTicketAlert /> */}
+      <PendingTicketAlert />
     </SidebarProvider>
   );
 }

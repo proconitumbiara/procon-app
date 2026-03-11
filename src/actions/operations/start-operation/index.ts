@@ -34,11 +34,12 @@ export const startOperation = authActionClient
       status: "operating",
       userId: session.user.id,
       servicePointId: parsedInput.servicePointId,
+      createdAt: new Date(),
     });
 
     await db
       .update(servicePointsTable)
-      .set({ availability: "operating" })
+      .set({ availability: "operating", updatedAt: new Date() })
       .where(eq(servicePointsTable.id, parsedInput.servicePointId));
 
     revalidatePath("/atendimento");

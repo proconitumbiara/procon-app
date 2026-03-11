@@ -51,11 +51,12 @@ export const startPause = authActionClient
       reason: parsedInput.reason,
       duration: 0,
       status: "in_progress",
+      createdAt: new Date(),
     });
 
     await db
       .update(operationsTable)
-      .set({ status: "paused" })
+      .set({ status: "paused", updatedAt: new Date() })
       .where(eq(operationsTable.id, operation.id));
 
     revalidatePath("/atendimento");

@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
@@ -53,12 +53,13 @@ export const endPause = authActionClient
         finishedAt,
         duration: durationMinutes,
         status: "finished",
+        updatedAt: new Date(),
       })
       .where(eq(pausesTable.id, pause.id));
 
     await db
       .update(operationsTable)
-      .set({ status: "operating" })
+      .set({ status: "operating", updatedAt: new Date() })
       .where(eq(operationsTable.id, pause.operationId));
 
     revalidatePath("/atendimento");

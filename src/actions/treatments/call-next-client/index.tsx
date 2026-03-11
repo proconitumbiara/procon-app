@@ -122,12 +122,12 @@ export const callNextTicket = authActionClient.action(async ({ ctx }) => {
 
   await db
     .update(ticketsTable)
-    .set({ status: "in-attendance", calledAt: new Date() })
+    .set({ status: "in-attendance", calledAt: new Date(), updatedAt: new Date() })
     .where(eq(ticketsTable.id, ticketWithClient.id));
 
   await db
     .update(operationsTable)
-    .set({ status: "in-attendance" })
+    .set({ status: "in-attendance", updatedAt: new Date() })
     .where(eq(operationsTable.id, operation.id));
 
   revalidatePath("/atendimento");

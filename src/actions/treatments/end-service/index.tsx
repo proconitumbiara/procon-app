@@ -54,12 +54,13 @@ export const endService = authActionClient
       .set({
         status: "finished",
         duration: durationMinutes,
+        updatedAt: new Date(),
       })
       .where(eq(treatmentsTable.id, treatment.id));
 
     await db
       .update(operationsTable)
-      .set({ status: "operating" })
+      .set({ status: "operating", updatedAt: new Date() })
       .where(eq(operationsTable.id, treatment.operationId));
 
     revalidatePath("/atendimento");
