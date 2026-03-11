@@ -22,14 +22,14 @@ const AuthenticationPage = async () => {
         backgroundImage: "url('/CapaAuthentication.png')",
       }}
     >
-      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#003173]/20 backdrop-blur-sm">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#003173]/20 backdrop-blur-sm px-4 lg:p-0">
         <Image
           src="/Logo.svg"
           alt="Procon Logo"
           width={300}
           height={0}
           priority
-          className="absolute top-4 left-4 z-10"
+          className="flex justify-center items-center lg:absolute lg:top-4 lg:left-4 z-10"
         />
         <div className="h-auto w-full max-w-md rounded-md">
           <LoginForm />
