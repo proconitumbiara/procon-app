@@ -1,190 +1,251 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAction } from "next-safe-action/hooks";
+import { toast } from "sonner";
 
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { callNextTicket } from "@/actions/treatments/call-next-client";
 
-const POLLING_INTERVAL_MS = 20000; // 30s
-const DISPLAY_DURATION_MS = 10000; // 10s na tela
+const POLLING_INTERVAL_MS = 60000; // 60s para não resetar a contagem durante o countdown
+const COUNTDOWN_SECONDS = 15;
 
 export default function PendingTicketAlert() {
-    const [, setHasPending] = useState(false);
-    const [open, setOpen] = useState(false);
-    const lastSoundTimestampRef = useRef<number>(0);
-    const autoCloseTimeoutRef = useRef<number | null>(null);
-    const lastNotificationRef = useRef<number>(0);
+  const [countdownOpen, setCountdownOpen] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(COUNTDOWN_SECONDS);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastSoundTimestampRef = useRef<number>(0);
+  const lastNotificationRef = useRef<number>(0);
 
-    const playAlarm = useCallback(() => {
-        // Alarme mais suave: onda triangular, volume menor e alternância mais lenta
+  const { execute: executeCallNext, status: callNextStatus } = useAction(
+    callNextTicket,
+    {
+      onSuccess: (result) => {
+        const data = result?.data as { success?: boolean; error?: { message: string } } | undefined;
+        if (data?.error) {
+          toast.error(data.error.message);
+        } else if (data?.success === true) {
+          toast.success("Atendimento iniciado com sucesso!");
+        }
+        stopCountdownAndClose();
+      },
+      onError: (err) => {
+        const msg =
+          err?.error?.serverError ??
+          (err?.error?.validationErrors?.formErrors?.[0]) ??
+          "Erro ao iniciar atendimento";
+        toast.error(msg);
+        stopCountdownAndClose();
+      },
+    }
+  );
+
+  const playAlarm = useCallback(() => {
+    try {
+      const AudioContextClass =
+        (window as unknown as { webkitAudioContext?: typeof window.AudioContext })
+          .webkitAudioContext || window.AudioContext;
+      const audioContext = new AudioContextClass();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.type = "triangle";
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.18,
+        audioContext.currentTime + 0.03
+      );
+
+      const startTime = audioContext.currentTime;
+      const durationSec = 1.2;
+      const endTime = startTime + durationSec;
+
+      let t = startTime;
+      let high = true;
+      while (t < endTime) {
+        const freq = high ? 900 : 700;
+        oscillator.frequency.setValueAtTime(freq, t);
+        t += 0.18;
+        high = !high;
+      }
+
+      gainNode.gain.setValueAtTime(0.18, endTime - 0.08);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+      oscillator.start(startTime);
+      oscillator.stop(endTime);
+
+      setTimeout(() => {
         try {
-            const AudioContextClass = (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext || window.AudioContext;
-            const audioContext = new AudioContextClass();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            oscillator.type = "triangle"; // timbre mais suave que square
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+          audioContext.close();
+        } catch {}
+      }, durationSec * 1000 + 150);
+    } catch {
+      // ignore audio errors
+    }
+  }, []);
 
-            // Envelope suave com volume moderado
-            gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.18, audioContext.currentTime + 0.03);
+  const stopCountdownAndClose = useCallback(() => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setCountdownSeconds(COUNTDOWN_SECONDS);
+    setCountdownOpen(false);
+  }, []);
 
-            const startTime = audioContext.currentTime;
-            const durationSec = 1.2; // duração do alarme
-            const endTime = startTime + durationSec;
+  const checkEligibility = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auto-call/check", {
+        method: "GET",
+        cache: "no-store",
+      });
+      if (res.status === 401) {
+        setCountdownOpen(false);
+        return;
+      }
+      const data = (await res.json()) as { showCountdown?: boolean };
+      const showCountdown = Boolean(data?.showCountdown);
 
-            // Alternar frequência entre 900Hz e 700Hz a cada 180ms
-            let t = startTime;
-            let high = true;
-            while (t < endTime) {
-                const freq = high ? 900 : 700;
-                oscillator.frequency.setValueAtTime(freq, t);
-                t += 0.18;
-                high = !high;
-            }
+      if (showCountdown) {
+        setCountdownOpen(true);
+        setCountdownSeconds(COUNTDOWN_SECONDS);
 
-            // Release suave
-            gainNode.gain.setValueAtTime(0.18, endTime - 0.08);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, endTime);
-
-            oscillator.start(startTime);
-            oscillator.stop(endTime);
-
-            setTimeout(() => {
-                try {
-                    audioContext.close();
-                } catch { }
-            }, durationSec * 1000 + 150);
-        } catch {
-            // ignore audio errors
+        const now = Date.now();
+        if (now - lastSoundTimestampRef.current >= POLLING_INTERVAL_MS - 50) {
+          playAlarm();
+          lastSoundTimestampRef.current = now;
         }
-    }, []);
 
-    const checkPending = useCallback(async () => {
-        try {
-            const [ticketsRes, activeRes] = await Promise.all([
-                fetch("/api/tickets", { method: "GET", cache: "no-store" }),
-                fetch("/api/treatments/active", { method: "GET", cache: "no-store" }),
-            ]);
-            if (ticketsRes.status === 401 || activeRes.status === 401) {
-                setHasPending(false);
-                setOpen(false);
-                return;
-            }
-            const ticketsData = (await ticketsRes.json()) as { tickets?: Array<unknown> };
-            const activeData = (await activeRes.json()) as { inService?: boolean; hasActiveOperation?: boolean };
-            const hasPendingTickets = Array.isArray(ticketsData.tickets) && ticketsData.tickets.length > 0;
-            const hasActiveService = Boolean(activeData?.inService);
-            const hasActiveOperation = Boolean(activeData?.hasActiveOperation);
-
-            const shouldAlert = hasPendingTickets && hasActiveOperation && !hasActiveService;
-            setHasPending(shouldAlert);
-            setOpen(shouldAlert);
-            if (shouldAlert) {
-                const now = Date.now();
-                if (now - lastSoundTimestampRef.current >= POLLING_INTERVAL_MS - 50) {
-                    playAlarm();
-                    lastSoundTimestampRef.current = now;
+        if (typeof window !== "undefined" && "Notification" in window) {
+          if (now - lastNotificationRef.current > 5000) {
+            if (Notification.permission === "granted") {
+              new Notification("⚠️ Chamada automática em 15 segundos", {
+                body: "Consumidores aguardando há mais de 10 minutos.",
+              });
+              lastNotificationRef.current = now;
+            } else if (Notification.permission !== "denied") {
+              Notification.requestPermission().then((perm) => {
+                if (perm === "granted") {
+                  new Notification("⚠️ Chamada automática em 15 segundos", {
+                    body: "Consumidores aguardando há mais de 10 minutos.",
+                  });
+                  lastNotificationRef.current = Date.now();
                 }
-                // Notificação web (mesmo se aba fechada/oculta)
-                const canNotify = typeof window !== "undefined" && "Notification" in window;
-                if (canNotify && now - lastNotificationRef.current > 5000) {
-                    if (Notification.permission === "granted") {
-                        new Notification("⚠️ Atendimento pendente", {
-                            body: "Há consumidores aguardando atendimento.",
-                        });
-                        lastNotificationRef.current = now;
-                    } else if (Notification.permission !== "denied") {
-                        Notification.requestPermission().then((perm) => {
-                            if (perm === "granted") {
-                                new Notification("⚠️ Atendimento pendente", {
-                                    body: "Há consumidores aguardando atendimento.",
-                                });
-                                lastNotificationRef.current = Date.now();
-                            }
-                        });
-                    }
-                }
-                // agendar auto-fechamento em 10s
-                if (autoCloseTimeoutRef.current) {
-                    clearTimeout(autoCloseTimeoutRef.current);
-                }
-                autoCloseTimeoutRef.current = window.setTimeout(() => {
-                    setOpen(false);
-                }, DISPLAY_DURATION_MS);
+              });
             }
-        } catch {
-            // ignore network errors to avoid noise
+          }
         }
-    }, [playAlarm]);
+      } else {
+        setCountdownOpen(false);
+      }
+    } catch {
+      // ignore network errors
+    }
+  }, [playAlarm]);
 
-    useEffect(() => {
-        // Initial check immediately
-        checkPending();
-        const intervalId = setInterval(checkPending, POLLING_INTERVAL_MS);
-        return () => clearInterval(intervalId);
-    }, [checkPending]);
+  useEffect(() => {
+    checkEligibility();
+    const intervalId = setInterval(checkEligibility, POLLING_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [checkEligibility]);
 
-    const onAcknowledge = useCallback(() => {
-        // usuário pode dispensar; dialog reabre no próximo ciclo se ainda houver pendentes
-        if (autoCloseTimeoutRef.current) {
-            clearTimeout(autoCloseTimeoutRef.current);
-            autoCloseTimeoutRef.current = null;
+  const executeCallNextRef = useRef(executeCallNext);
+  executeCallNextRef.current = executeCallNext;
+  const hasTriggeredCallRef = useRef(false);
+
+  useEffect(() => {
+    if (!countdownOpen) return;
+    hasTriggeredCallRef.current = false;
+
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdownSeconds((prev) => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          if (!hasTriggeredCallRef.current) {
+            hasTriggeredCallRef.current = true;
+            setTimeout(() => executeCallNextRef.current(), 0);
+          }
+          return 0;
         }
-        setOpen(false);
-    }, []);
+        return prev - 1;
+      });
+    }, 1000);
 
-    // Alterna o título da aba quando o alerta estiver aberto e a aba estiver oculta
-    useEffect(() => {
-        if (typeof document === "undefined") return;
-        const originalTitle = document.title;
-        let interval: number | null = null;
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+    };
+  }, [countdownOpen]);
 
-        if (open && document.hidden) {
-            interval = window.setInterval(() => {
-                document.title =
-                    document.title === "⚠️ Consumidores aguardando atendimento!"
-                        ? originalTitle
-                        : "⚠️ Consumidores aguardando atendimento!";
-            }, 1000);
-        }
+  const onCancelCountdown = useCallback(() => {
+    stopCountdownAndClose();
+  }, [stopCountdownAndClose]);
 
-        return () => {
-            if (interval) clearInterval(interval);
-            document.title = originalTitle;
-        };
-    }, [open]);
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const originalTitle = document.title;
+    let interval: ReturnType<typeof setInterval> | null = null;
 
-    if (!open) return null;
+    if (countdownOpen && document.hidden) {
+      interval = setInterval(() => {
+        document.title =
+          document.title === "⚠️ Chamada automática em breve!"
+            ? originalTitle
+            : "⚠️ Chamada automática em breve!";
+      }, 1000);
+    }
 
-    return (
-        <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Há consumidores aguardando atendimento!</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Existem consumidores aguardando atendimento. Verifique a página de operação para atendê-los.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogAction onClick={onAcknowledge}>Ok</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    );
+    return () => {
+      if (interval) clearInterval(interval);
+      document.title = originalTitle;
+    };
+  }, [countdownOpen]);
+
+  if (!countdownOpen) return null;
+
+  return (
+    <Dialog open={countdownOpen} onOpenChange={(open) => !open && onCancelCountdown()}>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>Chamada automática do próximo atendimento</DialogTitle>
+          <DialogDescription>
+            Existem consumidores aguardando há mais de 10 minutos. O próximo
+            ticket será chamado automaticamente em{" "}
+            <strong>{countdownSeconds}</strong> segundo
+            {countdownSeconds !== 1 ? "s" : ""}. Você pode cancelar para chamar
+            manualmente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-2 text-center text-3xl font-semibold tabular-nums">
+          {countdownSeconds}s
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancelCountdown}
+            disabled={callNextStatus === "executing"}
+          >
+            Cancelar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
-
-
-// Alternância do título da aba quando o alerta estiver aberto e a aba estiver oculta
-// Mantido fora do componente principal para evitar recriações? Precisamos do estado `open`, então criamos aqui abaixo dentro do mesmo arquivo para clareza.
-// Como precisamos de `open`, incluímos esse efeito dentro de um subcomponente que observa `open` via props.
-
-
