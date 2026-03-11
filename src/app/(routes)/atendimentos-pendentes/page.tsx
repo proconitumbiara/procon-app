@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -26,10 +25,9 @@ const PendingAppointments = async () => {
     redirect("/");
   }
 
-  // Apenas tickets pendentes, com client e sector (uma query; retorna só o necessário)
+  // Todos os tickets (qualquer status), com client e sector
   const ticketsRaw = await db.query.ticketsTable.findMany({
-    where: eq(ticketsTable.status, "pending"),
-    orderBy: (t, { asc }) => [asc(t.createdAt)],
+    orderBy: (t, { desc }) => [desc(t.createdAt)],
     with: {
       client: true,
       sector: true,
@@ -45,6 +43,8 @@ const PendingAppointments = async () => {
     sectorName: ticket.sector?.name ?? "-",
     sectorId: ticket.sectorId,
     createdAt: new Date(ticket.createdAt),
+    calledAt: ticket.calledAt ? new Date(ticket.calledAt) : null,
+    finishedAt: ticket.finishedAt ? new Date(ticket.finishedAt) : null,
   }));
 
   // Setores (apenas para filtros na UI; lista pequena)

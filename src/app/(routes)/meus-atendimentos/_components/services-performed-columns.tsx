@@ -13,6 +13,8 @@ export type ServicePerformedTableRow = {
     servicePointName: string
     servicePointId: string
     createdAt: Date
+    calledAt: Date | null
+    finishedAt: Date | null
     clientName: string
 }
 
@@ -58,9 +60,27 @@ export const servicesPerformedColumns: ColumnDef<ServicePerformedTableRow>[] = [
     {
         id: "createdAt",
         accessorKey: "createdAt",
-        header: "Data",
+        header: "Data de criação",
         cell: ({ row }) => {
             const date = row.original.createdAt;
+            return date ? new Date(date).toLocaleString("pt-BR") : "-";
+        },
+    },
+    {
+        id: "calledAt",
+        accessorKey: "calledAt",
+        header: "Chamado em",
+        cell: ({ row }) => {
+            const date = row.original.calledAt;
+            return date ? new Date(date).toLocaleString("pt-BR") : "-";
+        },
+    },
+    {
+        id: "finishedAt",
+        accessorKey: "finishedAt",
+        header: "Finalizado em",
+        cell: ({ row }) => {
+            const date = row.original.finishedAt;
             return date ? new Date(date).toLocaleString("pt-BR") : "-";
         },
     },

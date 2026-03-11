@@ -45,7 +45,7 @@ export const endService = authActionClient
     if (treatment.ticketId) {
       await db
         .update(ticketsTable)
-        .set({ status: "finished" })
+        .set({ status: "finished", finishedAt: new Date() })
         .where(eq(ticketsTable.id, treatment.ticketId));
     }
 

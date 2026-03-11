@@ -18,6 +18,8 @@ export type TicketTableRow = {
   sectorName: string;
   sectorId: string;
   createdAt: Date;
+  calledAt: Date | null;
+  finishedAt: Date | null;
 };
 
 const ActionsCell = ({ ticket }: { ticket: TicketTableRow }) => {
@@ -93,9 +95,27 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
   {
     id: "createdAt",
     accessorKey: "createdAt",
-    header: "Data",
+    header: "Data de criação do ticket",
     cell: ({ row }) => {
       const date = row.original.createdAt;
+      return date ? new Date(date).toLocaleString("pt-BR") : "-";
+    },
+  },
+  {
+    id: "calledAt",
+    accessorKey: "calledAt",
+    header: "Chamado em",
+    cell: ({ row }) => {
+      const date = row.original.calledAt;
+      return date ? new Date(date).toLocaleString("pt-BR") : "-";
+    },
+  },
+  {
+    id: "finishedAt",
+    accessorKey: "finishedAt",
+    header: "Finalizado em",
+    cell: ({ row }) => {
+      const date = row.original.finishedAt;
       return date ? new Date(date).toLocaleString("pt-BR") : "-";
     },
   },

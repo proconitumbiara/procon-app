@@ -49,24 +49,29 @@ const ServicesPerformed = async ({ userId }: ServicesPerformedProps) => {
     );
   }
 
-  // Mapear para ServicePerformedTableRow
+  // Mapear para ServicePerformedTableRow (createdAt/calledAt/finishedAt do ticket)
   const tableData: ServicePerformedTableRow[] = filtered
-    .map((treatment) => ({
-      id: treatment.id,
-      status: treatment.status,
-      sectorName:
-        treatment.operation?.servicePoint?.sector?.name ||
-        treatment.operation?.servicePoint?.sectorId ||
-        "-",
-      sectorId: treatment.operation?.servicePoint?.sectorId || "-",
-      servicePointName:
-        treatment.operation?.servicePoint?.name ||
-        treatment.operation?.servicePointId ||
-        "-",
-      servicePointId: treatment.operation?.servicePointId || "-",
-      createdAt: treatment.createdAt,
-      clientName: treatment.ticket?.client?.name || "-",
-    }))
+    .map((treatment) => {
+      const ticket = treatment.ticket;
+      return {
+        id: treatment.id,
+        status: treatment.status,
+        sectorName:
+          treatment.operation?.servicePoint?.sector?.name ||
+          treatment.operation?.servicePoint?.sectorId ||
+          "-",
+        sectorId: treatment.operation?.servicePoint?.sectorId || "-",
+        servicePointName:
+          treatment.operation?.servicePoint?.name ||
+          treatment.operation?.servicePointId ||
+          "-",
+        servicePointId: treatment.operation?.servicePointId || "-",
+        createdAt: ticket?.createdAt ? new Date(ticket.createdAt) : new Date(treatment.createdAt),
+        calledAt: ticket?.calledAt ? new Date(ticket.calledAt) : null,
+        finishedAt: ticket?.finishedAt ? new Date(ticket.finishedAt) : null,
+        clientName: treatment.ticket?.client?.name || "-",
+      };
+    })
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (

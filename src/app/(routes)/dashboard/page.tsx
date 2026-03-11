@@ -93,6 +93,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           totalCanceledTickets={dashboard.totalCanceledTickets}
           averageTreatmentDuration={dashboard.averageTreatmentDuration}
           averageWaitingTimeMinutes={dashboard.averageWaitingTimeMinutes}
+          averageTotalWaitingTimeMinutes={dashboard.averageTotalWaitingTimeMinutes}
         />
         <TopProfessionals professionals={professionals} />
       </PageContent>

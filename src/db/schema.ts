@@ -125,6 +125,8 @@ export const ticketsTable = pgTable(
     status: text("status").notNull().default("pending"),
     priority: integer("priority").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    calledAt: timestamp("called_at"),
+    finishedAt: timestamp("finished_at"),
     updatedAt: timestamp("updated_at")
       .defaultNow()
       .$onUpdate(() => new Date()),
@@ -139,6 +141,8 @@ export const ticketsTable = pgTable(
     index("tickets_status_sector_id_priority_idx").on(
       table.status,
       table.sectorId,
+      table.calledAt,
+      table.finishedAt,
       table.priority,
     ),
     index("tickets_status_idx").on(table.status),

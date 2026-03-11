@@ -25,8 +25,9 @@ const getDashboard = async ({ from, to }: Params) => {
     totalTreatmentsResult,
     totalNewClientsResult,
     totalCanceledTicketsResult,
-    avgDurationResult,
+    avgTreatmentDurationResult,
     avgWaitingResult,
+    avgTotalWaitingResult,
   ] = await Promise.all([
     // Ranking de profissionais filtrado pelo período selecionado
     db
@@ -74,15 +75,31 @@ const getDashboard = async ({ from, to }: Params) => {
         ),
       ),
 
-    // Média de duração dos atendimentos no período (calculado via SQL para evitar
-    // trazer todas as linhas para o Node.js)
+    // Média de tempo de atendimento (calledAt → finishedAt) no período
     db
       .select({
-        avg: sql<string>`COALESCE(ROUND(AVG(${treatmentsTable.duration})), 0)`,
+        avg: sql<string>`
+          COALESCE(
+            ROUND(
+              AVG(
+                GREATEST(
+                  0,
+                  EXTRACT(EPOCH FROM (${ticketsTable.finishedAt} - ${ticketsTable.calledAt})) / 60
+                )
+              )
+            ),
+            0
+          )
+        `,
       })
       .from(treatmentsTable)
+      .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
       .where(
-        and(dateFilter, isNotNull(treatmentsTable.duration)),
+        and(
+          dateFilter,
+          isNotNull(ticketsTable.calledAt),
+          isNotNull(ticketsTable.finishedAt),
+        ),
       ),
 
     // Média de tempo de espera no período
@@ -106,6 +123,29 @@ const getDashboard = async ({ from, to }: Params) => {
       .from(treatmentsTable)
       .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
       .where(dateFilter),
+
+    // Média de tempo total de espera (createdAt → finishedAt) no período
+    db
+      .select({
+        avg: sql<string>`
+          COALESCE(
+            ROUND(
+              AVG(
+                GREATEST(
+                  0,
+                  EXTRACT(EPOCH FROM (${ticketsTable.finishedAt} - ${ticketsTable.createdAt})) / 60
+                )
+              )
+            ),
+            0
+          )
+        `,
+      })
+      .from(treatmentsTable)
+      .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
+      .where(
+        and(dateFilter, isNotNull(ticketsTable.finishedAt)),
+      ),
   ]);
 
   return {
@@ -115,8 +155,9 @@ const getDashboard = async ({ from, to }: Params) => {
     totalTreatments: totalTreatmentsResult[0]?.total ?? 0,
     totalNewClients: totalNewClientsResult[0]?.total ?? 0,
     totalCanceledTickets: totalCanceledTicketsResult[0]?.total ?? 0,
-    averageTreatmentDuration: Number(avgDurationResult[0]?.avg ?? 0),
+    averageTreatmentDuration: Number(avgTreatmentDurationResult[0]?.avg ?? 0),
     averageWaitingTimeMinutes: Number(avgWaitingResult[0]?.avg ?? 0),
+    averageTotalWaitingTimeMinutes: Number(avgTotalWaitingResult[0]?.avg ?? 0),
   };
 };
 

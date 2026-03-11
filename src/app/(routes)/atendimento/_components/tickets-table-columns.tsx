@@ -65,4 +65,13 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
             );
         },
     },
+    {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: "Data de criação",
+        cell: ({ row }) => {
+            const date = row.original.createdAt;
+            return date ? new Date(date).toLocaleString("pt-BR") : "-";
+        },
+    },
 ]
