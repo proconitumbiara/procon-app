@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getProfessionalMetrics } from "@/data/get-professional-metrics";
+import { auth } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  if (
+    session.user.role === "professional" &&
+    id !== session.user.id
+  ) {
+    return NextResponse.json(
+      { error: "Acesso negado. Você só pode consultar suas próprias métricas." },
+      { status: 403 },
+    );
+  }
+
   try {
-    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");

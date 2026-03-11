@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DateRange } from "react-day-picker";
+import { useRouter } from "next/navigation";
 
 import {
   PageContainer,
@@ -11,17 +11,11 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { authClient } from "@/lib/auth.client";
-import { getEndOfDayInSaoPauloUTC, getStartOfDayInSaoPauloUTC } from "@/lib/timezone-utils";
-
-import DayHistory from "./_components/day-history";
-import GenerateCodeButton from "./_components/generate-code-button";
-import OperationsList from "./_components/operations-list";
-import ProfessionalHeader from "./_components/professional-header";
-import ProfessionalMetrics from "./_components/professional-metrics";
-import ProfessionalSelector from "./_components/professional-selector";
-import TreatmentsList from "./_components/treatments-list";
 import { PageActions } from "@/components/ui/page-container";
+import { authClient } from "@/lib/auth.client";
+
+import GenerateCodeButton from "./_components/generate-code-button";
+import ProfessionalListCard from "./_components/professional-list-card";
 
 interface Professional {
   id: string;
@@ -32,150 +26,62 @@ interface Professional {
   phoneNumber: string | null;
 }
 
-interface ProfessionalMetricsData {
-  totalOperations: number;
-  averageOperationTime: number;
-  totalTreatments: number;
-  averageTreatmentTime: number;
-  totalPauses: number;
-  averagePausesPerOperation: number;
-  operations: Array<{
-    id: string;
-    status: string;
-    createdAt: Date | string;
-    updatedAt: Date | string;
-    treatments: Array<{
-      id: string;
-      duration: number | null;
-      status: string;
-      createdAt: Date | string;
-      updatedAt: Date | string;
-    }>;
-    pauses: Array<{
-      id: string;
-      reason: string;
-      duration: number;
-      createdAt: Date | string;
-    }>;
-  }>;
-  treatments: Array<{
-    id: string;
-    duration: number | null;
-    status: string;
-    createdAt: Date | string;
-    updatedAt: Date | string;
-  }>;
-}
-
-const AdminsProfessionals = () => {
+const ProfissionaisPage = () => {
   const session = authClient.useSession();
+  const router = useRouter();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [selectedProfessionalId, setSelectedProfessionalId] =
-    useState<string>("");
-  const [selectedProfessional, setSelectedProfessional] =
-    useState<Professional | null>(null);
-  const [metrics, setMetrics] = useState<ProfessionalMetricsData>({
-    totalOperations: 0,
-    averageOperationTime: 0,
-    totalTreatments: 0,
-    averageTreatmentTime: 0,
-    totalPauses: 0,
-    averagePausesPerOperation: 0,
-    operations: [],
-    treatments: [],
-  });
-  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const isAdmin = session.data?.user?.role === "administrator";
+  const isProfessional = session.data?.user?.role === "professional";
+  const userId = session.data?.user?.id;
 
-  // Carregar profissionais
+  // Redirecionar profissional para a própria página
   useEffect(() => {
+    if (session.status === "loading") return;
+    if (isProfessional && userId) {
+      router.replace(`/profissionais/${userId}`);
+      return;
+    }
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
     const loadProfessionals = async () => {
       try {
         const response = await fetch("/api/professionals");
         if (response.ok) {
-          const professionalsData = await response.json();
-          setProfessionals(professionalsData);
+          const data = await response.json();
+          setProfessionals(data);
         }
       } catch (error) {
         console.error("Erro ao carregar profissionais:", error);
-      }
-    };
-
-    loadProfessionals();
-  }, []);
-
-  // Carregar métricas quando profissional ou período mudar
-  useEffect(() => {
-    if (!selectedProfessionalId) return;
-
-    const loadMetrics = async () => {
-      setLoading(true);
-      try {
-        let url = `/api/professionals/${selectedProfessionalId}/metrics`;
-
-        if (selectedDateRange?.from) {
-          // Converter datas do período para UTC antes de enviar
-          const fromUTC = getStartOfDayInSaoPauloUTC(selectedDateRange.from);
-          const toUTC = selectedDateRange.to
-            ? getEndOfDayInSaoPauloUTC(selectedDateRange.to)
-            : getEndOfDayInSaoPauloUTC(selectedDateRange.from);
-
-          url += `?from=${fromUTC.toISOString()}&to=${toUTC.toISOString()}`;
-        }
-
-        const response = await fetch(url);
-        if (response.ok) {
-          const metricsData = await response.json();
-          setMetrics(metricsData);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar métricas:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    loadMetrics();
-  }, [selectedProfessionalId, selectedDateRange]);
-
-  // Atualizar profissional selecionado
-  useEffect(() => {
-    if (selectedProfessionalId) {
-      const professional = professionals.find(
-        (p) => p.id === selectedProfessionalId,
-      );
-      setSelectedProfessional(professional || null);
-    } else {
-      setSelectedProfessional(null);
-    }
-  }, [selectedProfessionalId, professionals]);
-
-  const handleProfessionalSelect = (professionalId: string) => {
-    setSelectedProfessionalId(professionalId);
-    setSelectedDateRange(undefined); // Reset date range when changing professional
-  };
-
-  const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setSelectedDateRange(range);
-  };
-
-  const handleUpdateSuccess = () => {
-    // Recarregar profissionais após atualização
-    const loadProfessionals = async () => {
-      try {
-        const response = await fetch("/api/professionals");
-        if (response.ok) {
-          const professionalsData = await response.json();
-          setProfessionals(professionalsData);
-        }
-      } catch (error) {
-        console.error("Erro ao recarregar profissionais:", error);
-      }
-    };
     loadProfessionals();
-  };
+  }, [session.status, isProfessional, isAdmin, userId, router]);
+
+  if (session.status === "loading" || (isProfessional && userId)) {
+    return (
+      <PageContainer>
+        <PageContent className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Redirecionando...</p>
+        </PageContent>
+      </PageContainer>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <PageContainer>
+        <PageContent className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Acesso negado.</p>
+        </PageContent>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -187,67 +93,36 @@ const AdminsProfessionals = () => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          {/* Componente de Geração de Código (apenas para admins) */}
-          {isAdmin && <GenerateCodeButton />}
+          <GenerateCodeButton />
         </PageActions>
       </PageHeader>
       <PageContent className="space-y-6">
-
-
-        {/* Seletor de Profissional */}
-        <ProfessionalSelector
-          professionals={professionals.map(professional => ({
-            ...professional,
-            emailVerified: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }))}
-          selectedProfessionalId={selectedProfessionalId}
-          onProfessionalSelect={handleProfessionalSelect}
-        />
-
-        {/* Cabeçalho do Profissional */}
-        {selectedProfessional && (
-          <ProfessionalHeader
-            professional={selectedProfessional && {
-              ...selectedProfessional,
-              emailVerified: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }}
-            onUpdateSuccess={handleUpdateSuccess}
-          />
-        )}
-
-        {/* Métricas do Profissional */}
-        {selectedProfessional && (
-          <ProfessionalMetrics
-            metrics={metrics}
-            selectedDateRange={selectedDateRange}
-            onDateRangeSelect={handleDateRangeSelect}
-            professionalId={selectedProfessional.id}
-            professionalName={selectedProfessional.name}
-          />
-        )}
-
-        {/* Listas de Operações, Atendimentos e Histórico do dia */}
-        {selectedProfessional && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <OperationsList operations={metrics.operations} />
-            <TreatmentsList treatments={metrics.treatments} />
-            <DayHistory operations={metrics.operations} />
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Carregando profissionais...</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {professionals
+              .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+              .map((professional) => (
+                <ProfessionalListCard
+                  key={professional.id}
+                  id={professional.id}
+                  name={professional.name}
+                  role={professional.role}
+                />
+              ))}
           </div>
         )}
-
-        {/* Estado de carregamento */}
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground">Carregando métricas...</div>
-          </div>
+        {!loading && professionals.length === 0 && (
+          <p className="text-muted-foreground text-center py-8">
+            Nenhum profissional cadastrado.
+          </p>
         )}
       </PageContent>
     </PageContainer>
   );
 };
 
-export default AdminsProfessionals;
+export default ProfissionaisPage;

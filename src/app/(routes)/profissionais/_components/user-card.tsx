@@ -81,7 +81,7 @@ const UserCard = ({ user }: UserCardProps) => {
                 </Badge>
                 <Badge variant="outline">
                     <Lock className="mr-1" />
-                    Acesso: {user.role === "admin" ? "Administrador" : "Profissional"}
+                    Acesso: {user.role === "administrator" ? "Administrador" : "Profissional"}
                 </Badge>
 
             </CardContent>

@@ -14,11 +14,14 @@ import UpdateUserForm from "./update-user-form";
 interface ProfessionalHeaderProps {
   professional: typeof usersTable.$inferSelect;
   onUpdateSuccess?: () => void;
+  /** Quando false, oculta botões Editar e Redefinir Senha (ex.: profissional vendo própria página) */
+  showActions?: boolean;
 }
 
 const ProfessionalHeader = ({
   professional,
   onUpdateSuccess,
+  showActions = true,
 }: ProfessionalHeaderProps) => {
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] =
@@ -72,40 +75,42 @@ const ProfessionalHeader = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Dialog open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center">
-                  <Pencil className="h-4 w-4" />
-                  Editar
-                </Button>
-              </DialogTrigger>
-              <UpdateUserForm
-                user={professional}
-                onSuccess={() => {
-                  setIsEditFormOpen(false);
-                  onUpdateSuccess?.();
-                }}
-              />
-            </Dialog>
-            <Dialog
-              open={isResetPasswordDialogOpen}
-              onOpenChange={setIsResetPasswordDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center">
-                  <RotateCcwKey className="h-4 w-4" />
-                  Redefinir Senha
-                </Button>
-              </DialogTrigger>
-              <ResetPasswordDialog
-                userId={professional.id}
-                userName={professional.name || ""}
+          {showActions && (
+            <div className="flex items-center gap-2">
+              <Dialog open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center">
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                </DialogTrigger>
+                <UpdateUserForm
+                  user={professional}
+                  onSuccess={() => {
+                    setIsEditFormOpen(false);
+                    onUpdateSuccess?.();
+                  }}
+                />
+              </Dialog>
+              <Dialog
                 open={isResetPasswordDialogOpen}
                 onOpenChange={setIsResetPasswordDialogOpen}
-              />
-            </Dialog>
-          </div>
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center">
+                    <RotateCcwKey className="h-4 w-4" />
+                    Redefinir Senha
+                  </Button>
+                </DialogTrigger>
+                <ResetPasswordDialog
+                  userId={professional.id}
+                  userName={professional.name || ""}
+                  open={isResetPasswordDialogOpen}
+                  onOpenChange={setIsResetPasswordDialogOpen}
+                />
+              </Dialog>
+            </div>
+          )}
         </div>
       </CardHeader>
     </Card>

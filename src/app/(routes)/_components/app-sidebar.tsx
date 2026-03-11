@@ -124,16 +124,29 @@ export function AppSidebar() {
           <SidebarGroupLabel>Administradores</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {itemsEnterprise.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {itemsEnterprise.map((item) => {
+                const href =
+                  item.title === "Profissionais" &&
+                  role === "professional" &&
+                  session.data?.user?.id
+                    ? `/profissionais/${session.data.user.id}`
+                    : item.url;
+                const isActive =
+                  pathname === item.url ||
+                  (item.title === "Profissionais" &&
+                    role === "professional" &&
+                    pathname === `/profissionais/${session.data?.user?.id}`);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={href}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
