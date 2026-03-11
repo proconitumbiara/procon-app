@@ -9,12 +9,23 @@ const PUBLIC_PATHS = [
   "/api/auth",
 ];
 
-// Nome padrão do cookie de sessão do better-auth
-const SESSION_COOKIE_NAME = "better-auth.session_token";
+// Nomes do cookie de sessão do better-auth:
+// - desenvolvimento: "better-auth.session_token"
+// - produção (HTTPS): "__Secure-better-auth.session_token"
+const SESSION_COOKIE_NAMES = [
+  "better-auth.session_token",
+  "__Secure-better-auth.session_token",
+] as const;
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(path + "/"),
+  );
+}
+
+function hasSessionCookie(req: NextRequest): boolean {
+  return SESSION_COOKIE_NAMES.some(
+    (name) => req.cookies.get(name)?.value,
   );
 }
 
@@ -25,9 +36,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
-
-  if (!sessionCookie?.value) {
+  if (!hasSessionCookie(req)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
