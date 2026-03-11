@@ -11,6 +11,7 @@ import PausedOperationOverlay from "./_components/paused-operation-overlay";
 import PendingTickets from "./_components/pending-tickets";
 import ServiceInProgressCard from "./_components/service-in-progress-card";
 import StartOperationButton from "./_components/start-operation-button";
+import { AccessDenied } from "@/components/ui/access-denied";
 
 
 const ProfessionalServices = async () => {
@@ -34,6 +35,10 @@ const ProfessionalServices = async () => {
 
     if (!session?.user) {
         redirect("/");
+    }
+
+    if (session.user.role !== "professional") {
+        return <AccessDenied />;
     }
 
     const currentUserOperation = operations.find(
