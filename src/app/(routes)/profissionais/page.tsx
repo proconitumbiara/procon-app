@@ -38,7 +38,7 @@ const ProfissionaisPage = () => {
 
   // Redirecionar profissional para a própria página
   useEffect(() => {
-    if (session.status === "loading") return;
+    if (session.isPending) return;
     if (isProfessional && userId) {
       router.replace(`/profissionais/${userId}`);
       return;
@@ -61,9 +61,9 @@ const ProfissionaisPage = () => {
       }
     };
     loadProfessionals();
-  }, [session.status, isProfessional, isAdmin, userId, router]);
+  }, [session.isPending, isProfessional, isAdmin, userId, router]);
 
-  if (session.status === "loading" || (isProfessional && userId)) {
+  if (session.isPending || (isProfessional && userId)) {
     return (
       <PageContainer>
         <PageContent className="flex items-center justify-center py-12">
