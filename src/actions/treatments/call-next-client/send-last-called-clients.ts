@@ -3,12 +3,14 @@
 import { desc } from "drizzle-orm";
 
 import { db } from "@/db";
+import type { ChamadaCliente } from "@/lib/panel-api";
 import { sendLastCalledToPanel } from "@/lib/panel-api";
 import { getPriorityLabel } from "@/lib/priority-utils";
 
 import { treatmentsTable } from "@/db/schema";
 
-export async function sendLastCalledClients() {
+/** Retorna as últimas 5 chamadas a partir do banco (reutilizado pela API do painel). */
+export async function getUltimasChamadasFromDb(): Promise<ChamadaCliente[]> {
   const treatments = await db.query.treatmentsTable.findMany({
     orderBy: (t) => desc(t.createdAt),
     limit: 20,
@@ -55,5 +57,10 @@ export async function sendLastCalledClients() {
     (a, b) => new Date(b.chamadoEm).getTime() - new Date(a.chamadoEm).getTime(),
   );
 
-  await sendLastCalledToPanel(result.slice(0, 5));
+  return result.slice(0, 5);
+}
+
+export async function sendLastCalledClients() {
+  const result = await getUltimasChamadasFromDb();
+  await sendLastCalledToPanel(result);
 }

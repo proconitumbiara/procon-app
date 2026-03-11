@@ -1,18 +1,43 @@
 "use client";
 
+import type { ChamadaCliente } from "@/lib/panel-api";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { ArrowRight, Check, Clock, ListOrdered } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Pusher from "pusher-js";
 
-interface Chamada {
-  nome: string;
-  guiche: string;
-  chamadoEm?: string;
-  prioridade?: "Comum" | "Prioritário";
+function normalizeChamada(data: Partial<ChamadaCliente>): ChamadaCliente {
+  return {
+    nome: typeof data.nome === "string" ? data.nome : "",
+    guiche: typeof data.guiche === "string" ? data.guiche : "",
+    chamadoEm: data.chamadoEm ?? new Date().toISOString(),
+    prioridade: data.prioridade ?? "Comum",
+  };
+}
+
+function filterValidChamadas(list: ChamadaCliente[]): ChamadaCliente[] {
+  return list
+    .map(normalizeChamada)
+    .filter((c) => c.nome.trim() !== "" || c.guiche.trim() !== "")
+    .slice(0, 5);
+}
+
+function chamadaKey(c: ChamadaCliente): string {
+  return `${c.chamadoEm ?? ""}-${c.nome}-${c.guiche}`;
+}
+
+/** Retorna os 4 primeiros nomes (palavras) do nome completo. */
+function primeirosDoisNomes(nome: string): string {
+  return nome.trim().split(/\s+/).slice(0, 2).join(" ") || "";
 }
 
 function playBeep() {
-  const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+  const ctx = new (window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext })
+      .webkitAudioContext)();
   const freqs = [660, 880, 1040];
   const start = ctx.currentTime;
   freqs.forEach((freq, i) => {
@@ -32,7 +57,7 @@ function playBeep() {
   });
 }
 
-function speakName(chamada: Chamada) {
+function speakName(chamada: ChamadaCliente) {
   if (!("speechSynthesis" in window)) return;
 
   const texto =
@@ -51,10 +76,12 @@ function speakName(chamada: Chamada) {
         (v) =>
           v.lang.startsWith("pt-BR") &&
           (v.name.toLowerCase().includes("feminina") ||
-            v.name.toLowerCase().includes("female"))
+            v.name.toLowerCase().includes("female")),
       ) ||
       voices.find(
-        (v) => v.lang.startsWith("pt-BR") && v.name.toLowerCase().includes("brasil")
+        (v) =>
+          v.lang.startsWith("pt-BR") &&
+          v.name.toLowerCase().includes("brasil"),
       ) ||
       voices.find((v) => v.lang.startsWith("pt-BR"));
     if (female) utter.voice = female;
@@ -70,67 +97,68 @@ function speakName(chamada: Chamada) {
 }
 
 export default function PainelPage() {
-  const [chamadaAtual, setChamadaAtual] = useState<Chamada | null>(null);
-  const [ultimasChamadas, setUltimasChamadas] = useState<Chamada[]>([]);
+  const [chamadaAtual, setChamadaAtual] = useState<ChamadaCliente | null>(
+    null,
+  );
+  const [ultimasChamadas, setUltimasChamadas] = useState<ChamadaCliente[]>([]);
   const [clockTime, setClockTime] = useState("");
   const [clockDate, setClockDate] = useState("");
   const pusherRef = useRef<Pusher | null>(null);
 
-  // Relógio
+  const updateClock = useCallback(() => {
+    const now = new Date();
+    setClockTime(
+      now.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+    );
+    setClockDate(
+      now.toLocaleDateString("pt-BR", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+    );
+  }, []);
+
   useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      setClockTime(
-        now.toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
-      setClockDate(
-        now.toLocaleDateString("pt-BR", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      );
-    };
     updateClock();
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
+  }, [updateClock]);
+
+  useEffect(() => {
+    fetch("/api/painel/ultimas-chamadas")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: ChamadaCliente[]) => setUltimasChamadas(filterValidChamadas(data)))
+      .catch(() => { });
   }, []);
 
-  // Conexão Pusher
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-      // Heartbeat agressivo para manter conexão estável mesmo sem chamadas por horas
       activityTimeout: 25000,
       pongTimeout: 15000,
     });
 
     pusherRef.current = pusher;
-
     const channel = pusher.subscribe("painel");
 
-    channel.bind("nova-chamada", (data: Chamada) => {
-      setChamadaAtual(data);
-      setUltimasChamadas((prev) => {
-        const nova = {
-          nome: data.nome,
-          guiche: data.guiche,
-          chamadoEm: data.chamadoEm ?? new Date().toISOString(),
-          prioridade: data.prioridade,
-        };
-        return [nova, ...prev].slice(0, 5);
-      });
+    channel.bind("nova-chamada", (data: Partial<ChamadaCliente>) => {
+      const nova = normalizeChamada(data);
+      setChamadaAtual(nova);
+      setUltimasChamadas((prev) =>
+        filterValidChamadas([nova, ...prev]),
+      );
       playBeep();
-      speakName(data);
+      speakName(nova);
     });
 
-    channel.bind("ultimas-chamadas", (data: Chamada[]) => {
-      setUltimasChamadas(data.slice(0, 5));
+    channel.bind("ultimas-chamadas", (data: ChamadaCliente[]) => {
+      setUltimasChamadas(filterValidChamadas(data ?? []));
     });
 
     return () => {
@@ -146,243 +174,103 @@ export default function PainelPage() {
       : (chamadaAtual?.guiche ?? "");
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700;900&display=swap');
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html, body {
-          height: 100vh;
-          overflow: hidden;
-          font-family: 'Roboto', Arial, Helvetica, sans-serif;
-          background: #0a2240;
-        }
-
-        .painel-layout {
-          display: flex;
-          flex-direction: row;
-          width: 100vw;
-          height: 100vh;
-          position: relative;
-        }
-
-        .painel-main {
-          width: 80vw;
-          height: 110%;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .painel-header {
-          background: #fff;
-          color: #22223b;
-          font-size: 4rem;
-          font-weight: bold;
-          text-align: center;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-          letter-spacing: 1px;
-          width: 100%;
-          height: 5vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .painel-center {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 99%;
-          height: 90vh;
-          margin: 0 9px;
-        }
-
-        .painel-card {
-          background: rgba(255,255,255,0.92);
-          border-radius: 2rem;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-          width: 90%;
-          height: auto;
-          text-align: center;
-        }
-
-        .painel-card h2 {
-          font-size: 9rem;
-          font-weight: 900;
-          color: #22223b;
-          margin-bottom: 2rem;
-          letter-spacing: 0.08em;
-          padding: 0 10px;
-        }
-
-        .painel-card p {
-          font-size: 6rem;
-          color: #0a2240;
-          font-weight: bold;
-        }
-
-        .painel-sidebar {
-          width: 20vw;
-          height: 96vh;
-          background: #fff;
-          box-shadow: -2px 0 16px rgba(0,0,0,0.1);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: space-between;
-          position: relative;
-          z-index: 1;
-        }
-
-        .painel-sidebar img {
-          width: 32rem;
-          height: auto;
-          margin-bottom: 2rem;
-        }
-
-        .latest-calls {
-          text-align: center;
-          margin-bottom: 2rem;
-        }
-
-        .latest-calls-title {
-          font-size: 4rem;
-          color: #0a2240;
-          font-weight: 900;
-        }
-
-        .latest-calls ul {
-          list-style: none;
-          text-align: left;
-          padding: 0;
-        }
-
-        .latest-calls ul li {
-          margin-bottom: 20px;
-          margin-top: 20px;
-          color: #0a2240;
-          font-weight: 600;
-          font-size: 2rem;
-        }
-
-        .latest-calls ul li span {
-          font-size: 1.6rem;
-          color: #888;
-        }
-
-        .painel-clock {
-          text-align: center;
-          margin-bottom: 1rem;
-        }
-
-        .clock-time {
-          font-size: 6rem;
-          font-weight: bold;
-          color: #0a2240;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .clock-date {
-          font-size: 2rem;
-          color: #0a2240;
-          font-weight: bold;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .painel-footer {
-          background: #d90429;
-          color: #fff;
-          text-align: center;
-          font-weight: 600;
-          overflow: hidden;
-          position: fixed;
-          left: 0;
-          bottom: 0;
-          width: 100vw;
-          height: 4vh;
-          box-shadow: 0 -2px 8px rgba(0,0,0,0.07);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2;
-        }
-
-        .marquee {
-          white-space: nowrap;
-          display: inline-block;
-          animation: marquee 30s linear infinite;
-          font-size: 3rem;
-          font-weight: 900;
-        }
-
-        @keyframes marquee {
-          0%   { transform: translateX(100vw); }
-          100% { transform: translateX(-100%); }
-        }
-      `}</style>
-
-      <div className="painel-layout">
-        <div className="painel-main">
-          <header className="painel-header">
-            PROCON ITUMBIARA - PAINEL DE ATENDIMENTO
+    <div className="flex h-screen min-h-screen w-full flex-col overflow-hidden bg-secondary">
+      <div className="flex min-h-0 flex-1 flex-row">
+        <main className="flex min-w-0 flex-1 flex-col">
+          <header className="flex shrink-0 items-center justify-center border-transparent bg-white px-4 py-3 text-center shadow-2xl">
+            <h1 className="text-[clamp(1.25rem,2.5vw,2.5rem)] font-bold tracking-wide text-secondary">
+              PROCON ITUMBIARA - PAINEL DE ATENDIMENTO
+            </h1>
           </header>
 
-          <div className="painel-center">
-            <div className="painel-card">
-              <h2>{chamadaAtual?.nome ?? ""}</h2>
-              <p>{guicheDisplay}</p>
-            </div>
+          <div className="flex flex-1 flex-col items-center justify-center p-4 md:p-6">
+            <Card className="w-full max-w-[90%] bg-white border border-transparent shadow-lg md:max-w-4xl">
+              <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center md:gap-6 md:py-16">
+                <h2 className="max-w-full wrap-break-words px-2 text-center font-black tracking-wide text-secondary text-[clamp(2rem,5vw,6rem)]">
+                  {chamadaAtual?.nome
+                    ? primeirosDoisNomes(chamadaAtual.nome) + ""
+                    : "Aguardando chamada"}
+                </h2>
+                {chamadaAtual?.guiche && (
+                  <p className="font-bold text-primary/75 text-[clamp(1.25rem,2.5vw,3rem)]">
+                    {guicheDisplay}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </div>
+        </main>
 
-        <aside className="painel-sidebar">
+        <aside className="flex w-full max-w-88 shrink-0 flex-col items-center justify-between gap-4 border-l border-border bg-white px-4 py-6 shadow-2xl xl:max-w-md">
           <Image
             src="/Logo.svg"
             alt="Logo PROCON Itumbiara"
             width={320}
             height={120}
             priority
-            style={{ width: "32rem", height: "auto", marginBottom: "2rem" }}
+            className="h-auto w-full max-w-[18rem] shrink-0 object-contain"
           />
 
-          <div className="latest-calls">
-            <span className="latest-calls-title">ÚLTIMAS CHAMADAS</span>
-            <ul>
-              {ultimasChamadas.map((c, idx) => (
-                <li key={idx}>
-                  {c.nome} - {c.guiche}
-                  {c.chamadoEm && (
-                    <span>
-                      {" "}
-                      (
-                      {new Date(c.chamadoEm).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                      )
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Card className="w-full min-w-0 flex-1 overflow-hidden bg-white border-none shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-xl font-bold text-secondary">
+                Últimas chamadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <ul className="list-none space-y-2 p-0" role="list">
+                {ultimasChamadas.map((c) => (
+                  <li
+                    key={chamadaKey(c)}
+                    className="rounded-md border border-transparent bg-white px-3 py-2 text-xl"
+                  >
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-semibold text-secondary">
+                        {c.nome}
+                      </span>
+                      {c.prioridade === "Prioritário" && (
+                        <Badge variant="default" className="shrink-0 text-xs bg-primary/75 py-0.5 text-white">
+                          Prioritário
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-secondary text-md">
+                      <span>{c.guiche} - </span>
+                      {c.chamadoEm && (
+                        <span>
+                          {new Date(c.chamadoEm).toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
 
-          <div className="painel-clock">
-            <div className="clock-time">{clockTime}</div>
-            <div className="clock-date">{clockDate}</div>
+
+          <div className="flex shrink-0 flex-col items-center gap-1 text-center">
+            <div className="flex items-center gap-2 font-bold text-secondary">
+              <span className="text-[clamp(1.25rem,2vw,2rem)] tabular-nums text-2xl">
+                {clockTime}
+              </span>
+            </div>
+            <div className="font-medium capitalize text-secondary text-2xl">
+              {clockDate}
+            </div>
           </div>
         </aside>
       </div>
 
-      <footer className="painel-footer">
-        <span className="marquee">
+      <footer className="flex shrink-0 items-center justify-center overflow-hidden bg-primary py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.07)]">
+        <span className="painel-marquee inline-block whitespace-nowrap font-bold text-primary-foreground text-[clamp(0.875rem,1.5vw,1.25rem)]">
           SEJAM BEM-VINDOS • MANTENHA SEUS DOCUMENTOS EM MÃOS • AGUARDE SER
           CHAMADO • SIGA NOSSAS REDES SOCIAIS - @PROCONITUMBIARA
         </span>
       </footer>
-    </>
+    </div>
   );
 }

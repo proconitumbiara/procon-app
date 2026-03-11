@@ -237,3 +237,17 @@ a:focus:not([class*="no-underline"]) {
 .large-font {
   font-size: 110% !important;
 }
+
+/* Painel: marquee do rodapé */
+@keyframes painel-marquee {
+  0% {
+    transform: translateX(100vw);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.painel-marquee {
+  animation: painel-marquee 30s linear infinite;
+}
