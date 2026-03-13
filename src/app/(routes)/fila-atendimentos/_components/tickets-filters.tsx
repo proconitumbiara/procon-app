@@ -21,7 +21,7 @@ export default function TicketsFilters({
   const [tickets, setTickets] = useState(initialTickets);
   const [nameFilter, setNameFilter] = useState("");
   const [cpfFilter, setCpfFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [sectorFilter, setSectorFilter] = useState("");
   const [showAllTickets, setShowAllTickets] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
@@ -35,19 +35,19 @@ export default function TicketsFilters({
         throw new Error("Erro ao buscar tickets");
       }
       const data = await res.json();
-      
+
       // Buscar clientes e setores
       const clientsRes = await fetch("/api/clients", { credentials: "same-origin" });
       if (!clientsRes.ok) throw new Error("Erro ao buscar clientes/setores");
       const clientsSectorsData = await clientsRes.json();
-      
+
       const clientsMap = Object.fromEntries(
         (clientsSectorsData.clients || []).map((c: { id: string; name: string }) => [c.id, c.name])
       );
       const sectorsMap = Object.fromEntries(
         (clientsSectorsData.sectors || []).map((s: { id: string; name: string }) => [s.id, s.name])
       );
-      
+
       const mapped: TicketTableRow[] = (data.tickets || []).map(
         (ticket: {
           id: string;
@@ -71,7 +71,7 @@ export default function TicketsFilters({
           finishedAt: ticket.finishedAt ? new Date(ticket.finishedAt) : null,
         })
       );
-      
+
       setTickets(mapped);
     } catch (error) {
       console.error("Erro ao recarregar tickets:", error);
@@ -119,66 +119,66 @@ export default function TicketsFilters({
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="flex flex-1 flex-wrap gap-2">
-        <input
-          type="text"
-          placeholder="Buscar por nome..."
-          value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
-          className="rounded border p-2 text-sm"
-        />
-        <input
-          type="text"
-          placeholder="Buscar por CPF..."
-          value={cpfFilter}
-          onChange={(e) => setCpfFilter(e.target.value)}
-          className="rounded border p-2 text-sm"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded border p-2 text-sm"
-        >
-          <option value="" className="bg-background">
-            Status
-          </option>
-          <option value="pending" className="bg-background">
-            Pendente
-          </option>
-          <option value="in-attendance" className="bg-background">
-            Em atendimento
-          </option>
-          <option value="finished" className="bg-background">
-            Atendido
-          </option>
-          <option value="cancelled" className="bg-background">
-            Cancelado
-          </option>
-        </select>
-        <select
-          value={sectorFilter}
-          onChange={(e) => setSectorFilter(e.target.value)}
-          className="rounded border p-2 text-sm"
-        >
-          <option value="" className="bg-background">
-            Setores
-          </option>
-          {sectors.map((sector) => (
-            <option key={sector.id} value={sector.id} className="bg-background">
-              {sector.name}
+          <input
+            type="text"
+            placeholder="Buscar por nome..."
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+            className="rounded border p-2 text-sm"
+          />
+          <input
+            type="text"
+            placeholder="Buscar por CPF..."
+            value={cpfFilter}
+            onChange={(e) => setCpfFilter(e.target.value)}
+            className="rounded border p-2 text-sm"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded border p-2 text-sm"
+          >
+            <option value="" className="bg-background">
+              Status
             </option>
-          ))}
-        </select>
-        <Button
-          onClick={() => {
-            setNameFilter("");
-            setCpfFilter("");
-            setStatusFilter("");
-            setSectorFilter("");
-          }}
-          variant="link"
-        >
-          Resetar filtros
-        </Button>
+            <option value="pending" className="bg-background">
+              Pendente
+            </option>
+            <option value="in-attendance" className="bg-background">
+              Em atendimento
+            </option>
+            <option value="finished" className="bg-background">
+              Atendido
+            </option>
+            <option value="cancelled" className="bg-background">
+              Cancelado
+            </option>
+          </select>
+          <select
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className="rounded border p-2 text-sm"
+          >
+            <option value="" className="bg-background">
+              Setores
+            </option>
+            {sectors.map((sector) => (
+              <option key={sector.id} value={sector.id} className="bg-background">
+                {sector.name}
+              </option>
+            ))}
+          </select>
+          <Button
+            onClick={() => {
+              setNameFilter("");
+              setCpfFilter("");
+              setStatusFilter("");
+              setSectorFilter("");
+            }}
+            variant="link"
+          >
+            Resetar filtros
+          </Button>
         </div>
         <div className="flex gap-1">
           <Button
