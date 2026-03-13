@@ -22,7 +22,7 @@ export const servicesPerformedColumns: ColumnDef<ServicePerformedTableRow>[] = [
     {
         id: "clientName",
         accessorKey: "clientName",
-        header: "Cliente",
+        header: "Consumidor",
     },
     {
         id: "sectorName",
