@@ -1,13 +1,16 @@
-import { EditIcon, TicketPlus } from "lucide-react";
+import { EditIcon, ExternalLink, TicketPlus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
-import {} from "@/components/ui/alert-dialog";
+import { } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { clientsTable } from "@/db/schema";
 
 import CreateTicketForm from "./create-ticket-form";
 import UpsertClientForm from "./upsert-client-form";
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface ClientsTableActionsProps {
   client: typeof clientsTable.$inferSelect;
@@ -20,6 +23,26 @@ const TableClientActions = ({ client, sectors }: ClientsTableActionsProps) => {
 
   return (
     <div className="flex items-center gap-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="gap-2"
+              aria-label={`Ver detalhes de ${client.name}`}
+            >
+              <Link href={`/consumidores/${client.id}`}>
+                <ExternalLink className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Ver detalhes de {client.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <Dialog open={upsertDialogIsOpen} onOpenChange={setUpsertDialogOpen}>
         <Button
           variant="outline"
