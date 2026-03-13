@@ -1,11 +1,13 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LayoutGrid, List } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { useTicketsWebSocket } from "@/hooks/use-tickets-websocket";
 
 import { ticketsTableColumns, TicketTableRow } from "./table-columns";
+import TicketsCards from "./tickets-cards";
 
 interface TicketsFiltersProps {
   tickets: TicketTableRow[];
@@ -22,6 +24,7 @@ export default function TicketsFilters({
   const [statusFilter, setStatusFilter] = useState("");
   const [sectorFilter, setSectorFilter] = useState("");
   const [showAllTickets, setShowAllTickets] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   // Função para recarregar tickets
   const reloadTickets = useCallback(async () => {
@@ -114,7 +117,8 @@ export default function TicketsFilters({
 
   return (
     <>
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="flex flex-1 flex-wrap gap-2">
         <input
           type="text"
           placeholder="Buscar por nome..."
@@ -175,6 +179,25 @@ export default function TicketsFilters({
         >
           Resetar filtros
         </Button>
+        </div>
+        <div className="flex gap-1">
+          <Button
+            variant={viewMode === "table" ? "secondary" : "outline"}
+            size="icon"
+            onClick={() => setViewMode("table")}
+            aria-label="Visualização em tabela"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "cards" ? "secondary" : "outline"}
+            size="icon"
+            onClick={() => setViewMode("cards")}
+            aria-label="Visualização em cards"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       {/* Contador de registros */}
       <div className="text-muted-foreground mb-2 text-sm">
@@ -182,7 +205,11 @@ export default function TicketsFilters({
         {filteredTickets.length === 1 ? "" : "s"} encontrado
         {filteredTickets.length === 1 ? "" : "s"}
       </div>
-      <DataTable data={displayedTickets} columns={ticketsTableColumns} />
+      {viewMode === "table" ? (
+        <DataTable data={displayedTickets} columns={ticketsTableColumns} />
+      ) : (
+        <TicketsCards tickets={displayedTickets} />
+      )}
       {filteredTickets.length > 20 && (
         <div className="flex justify-center pt-4">
           <Button

@@ -28,6 +28,7 @@ export const updateTicket = authActionClient
       .update(ticketsTable)
       .set({
         status: "cancelled",
+        finishedAt: new Date(),
         sectorId: ticket.sectorId,
         clientId: ticket.clientId,
       })

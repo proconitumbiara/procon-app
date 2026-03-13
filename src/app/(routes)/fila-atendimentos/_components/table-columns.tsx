@@ -6,8 +6,22 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { TicketWaitTime } from "@/components/ticket-wait-time";
 
 import UpdateTicketForm from "./update-ticket-form";
+
+function formatDurationMs(ms: number): string {
+  if (ms < 0) return "-";
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}min`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+  return parts.join(" ");
+}
 
 export type TicketTableRow = {
   id: string;
@@ -32,9 +46,10 @@ const ActionsCell = ({ ticket }: { ticket: TicketTableRow }) => {
         size="icon"
         onClick={() => setOpen(true)}
         aria-label="Cancelar atendimento"
-        disabled={ticket.status === "cancelled"}
+        className="w-full"
+        disabled={ticket.status === "cancelled" || ticket.status === "finished"}
       >
-        {ticket.status === "cancelled" ? "Já cancelado" : "Cancelar"}
+        {ticket.status === "cancelled" ? "Já cancelado" : ticket.status === "finished" ? "Atendido" : "Cancelar"}
       </Button>
       {open && (
         <UpdateTicketForm ticket={ticket} onSuccess={() => setOpen(false)} />
@@ -90,6 +105,33 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
         color = "bg-green-100 text-green-800 border-green-300";
       }
       return <Badge className={color}>{label}</Badge>;
+    },
+  },
+  {
+    id: "waitTime",
+    header: "Tempo de espera",
+    cell: ({ row }) => {
+      const t = row.original;
+      return (
+        <TicketWaitTime
+          status={t.status}
+          createdAt={t.createdAt}
+          calledAt={t.calledAt}
+          finishedAt={t.finishedAt}
+          live={true}
+        />
+      );
+    },
+  },
+  {
+    id: "serviceDuration",
+    header: "Duração do atendimento",
+    cell: ({ row }) => {
+      const t = row.original;
+      if (t.status !== "finished" || !t.calledAt || !t.finishedAt) return "-";
+      const ms =
+        new Date(t.finishedAt).getTime() - new Date(t.calledAt).getTime();
+      return formatDurationMs(ms);
     },
   },
   {
