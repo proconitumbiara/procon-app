@@ -9,6 +9,7 @@ import { useTicketsWebSocket } from "@/hooks/use-tickets-websocket";
 
 import CallNextTicketButton from "./call-next-ticket-button";
 import { ticketsTableColumns, TicketTableRow } from "./tickets-table-columns";
+import { TicketWaitTime } from "@/components/ticket-wait-time";
 
 const fetchPendingTicketsWithNames = async () => {
     const res = await fetch("/api/tickets/pending-with-names", { credentials: "same-origin" });
@@ -121,6 +122,17 @@ export default function PendingTickets() {
                                                     {priorityLabel}
                                                 </p>
                                                 <p className="text-xs mt-6 font-light text-muted-foreground">Aguardando desde: {new Date(ticket.createdAt).toLocaleString("pt-BR")}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs font-light text-muted-foreground">Tempo de espera:</p>
+                                                    <TicketWaitTime
+                                                        status={ticket.status}
+                                                        createdAt={ticket.createdAt}
+                                                        calledAt={null}
+                                                        finishedAt={null}
+                                                        live={true}
+                                                        className="text-xs font-normal text-muted-foreground"
+                                                    />
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>

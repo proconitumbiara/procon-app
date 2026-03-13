@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 
 import { Badge } from "@/components/ui/badge"
+import { TicketWaitTime } from "@/components/ticket-wait-time"
 
 
 export type TicketTableRow = {
@@ -34,8 +35,8 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
         cell: ({ row }) => {
             const priority = row.original.priority;
             const label = priority === 1 ? "Prioritário" : "Comum";
-            const color = priority === 1 
-                ? "bg-purple-100 text-purple-800 border-purple-300" 
+            const color = priority === 1
+                ? "bg-purple-100 text-purple-800 border-purple-300"
                 : "bg-gray-100 text-gray-800 border-gray-300";
             return (
                 <Badge className={color}>{label}</Badge>
@@ -72,6 +73,23 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
         cell: ({ row }) => {
             const date = row.original.createdAt;
             return date ? new Date(date).toLocaleString("pt-BR") : "-";
+        },
+    },
+    {
+        id: "waitTime",
+        header: "Tempo de espera",
+        cell: ({ row }) => {
+            const { status, createdAt } = row.original;
+            return (
+                <TicketWaitTime
+                    status={status}
+                    createdAt={createdAt}
+                    calledAt={null}
+                    finishedAt={null}
+                    live
+                    className="text-sm"
+                />
+            );
         },
     },
 ]
