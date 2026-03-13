@@ -12,6 +12,7 @@ import { usersTable } from "@/db/schema";
 
 import DayHistory from "../../_components/day-history";
 import OperationsList from "../../_components/operations-list";
+import PausesList from "../../_components/pauses-list";
 import ProfessionalHeader from "../../_components/professional-header";
 import ProfessionalMetrics from "../../_components/professional-metrics";
 import TreatmentsList from "../../_components/treatments-list";
@@ -23,17 +24,19 @@ interface ProfessionalMetricsData {
   averageTreatmentTime: number;
   totalPauses: number;
   averagePausesPerOperation: number;
+  averageTimeBetweenTreatments: number;
   operations: Array<{
     id: string;
     status: string;
     createdAt: Date | string;
     updatedAt: Date | string;
+    finishedAt: Date | string | null;
     treatments: Array<{
       id: string;
       duration: number | null;
       status: string;
-      createdAt: Date | string;
-      updatedAt: Date | string;
+      startedAt?: Date | string | null;
+      finishedAt?: Date | string | null;
     }>;
     pauses: Array<{
       id: string;
@@ -46,8 +49,28 @@ interface ProfessionalMetricsData {
     id: string;
     duration: number | null;
     status: string;
+    startedAt: Date | string | null;
+    finishedAt: Date | string | null;
+    clientName?: string;
+    sectorName?: string;
+    servicePointName?: string;
+    ticketCreatedAt?: Date | string | null;
+    ticketCalledAt?: Date | string | null;
+    ticketFinishedAt?: Date | string | null;
+    ticketStatus?: string | null;
+    treatmentStartedAt?: Date | string | null;
+    treatmentFinishedAt?: Date | string | null;
+    waitingTimeMinutes?: number | null;
+  }>;
+  pauses: Array<{
+    id: string;
+    reason: string;
+    duration: number;
+    status: string;
     createdAt: Date | string;
-    updatedAt: Date | string;
+    finishedAt: Date | string | null;
+    operationId: string;
+    operationCreatedAt: Date | string;
   }>;
 }
 
@@ -69,8 +92,10 @@ const ProfessionalDetailClient = ({
     averageTreatmentTime: 0,
     totalPauses: 0,
     averagePausesPerOperation: 0,
+    averageTimeBetweenTreatments: 0,
     operations: [],
     treatments: [],
+    pauses: [],
   });
   const [selectedDateRange, setSelectedDateRange] = useState<
     DateRange | undefined
@@ -119,11 +144,13 @@ const ProfessionalDetailClient = ({
           professionalName={professional.name}
         />
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <OperationsList operations={metrics.operations} />
           <TreatmentsList treatments={metrics.treatments} />
           <DayHistory operations={metrics.operations} />
+          <PausesList pauses={metrics.pauses} />
         </div>
+
 
         {loading && (
           <div className="flex items-center justify-center py-8">

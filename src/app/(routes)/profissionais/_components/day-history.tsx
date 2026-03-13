@@ -39,7 +39,8 @@ interface Operation {
   finishedAt?: Date | string | null;
   treatments: Array<{
     id: string;
-    createdAt: Date | string;
+    createdAt?: Date | string;
+    startedAt?: Date | string | null;
   }>;
   pauses: Array<{
     id: string;
@@ -74,11 +75,13 @@ const buildHistoryItems = (operations: Operation[]): HistoryItem[] => {
     });
 
     for (const t of op.treatments || []) {
+      const treatmentDate = t.createdAt ?? t.startedAt;
+      if (!treatmentDate) continue;
       treatmentIndex += 1;
       raw.push({
         type: "treatment",
         id: t.id,
-        date: t.createdAt,
+        date: treatmentDate,
         label: `Atendimento ${String(treatmentIndex).padStart(2, "0")}`,
       });
     }
@@ -154,12 +157,12 @@ const DayHistory = ({ operations }: DayHistoryProps) => {
               <div className="flex flex-col items-center">
                 <div
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${item.type === "operation_start"
-                      ? "border-blue-600 bg-blue-500/10"
-                      : item.type === "operation_finish"
-                        ? "border-primary bg-primary/10"
-                        : item.type === "treatment"
-                          ? "border-green-600 bg-green-500/10"
-                          : "border-amber-600 bg-amber-500/10"
+                    ? "border-blue-600 bg-blue-500/10"
+                    : item.type === "operation_finish"
+                      ? "border-primary bg-primary/10"
+                      : item.type === "treatment"
+                        ? "border-green-600 bg-green-500/10"
+                        : "border-amber-600 bg-amber-500/10"
                     }`}
                 >
                   {item.type === "operation_start" ? (

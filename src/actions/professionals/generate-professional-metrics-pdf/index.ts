@@ -118,6 +118,21 @@ export const generateProfessionalMetricsPDF = authActionClient
       doc.setTextColor(secondaryColor);
       doc.text("Atendimentos por operação", 110, yPosition + 18);
 
+      // Intervalo entre atendimentos
+      doc.setFontSize(12);
+      doc.setTextColor(textColor);
+      doc.text("Intervalo entre atendimentos", 20, yPosition + 35);
+      doc.setFontSize(18);
+      doc.setTextColor(primaryColor);
+      doc.text(
+        formatTime(metrics.averageTimeBetweenTreatments ?? 0),
+        20,
+        yPosition + 45,
+      );
+      doc.setFontSize(10);
+      doc.setTextColor(secondaryColor);
+      doc.text("Tempo médio entre um atendimento e outro", 20, yPosition + 53);
+
       // Data de geração
       doc.setFontSize(8);
       doc.setTextColor(secondaryColor);

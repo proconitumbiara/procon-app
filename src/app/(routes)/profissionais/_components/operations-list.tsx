@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Clock, Pause, Users } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,10 +17,13 @@ interface Operation {
   status: string;
   createdAt: Date | string;
   updatedAt: Date | string;
+  finishedAt: Date | string | null;
   treatments: Array<{
     id: string;
     duration: number | null;
     status: string;
+    startedAt?: Date | string | null;
+    finishedAt?: Date | string | null;
   }>;
   pauses: Array<{
     id: string;
@@ -79,15 +82,20 @@ const OperationsList = ({ operations }: OperationsListProps) => {
         ? operation.createdAt
         : new Date(operation.createdAt);
     const end =
-      operation.updatedAt instanceof Date
-        ? operation.updatedAt
-        : new Date(operation.updatedAt);
+      operation.status === "finished" && operation.finishedAt
+        ? operation.finishedAt instanceof Date
+          ? operation.finishedAt
+          : new Date(operation.finishedAt)
+        : operation.updatedAt instanceof Date
+          ? operation.updatedAt
+          : new Date(operation.updatedAt);
     const durationMs = end.getTime() - start.getTime();
     return Math.round(durationMs / 60000); // em minutos
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "active":
       case "operating":
         return "bg-green-100 text-green-800";
       case "finished":
@@ -101,6 +109,7 @@ const OperationsList = ({ operations }: OperationsListProps) => {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case "active":
       case "operating":
         return "Em operação";
       case "finished":
@@ -112,43 +121,50 @@ const OperationsList = ({ operations }: OperationsListProps) => {
     }
   };
 
+  const sortedOperations = [...operations].sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA;
+  });
+  const list = showAllOperations ? sortedOperations : sortedOperations.slice(0, 20);
+
   if (operations.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Operações
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground py-4 text-center">
+      <Card className="mx-auto flex h-full w-full flex-col">
+        <CardContent className="flex flex-1 flex-col">
+          <div className="mb-6 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <Users className="text-muted-foreground h-5 w-5" />
+              <CardTitle className="text-base sm:text-lg">Operações</CardTitle>
+            </div>
+            <CardDescription className="text-sm sm:text-base">
+              Listagem de operações do profissional no período selecionado
+            </CardDescription>
+          </div>
+          <div className="text-muted-foreground py-8 text-center text-sm">
             Nenhuma operação encontrada para este período.
-          </p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Operações ({operations.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {operations
-          .sort((a, b) => {
-            const dateA =
-              a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-            const dateB =
-              b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
-            return dateB.getTime() - dateA.getTime(); // Mais novo primeiro
-          })
-          .slice(0, showAllOperations ? undefined : 20)
-          .map((operation) => {
+    <Card className="mx-auto flex h-full w-full flex-col">
+      <CardContent className="flex flex-1 flex-col">
+        <div className="mb-6 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Users className="text-muted-foreground h-5 w-5" />
+            <CardTitle className="text-base sm:text-lg">
+              Operações ({operations.length})
+            </CardTitle>
+          </div>
+          <CardDescription className="text-sm sm:text-base">
+            Listagem de operações do profissional no período selecionado
+          </CardDescription>
+        </div>
+        <div className="flex-1 space-y-1 overflow-y-auto">
+          {list.map((operation) => {
             const isExpanded = expandedOperations.has(operation.id);
             const duration = calculateOperationDuration(operation);
             const treatmentsCount = operation.treatments.length;
@@ -161,39 +177,39 @@ const OperationsList = ({ operations }: OperationsListProps) => {
               >
                 <CollapsibleTrigger asChild>
                   <Button
-                    variant="ghost"
-                    className="h-auto w-full justify-between p-4"
+                    variant="outline"
+                    className="h-auto w-full justify-between gap-2 py-3 text-left"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4 shrink-0" />
                       ) : (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 shrink-0" />
                       )}
-                      <div className="text-left">
-                        <div className="font-medium">
+                      <div className="flex w-full items-center justify-between">
+                        <div className="truncate font-medium">
                           Operação #{operation.id.slice(-8)}
                         </div>
-                        <div className="text-muted-foreground text-sm">
-                          {formatDate(operation.createdAt)}
+                        <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                          <span className="flex items-center gap-1 border-r border-border pr-3">
+                            {formatDate(operation.createdAt)}
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(operation.status)}`}
+                          >
+                            {getStatusText(operation.status)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {formatTime(duration)}
+                          </span>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(operation.status)}`}
-                      >
-                        {getStatusText(operation.status)}
-                      </span>
-                      <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4" />
-                        {formatTime(duration)}
                       </div>
                     </div>
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="px-4 pb-4">
-                  <div className="bg-muted/50 space-y-3 rounded-lg p-4">
+                <CollapsibleContent>
+                  <div className="border-border bg-muted/40 text-muted-foreground mt-0.5 mb-4 rounded-md border px-4 py-3 text-sm space-y-3">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-blue-600" />
@@ -208,19 +224,35 @@ const OperationsList = ({ operations }: OperationsListProps) => {
                           Atendimentos realizados:
                         </h4>
                         <div className="space-y-1">
-                          {operation.treatments.map((treatment) => (
-                            <div
-                              key={treatment.id}
-                              className="bg-background flex items-center justify-between rounded p-2 text-xs"
-                            >
-                              <span>Atendimento #{treatment.id.slice(-8)}</span>
-                              <span className="text-muted-foreground">
-                                {treatment.duration
-                                  ? formatTime(treatment.duration)
-                                  : "Em andamento"}
-                              </span>
-                            </div>
-                          ))}
+                          {operation.treatments.map((treatment) => {
+                            const isFinished = treatment.status === "finished";
+                            const startRef =
+                              treatment.startedAt ?? operation.createdAt;
+                            const duration =
+                              treatment.duration ??
+                              (isFinished &&
+                                treatment.finishedAt &&
+                                startRef
+                                ? Math.round(
+                                    (new Date(treatment.finishedAt).getTime() -
+                                      new Date(startRef).getTime()) /
+                                      60000
+                                  )
+                                : null);
+                            return (
+                              <div
+                                key={treatment.id}
+                                className="bg-background flex items-center justify-between rounded p-2 text-xs"
+                              >
+                                <span>Atendimento #{treatment.id.slice(-8)}</span>
+                                <span className="text-muted-foreground">
+                                  {duration != null
+                                    ? formatTime(duration)
+                                    : "Em andamento"}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -260,18 +292,20 @@ const OperationsList = ({ operations }: OperationsListProps) => {
               </Collapsible>
             );
           })}
-        {operations.length > 20 && (
-          <div className="flex justify-center pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowAllOperations(!showAllOperations)}
-            >
-              {showAllOperations
-                ? "Ver menos"
-                : `Ver mais (${operations.length - 20} restantes)`}
-            </Button>
-          </div>
-        )}
+          {operations.length > 20 && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllOperations(!showAllOperations)}
+              >
+                {showAllOperations
+                  ? "Ver menos"
+                  : `Ver mais (${operations.length - 20} restantes)`}
+              </Button>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
