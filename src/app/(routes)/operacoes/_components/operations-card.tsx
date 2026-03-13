@@ -185,8 +185,16 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
           className="relative flex w-full max-w-md min-w-[30px] flex-col h-[400px]"
         >
           {operation && (
-            <Badge className="absolute top-3 right-3 bg-green-500 text-white">
-              Operando
+            <Badge
+              className={
+                operation.status === "in-attendance"
+                  ? "absolute top-3 right-3 bg-blue-500 text-white"
+                  : "absolute top-3 right-3 bg-green-500 text-white"
+              }
+            >
+              {operation.status === "in-attendance"
+                ? "Ativa - Em atendimento"
+                : "Ativa - Disponível"}
             </Badge>
           )}
           <CardHeader className="flex flex-col">

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -28,9 +28,10 @@ const Operations = async () => {
     redirect("/");
   }
 
-  // Buscar operações com status 'operating', incluindo joins e atendimentos
+  // Buscar operações com status 'operating' ou 'in-attendance', incluindo joins e atendimentos
   const operations = await db.query.operationsTable.findMany({
-    where: (op, { eq }) => eq(op.status, "operating"),
+    where: (op, { eq, or }) =>
+      or(eq(op.status, "operating"), eq(op.status, "in-attendance")),
     with: {
       servicePoint: {
         with: {
