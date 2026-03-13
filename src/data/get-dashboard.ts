@@ -28,6 +28,7 @@ const getDashboard = async ({ from, to }: Params) => {
     avgTreatmentDurationResult,
     avgWaitingResult,
     avgTotalWaitingResult,
+    treatmentsRaw,
   ] = await Promise.all([
     // Ranking de profissionais filtrado pelo período selecionado
     db
@@ -141,7 +142,68 @@ const getDashboard = async ({ from, to }: Params) => {
       .from(treatmentsTable)
       .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
       .where(and(dateFilter, isNotNull(ticketsTable.finishedAt))),
+
+    // Listagem de todos os atendimentos do período (para o dashboard)
+    db.query.treatmentsTable.findMany({
+      where: dateFilter,
+      orderBy: (t, { desc }) => [desc(t.createdAt)],
+      with: {
+        ticket: {
+          with: {
+            client: true,
+            sector: true,
+          },
+        },
+        operation: {
+          with: {
+            user: true,
+            servicePoint: {
+              with: {
+                sector: true,
+              },
+            },
+          },
+        },
+      },
+    }),
   ]);
+
+  const treatments = treatmentsRaw.map((t) => {
+    const ticketCreatedAt = t.ticket?.createdAt
+      ? new Date(t.ticket.createdAt).getTime()
+      : null;
+    const calledAt = t.ticket?.calledAt
+      ? new Date(t.ticket.calledAt).getTime()
+      : null;
+    const treatmentStartedAt = t.startedAt
+      ? new Date(t.startedAt).getTime()
+      : null;
+    const waitingTimeMs =
+      ticketCreatedAt != null && (calledAt != null || treatmentStartedAt != null)
+        ? (calledAt ?? treatmentStartedAt!) - ticketCreatedAt
+        : null;
+    const waitingTimeMinutes =
+      waitingTimeMs != null ? Math.round(waitingTimeMs / 60000) : null;
+    const durationMinutes =
+      t.duration != null ? Math.round(t.duration / 60) : null;
+
+    return {
+      id: t.id,
+      clientName: t.ticket?.client?.name ?? "-",
+      sectorName: t.ticket?.sector?.name ?? "-",
+      ticketCreatedAt: t.ticket?.createdAt ?? null,
+      ticketCalledAt: t.ticket?.calledAt ?? null,
+      ticketFinishedAt: t.ticket?.finishedAt ?? null,
+      ticketStatus: t.ticket?.status ?? null,
+      durationMinutes,
+      treatmentStartedAt: t.startedAt ?? null,
+      treatmentFinishedAt: t.finishedAt ?? null,
+      treatmentStatus: t.status,
+      professionalName: t.operation?.user?.name ?? "-",
+      servicePointName: t.operation?.servicePoint?.name ?? "-",
+      waitingTimeMinutes,
+    };
+  });
 
   return {
     topProfessionals: topProfessionals.filter(
@@ -153,6 +215,7 @@ const getDashboard = async ({ from, to }: Params) => {
     averageTreatmentDuration: Number(avgTreatmentDurationResult[0]?.avg ?? 0),
     averageWaitingTimeMinutes: Number(avgWaitingResult[0]?.avg ?? 0),
     averageTotalWaitingTimeMinutes: Number(avgTotalWaitingResult[0]?.avg ?? 0),
+    treatments,
   };
 };
 

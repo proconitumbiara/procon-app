@@ -22,6 +22,7 @@ import {
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
 import TopProfessionals from "./_components/top-professionals";
+import TreatmentsList from "./_components/treatments-list";
 
 interface DashboardPageProps {
   searchParams: Promise<{
@@ -95,7 +96,10 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           averageWaitingTimeMinutes={dashboard.averageWaitingTimeMinutes}
           averageTotalWaitingTimeMinutes={dashboard.averageTotalWaitingTimeMinutes}
         />
-        <TopProfessionals professionals={professionals} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <TopProfessionals professionals={professionals} />
+          <TreatmentsList treatments={dashboard.treatments} />
+        </div>
       </PageContent>
     </PageContainer>
   );

@@ -2,7 +2,7 @@
 
 import { endOfMonth, format, parseISO, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, RotateCcw } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import * as React from "react";
 import { DateRange } from "react-day-picker";
@@ -70,6 +70,14 @@ export function DatePicker({
     setTo(format(endOfMonth(today), "yyyy-MM-dd"), { shallow: false });
   };
 
+  const handleReset = () => {
+    setFrom(null, { shallow: false });
+    setTo(null, { shallow: false });
+  };
+
+  const isDefault =
+    from === defaultFromStr && to === defaultToStr;
+
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Popover>
@@ -118,6 +126,16 @@ export function DatePicker({
           </div>
         </PopoverContent>
       </Popover>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleReset}
+        disabled={isDefault}
+        aria-label="Resetar período para o padrão (mês atual)"
+        title="Resetar período"
+      >
+        <RotateCcw className="h-4 w-4" />
+      </Button>
     </div>
   );
 }
