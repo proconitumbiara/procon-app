@@ -12,8 +12,8 @@ interface Treatment {
     id: string;
     duration: number | null;
     status: string;
-    createdAt: Date | string;
-    updatedAt: Date | string;
+    startedAt: Date | string | null;
+    finishedAt: Date | string | null;
 }
 
 interface TreatmentsListProps {
@@ -111,8 +111,18 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
             <CardContent className="space-y-2">
                 {treatments
                     .sort((a, b) => {
-                        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-                        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+                        const dateA =
+                            a.startedAt instanceof Date
+                                ? a.startedAt
+                                : a.startedAt
+                                    ? new Date(a.startedAt)
+                                    : new Date();
+                        const dateB =
+                            b.startedAt instanceof Date
+                                ? b.startedAt
+                                : b.startedAt
+                                    ? new Date(b.startedAt)
+                                    : new Date();
                         return dateB.getTime() - dateA.getTime(); // Mais novo primeiro
                     })
                     .slice(0, showAllTreatments ? undefined : 20)
@@ -141,7 +151,7 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
                                                     Atendimento #{treatment.id.slice(-8)}
                                                 </div>
                                                 <div className="text-sm text-muted-foreground">
-                                                    {formatDate(treatment.createdAt)}
+                                                    {treatment.startedAt ? formatDate(treatment.startedAt) : "-"}
                                                 </div>
                                             </div>
                                         </div>
@@ -176,13 +186,17 @@ const TreatmentsList = ({ treatments }: TreatmentsListProps) => {
 
                                             <div className="flex justify-between items-center">
                                                 <span className="font-medium">Iniciado em:</span>
-                                                <span>{formatDate(treatment.createdAt)}</span>
+                                                <span>
+                                                    {treatment.startedAt
+                                                        ? formatDate(treatment.startedAt)
+                                                        : "-"}
+                                                </span>
                                             </div>
 
-                                            {treatment.updatedAt && (
+                                            {treatment.finishedAt && (
                                                 <div className="flex justify-between items-center">
-                                                    <span className="font-medium">Atualizado em:</span>
-                                                    <span>{formatDate(treatment.updatedAt)}</span>
+                                                    <span className="font-medium">Finalizado em:</span>
+                                                    <span>{formatDate(treatment.finishedAt)}</span>
                                                 </div>
                                             )}
 

@@ -160,6 +160,8 @@ export const treatmentsTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     status: text("status").notNull().default("in_service"),
     duration: integer("duration"),
+    startedAt: timestamp("started_at").defaultNow().notNull(),
+    finishedAt: timestamp("finished_at").defaultNow().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -175,6 +177,8 @@ export const treatmentsTable = pgTable(
     index("treatments_operation_id_status_idx").on(
       table.operationId,
       table.status,
+      table.finishedAt,
+      table.startedAt,
     ),
   ],
 );

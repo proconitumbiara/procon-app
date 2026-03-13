@@ -35,9 +35,13 @@ export const endService = authActionClient
     }
 
     const start =
-      treatment.createdAt instanceof Date
-        ? treatment.createdAt
-        : new Date(treatment.createdAt);
+      (treatment.startedAt instanceof Date
+        ? treatment.startedAt
+        : treatment.startedAt
+          ? new Date(treatment.startedAt)
+          : treatment.createdAt instanceof Date
+            ? treatment.createdAt
+            : new Date(treatment.createdAt));
     const end = new Date();
     const durationMs = end.getTime() - start.getTime();
     const durationMinutes = Math.floor(durationMs / 60000);
@@ -54,6 +58,7 @@ export const endService = authActionClient
       .set({
         status: "finished",
         duration: durationMinutes,
+        finishedAt: end,
         updatedAt: new Date(),
       })
       .where(eq(treatmentsTable.id, treatment.id));

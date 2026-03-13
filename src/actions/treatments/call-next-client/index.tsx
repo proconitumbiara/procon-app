@@ -118,6 +118,7 @@ export const callNextTicket = authActionClient.action(async ({ ctx }) => {
   await db.insert(treatmentsTable).values({
     ticketId: ticketWithClient.id,
     operationId: operation.id,
+    startedAt: new Date(),
   });
 
   await db

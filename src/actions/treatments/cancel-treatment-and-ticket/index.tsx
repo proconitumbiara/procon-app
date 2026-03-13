@@ -47,9 +47,13 @@ export const cancelTreatmentAndTicket = authActionClient
     }
 
     const start =
-      treatment.createdAt instanceof Date
-        ? treatment.createdAt
-        : new Date(treatment.createdAt);
+      (treatment.startedAt instanceof Date
+        ? treatment.startedAt
+        : treatment.startedAt
+          ? new Date(treatment.startedAt)
+          : treatment.createdAt instanceof Date
+            ? treatment.createdAt
+            : new Date(treatment.createdAt));
     const end = new Date();
     const durationMs = end.getTime() - start.getTime();
     const durationMinutes = Math.floor(durationMs / 60000);
@@ -61,7 +65,12 @@ export const cancelTreatmentAndTicket = authActionClient
 
     await db
       .update(treatmentsTable)
-      .set({ status: "cancelled", duration: durationMinutes, updatedAt: new Date() })
+      .set({
+        status: "cancelled",
+        duration: durationMinutes,
+        finishedAt: end,
+        updatedAt: new Date(),
+      })
       .where(eq(treatmentsTable.id, treatment.id));
 
     await db
