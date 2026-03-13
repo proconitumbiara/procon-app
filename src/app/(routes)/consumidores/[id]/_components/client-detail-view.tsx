@@ -41,15 +41,17 @@ export default function ClientDetailView({ client, tickets }: ClientDetailViewPr
       <PageHeader>
         <PageHeaderContent>
           <div className="flex flex-col gap-2">
-            <Button variant="outline" size="icon" className="w-fit" asChild aria-label="Voltar aos consumidores">
+            <Button variant="ghost" size="icon" asChild aria-label="Voltar aos consumidores">
               <Link href="/consumidores">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
             <PageTitle>{client.name}</PageTitle>
-            <PageDescription className="flex flex-wrap gap-x-4 gap-y-1">
-              <span>CPF: {formatCPF(client.register)}</span>
-              <span>Telefone: {formatPhoneNumber(client.phoneNumber)}</span>
+            <PageDescription>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                <span>CPF: {formatCPF(client.register)}</span>
+                <span>Telefone: {formatPhoneNumber(client.phoneNumber)}</span>
+              </div>
             </PageDescription>
           </div>
         </PageHeaderContent>
