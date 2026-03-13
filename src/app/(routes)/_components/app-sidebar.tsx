@@ -40,11 +40,6 @@ import { authClient } from "@/lib/auth.client";
 // Menu items.
 const itemsEnterprise = [
   {
-    title: "Atendimentos",
-    url: "/dashboard",
-    icon: ChartBarBig,
-  },
-  {
     title: "Setores",
     url: "/setores",
     icon: BriefcaseBusinessIcon,
@@ -54,8 +49,17 @@ const itemsEnterprise = [
     url: "/operacoes",
     icon: LaptopMinimalCheck,
   },
+];
+
+// Menu items.
+const itemsResults = [
   {
-    title: "Profissionais",
+    title: "Resultados de Gerais",
+    url: "/dashboard",
+    icon: ChartBarBig,
+  },
+  {
+    title: "Resultados de Profissionais",
     url: "/profissionais",
     icon: Users,
   },
@@ -121,14 +125,14 @@ export function AppSidebar() {
 
       <SidebarContent className="bg-background">
         <SidebarGroup>
-          <SidebarGroupLabel>Administradores</SidebarGroupLabel>
+          <SidebarGroupLabel>Gestão</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {itemsEnterprise.map((item) => {
                 const href =
                   item.title === "Profissionais" &&
-                  role === "professional" &&
-                  session.data?.user?.id
+                    role === "professional" &&
+                    session.data?.user?.id
                     ? `/profissionais/${session.data.user.id}`
                     : item.url;
                 const isActive =
@@ -136,6 +140,30 @@ export function AppSidebar() {
                   (item.title === "Profissionais" &&
                     role === "professional" &&
                     pathname === `/profissionais/${session.data?.user?.id}`);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={href}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Resultados</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {itemsResults.map((item) => {
+                const href =
+                  item.url;
+                const isActive =
+                  pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive}>
