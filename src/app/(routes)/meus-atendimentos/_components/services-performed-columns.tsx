@@ -4,6 +4,18 @@ import { ColumnDef } from "@tanstack/react-table"
 
 import { Badge } from "@/components/ui/badge"
 
+function formatDurationMs(ms: number): string {
+  if (ms < 0) return "-";
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}min`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+  return parts.join(" ");
+}
 
 export type ServicePerformedTableRow = {
     id: string
@@ -45,6 +57,9 @@ export const servicesPerformedColumns: ColumnDef<ServicePerformedTableRow>[] = [
             if (status === "pending") {
                 label = "Aguardando";
                 color = "bg-yellow-100 text-yellow-800 border-yellow-300";
+            } else if (status === "in-attendance") {
+                label = "Em atendimento";
+                color = "bg-blue-100 text-blue-800 border-blue-300";
             } else if (status === "cancelled") {
                 label = "Cancelado";
                 color = "bg-red-100 text-red-800 border-red-300";
@@ -52,9 +67,18 @@ export const servicesPerformedColumns: ColumnDef<ServicePerformedTableRow>[] = [
                 label = "Atendido";
                 color = "bg-green-100 text-green-800 border-green-300";
             }
-            return (
-                <Badge className={color}>{label}</Badge>
-            );
+            return <Badge className={color}>{label}</Badge>;
+        },
+    },
+    {
+        id: "serviceDuration",
+        header: "Duração do atendimento",
+        cell: ({ row }) => {
+            const t = row.original;
+            if (t.status !== "finished" || !t.calledAt || !t.finishedAt) return "-";
+            const ms =
+                new Date(t.finishedAt).getTime() - new Date(t.calledAt).getTime();
+            return formatDurationMs(ms);
         },
     },
     {

@@ -1,14 +1,22 @@
 import { eq } from "drizzle-orm";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/db";
 import { treatmentsTable } from "@/db/schema";
 
 import {
   ServicePerformedTableRow,
-  servicesPerformedColumns,
 } from "./services-performed-columns";
+import ServicesPerformedList from "../../meus-atendimentos/_components/services-performed-list";
+
+function isToday(date: Date): boolean {
+  const d = new Date(date);
+  const t = new Date();
+  return (
+    d.getFullYear() === t.getFullYear() &&
+    d.getMonth() === t.getMonth() &&
+    d.getDate() === t.getDate()
+  );
+}
 
 interface ServicesPerformedProps {
   userId: string;
@@ -36,18 +44,13 @@ const ServicesPerformed = async ({ userId }: ServicesPerformedProps) => {
     },
   });
 
-  // Filtrar apenas treatments que possuem operation do usuário
-  const filtered = treatments.filter(
-    (t) => t.operation && t.operation.userId === userId,
-  );
-
-  if (!filtered.length) {
-    return (
-      <Card className="text-muted-foreground h-full w-full text-center text-sm">
-        Nenhum atendimento realizado.
-      </Card>
-    );
-  }
+  // Filtrar apenas treatments do usuário e do dia atual (pela data de finalização do ticket)
+  const filtered = treatments.filter((t) => {
+    if (!t.operation || t.operation.userId !== userId) return false;
+    const finishedAt = t.ticket?.finishedAt;
+    if (!finishedAt) return false;
+    return isToday(new Date(finishedAt));
+  });
 
   // Mapear para ServicePerformedTableRow (createdAt/calledAt/finishedAt do ticket)
   const tableData: ServicePerformedTableRow[] = filtered
@@ -75,18 +78,7 @@ const ServicesPerformed = async ({ userId }: ServicesPerformedProps) => {
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
-    <div className="flex h-full max-h-[80vh] w-full flex-col gap-4">
-      <Card className="flex h-full w-full flex-col">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Atendimentos Realizados</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-auto p-0">
-          <div className="p-6">
-            <DataTable data={tableData} columns={servicesPerformedColumns} />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <ServicesPerformedList tableData={tableData} />
   );
 };
 
