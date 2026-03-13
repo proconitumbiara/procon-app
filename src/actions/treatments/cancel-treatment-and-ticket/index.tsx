@@ -79,5 +79,5 @@ export const cancelTreatmentAndTicket = authActionClient
       .where(eq(operationsTable.id, treatment.operationId));
 
     revalidatePath("/atendimento");
-    revalidatePath("/atendimentos-pendentes");
+    revalidatePath("/fila-atendimentos");
   });

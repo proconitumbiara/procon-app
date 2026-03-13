@@ -132,7 +132,7 @@ export const callNextTicket = authActionClient.action(async ({ ctx }) => {
     .where(eq(operationsTable.id, operation.id));
 
   revalidatePath("/atendimento");
-  revalidatePath("/atendimentos-pendentes");
+  revalidatePath("/fila-atendimentos");
 
   // Pusher em background (não bloquear resposta ao usuário)
   void sendLastCalledClients().catch((err) => {

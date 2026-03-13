@@ -33,7 +33,7 @@ export const updateTicket = authActionClient
       })
       .where(eq(ticketsTable.id, parsedInput.id));
 
-    revalidatePath("/atendimentos-pendentes");
+    revalidatePath("/fila-atendimentos");
 
     void pusherServer.trigger("tickets", "ticket-updated", {
       ticketId: parsedInput.id,
@@ -66,7 +66,7 @@ export const createTicket = authActionClient
       .returning();
 
     revalidatePath("/atendimento");
-    revalidatePath("/atendimentos-pendentes");
+    revalidatePath("/fila-atendimentos");
 
     void pusherServer.trigger("tickets", "ticket-created", {
       ticketId: newTicket.id,

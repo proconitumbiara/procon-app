@@ -82,7 +82,7 @@ const itemsClients = [
   },
   {
     title: "Fila de atendimentos",
-    url: "/atendimentos-pendentes",
+    url: "/fila-atendimentos",
     icon: ListOrdered,
   },
 ];
