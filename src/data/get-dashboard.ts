@@ -1,9 +1,21 @@
-import { and, count, desc, eq, gte, isNotNull, lte, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  lte,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "@/db";
 import {
   clientsTable,
   operationsTable,
+  sectorsTable,
+  servicePointsTable,
   ticketsTable,
   treatmentsTable,
   usersTable,
@@ -12,13 +24,19 @@ import {
 interface Params {
   from: Date;
   to: Date;
+  sectorKeyNames?: string[] | null;
 }
 
-const getDashboard = async ({ from, to }: Params) => {
+const getDashboard = async ({ from, to, sectorKeyNames = null }: Params) => {
   const dateFilter = and(
     gte(treatmentsTable.createdAt, from),
     lte(treatmentsTable.createdAt, to),
   );
+
+  const sectorFilter =
+    sectorKeyNames && sectorKeyNames.length
+      ? inArray(sectorsTable.key_name, sectorKeyNames)
+      : null;
 
   const [
     topProfessionals,
@@ -42,8 +60,13 @@ const getDashboard = async ({ from, to }: Params) => {
         operationsTable,
         eq(treatmentsTable.operationId, operationsTable.id),
       )
+      .leftJoin(
+        servicePointsTable,
+        eq(operationsTable.servicePointId, servicePointsTable.id),
+      )
+      .leftJoin(sectorsTable, eq(servicePointsTable.sectorId, sectorsTable.id))
       .leftJoin(usersTable, eq(operationsTable.userId, usersTable.id))
-      .where(dateFilter)
+      .where(sectorFilter ? and(dateFilter, sectorFilter) : dateFilter)
       .groupBy(operationsTable.userId, usersTable.name)
       .orderBy(desc(sql<number>`count(*)`)),
 
@@ -51,7 +74,16 @@ const getDashboard = async ({ from, to }: Params) => {
     db
       .select({ total: count(treatmentsTable.id) })
       .from(treatmentsTable)
-      .where(dateFilter),
+      .leftJoin(
+        operationsTable,
+        eq(treatmentsTable.operationId, operationsTable.id),
+      )
+      .leftJoin(
+        servicePointsTable,
+        eq(operationsTable.servicePointId, servicePointsTable.id),
+      )
+      .leftJoin(sectorsTable, eq(servicePointsTable.sectorId, sectorsTable.id))
+      .where(sectorFilter ? and(dateFilter, sectorFilter) : dateFilter),
 
     // Total de novos clientes cadastrados no período
     db
@@ -65,11 +97,13 @@ const getDashboard = async ({ from, to }: Params) => {
     db
       .select({ total: count(ticketsTable.id) })
       .from(ticketsTable)
+      .leftJoin(sectorsTable, eq(ticketsTable.sectorId, sectorsTable.id))
       .where(
         and(
           gte(ticketsTable.createdAt, from),
           lte(ticketsTable.createdAt, to),
           eq(ticketsTable.status, "cancelled"),
+          ...(sectorFilter ? [sectorFilter] : []),
         ),
       ),
 
@@ -92,11 +126,13 @@ const getDashboard = async ({ from, to }: Params) => {
       })
       .from(treatmentsTable)
       .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
+      .innerJoin(sectorsTable, eq(ticketsTable.sectorId, sectorsTable.id))
       .where(
         and(
           dateFilter,
           isNotNull(ticketsTable.calledAt),
           isNotNull(ticketsTable.finishedAt),
+          ...(sectorFilter ? [sectorFilter] : []),
         ),
       ),
 
@@ -120,7 +156,8 @@ const getDashboard = async ({ from, to }: Params) => {
       })
       .from(treatmentsTable)
       .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
-      .where(dateFilter),
+      .innerJoin(sectorsTable, eq(ticketsTable.sectorId, sectorsTable.id))
+      .where(sectorFilter ? and(dateFilter, sectorFilter) : dateFilter),
 
     // Média de tempo total de espera (createdAt → finishedAt) no período
     db
@@ -141,7 +178,14 @@ const getDashboard = async ({ from, to }: Params) => {
       })
       .from(treatmentsTable)
       .innerJoin(ticketsTable, eq(treatmentsTable.ticketId, ticketsTable.id))
-      .where(and(dateFilter, isNotNull(ticketsTable.finishedAt))),
+      .innerJoin(sectorsTable, eq(ticketsTable.sectorId, sectorsTable.id))
+      .where(
+        and(
+          dateFilter,
+          isNotNull(ticketsTable.finishedAt),
+          ...(sectorFilter ? [sectorFilter] : []),
+        ),
+      ),
 
     // Listagem de todos os atendimentos do período (para o dashboard)
     db.query.treatmentsTable.findMany({
@@ -168,7 +212,18 @@ const getDashboard = async ({ from, to }: Params) => {
     }),
   ]);
 
-  const treatments = treatmentsRaw.map((t) => {
+  const treatmentsFiltered =
+    sectorKeyNames && sectorKeyNames.length
+      ? treatmentsRaw.filter((t) => {
+          const key =
+            t.ticket?.sector?.key_name ??
+            t.operation?.servicePoint?.sector?.key_name ??
+            null;
+          return !!key && sectorKeyNames.includes(key);
+        })
+      : treatmentsRaw;
+
+  const treatments = treatmentsFiltered.map((t) => {
     const ticketCreatedAt = t.ticket?.createdAt
       ? new Date(t.ticket.createdAt).getTime()
       : null;

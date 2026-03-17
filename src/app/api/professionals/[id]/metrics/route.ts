@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getProfessionalMetrics } from "@/data/get-professional-metrics";
 import { auth } from "@/lib/auth";
+import { buildUserPermissions } from "@/lib/authorization";
 
 export async function GET(
   request: NextRequest,
@@ -41,8 +42,20 @@ export async function GET(
       };
     }
 
+    const perms = buildUserPermissions({
+      id: session.user.id,
+      role: session.user.role,
+      profile: (session.user as any).profile,
+    });
+
+    const sectorKeyNames =
+      perms.sectorKeyFilter.length === 1 && perms.sectorKeyFilter[0] === "*"
+        ? null
+        : (perms.sectorKeyFilter as string[]);
+
     const metrics = await getProfessionalMetrics({
       professionalId: id,
+      sectorKeyNames,
       ...dateFilter,
     });
 

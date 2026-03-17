@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   BookUser,
   BriefcaseBusinessIcon,
@@ -36,61 +37,115 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth.client";
+import type { AppRole, UserProfile } from "@/lib/authorization";
 
-// Menu items.
-const itemsEnterprise = [
-  {
-    title: "Setores",
-    url: "/setores",
-    icon: BriefcaseBusinessIcon,
-  },
-  {
-    title: "Operações",
-    url: "/operacoes",
-    icon: LaptopMinimalCheck,
-  },
-];
+type SidebarItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+};
 
-// Menu items.
-const itemsResults = [
-  {
-    title: "Resultados de Gerais",
-    url: "/dashboard",
-    icon: ChartBarBig,
-  },
-  {
-    title: "Resultados de Profissionais",
-    url: "/profissionais",
-    icon: Users,
-  },
-];
+type SidebarSections = {
+  enterprise: SidebarItem[];
+  results: SidebarItem[];
+  professionals: SidebarItem[];
+  clients: SidebarItem[];
+};
 
-const itemsProfessionals = [
-  {
-    title: "Operação",
-    url: "/atendimento",
-    icon: Headset,
-  },
-  {
-    title: "Meus atendimentos",
-    url: "/meus-atendimentos",
-    icon: ListCheck,
-  },
-];
+function getSidebarSectionsForUser(args: {
+  role?: string;
+  profile?: string;
+  userId?: string;
+}): SidebarSections {
+  const role = (args.role ?? "user") as AppRole;
+  const profile = (args.profile ?? "tecnico-atendimento") as UserProfile;
+  const userId = args.userId;
 
-const itemsClients = [
-  {
-    title: "Gerenciar consumidores",
-    url: "/consumidores",
-    icon: BookUser,
-  },
-  {
-    title: "Fila de atendimentos",
-    url: "/fila-atendimentos",
-    icon: ListOrdered,
-  },
-];
+  const base: SidebarSections = {
+    enterprise: [],
+    results: [],
+    professionals: [],
+    clients: [],
+  };
 
+  // Developer / administrator enxergam tudo
+  if (role === "administrator" || role === "supervisor-geral") {
+    return {
+      enterprise: [
+        { title: "Setores", url: "/setores", icon: BriefcaseBusinessIcon },
+        { title: "Operações", url: "/operacoes", icon: LaptopMinimalCheck },
+      ],
+      results: [
+        { title: "Resultados de Gerais", url: "/dashboard", icon: ChartBarBig },
+        { title: "Resultados de Profissionais", url: "/profissionais", icon: Users },
+      ],
+      professionals: [
+        { title: "Operação", url: "/atendimento", icon: Headset },
+        { title: "Meus atendimentos", url: "/meus-atendimentos", icon: ListCheck },
+      ],
+      clients: [
+        { title: "Gerenciar consumidores", url: "/consumidores", icon: BookUser },
+        { title: "Fila de atendimentos", url: "/fila-atendimentos", icon: ListOrdered },
+      ],
+    };
+  }
+
+  if (
+    profile === "tecnico-geral" ||
+    profile === "tecnico-atendimento" ||
+    profile === "tecnico-juridico"
+  ) {
+    const myProfileUrl = userId ? `/profissionais/${userId}` : "/profissionais";
+    return {
+      ...base,
+      professionals: [
+        { title: "Operação", url: "/atendimento", icon: Headset },
+        { title: "Meus atendimentos", url: "/meus-atendimentos", icon: ListCheck },
+        { title: "Meu perfil", url: myProfileUrl, icon: Users },
+      ],
+    };
+  }
+
+  if (profile === "recepcionista") {
+    const myProfileUrl = userId ? `/profissionais/${userId}` : "/profissionais";
+    return {
+      ...base,
+      clients: [
+        { title: "Gerenciar consumidores", url: "/consumidores", icon: BookUser },
+        { title: "Fila de atendimentos", url: "/fila-atendimentos", icon: ListOrdered },
+        { title: "Meu perfil", url: myProfileUrl, icon: Users },
+      ],
+    };
+  }
+
+  if (profile === "supervisor-atendimento" || profile === "supervisor-juridico") {
+    return {
+      enterprise: [
+        { title: "Setores", url: "/setores", icon: BriefcaseBusinessIcon },
+      ],
+      results: [
+        { title: "Resultados de Gerais", url: "/dashboard", icon: ChartBarBig },
+        { title: "Resultados de Profissionais", url: "/profissionais", icon: Users },
+      ],
+      professionals: [
+        { title: "Operação", url: "/atendimento", icon: Headset },
+        { title: "Meus atendimentos", url: "/meus-atendimentos", icon: ListCheck },
+      ],
+      clients: [
+        { title: "Gerenciar consumidores", url: "/consumidores", icon: BookUser },
+        { title: "Fila de atendimentos", url: "/fila-atendimentos", icon: ListOrdered },
+      ],
+    };
+  }
+
+  // Fallback para roles básicos: mostra apenas atendimento
+  return {
+    ...base,
+    professionals: [
+      { title: "Operação", url: "/atendimento", icon: Headset },
+    ],
+  };
+}
 
 export function AppSidebar() {
   const router = useRouter();
@@ -102,6 +157,10 @@ export function AppSidebar() {
   const { setTheme, resolvedTheme } = useTheme();
 
   const role = session.data?.user?.role;
+  const profile = (session.data?.user as any)?.profile as string | undefined;
+  const userId = session.data?.user?.id;
+
+  const sections = getSidebarSectionsForUser({ role, profile, userId });
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -124,96 +183,99 @@ export function AppSidebar() {
       <SidebarHeader className="bg-background flex items-center justify-center border-b p-4" />
 
       <SidebarContent className="bg-background">
-        <SidebarGroup>
-          <SidebarGroupLabel>Gestão</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {itemsEnterprise.map((item) => {
-                const href =
-                  item.title === "Profissionais" &&
-                    role === "professional" &&
-                    session.data?.user?.id
-                    ? `/profissionais/${session.data.user.id}`
-                    : item.url;
-                const isActive =
-                  pathname === item.url ||
-                  (item.title === "Profissionais" &&
-                    role === "professional" &&
-                    pathname === `/profissionais/${session.data?.user?.id}`);
-                return (
+        {!!sections.enterprise.length && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Gestão</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sections.enterprise.map((item) => {
+                  const href = item.url;
+                  const isActive = pathname === item.url;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <Link href={href}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {!!sections.results.length && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Resultados</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sections.results.map((item) => {
+                  const href = item.url;
+                  const isActive = pathname === item.url;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <Link href={href}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {!!sections.professionals.length && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Atendimento</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sections.professionals.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url}
+                    >
+                      <Link href={item.url}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Resultados</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {itemsResults.map((item) => {
-                const href =
-                  item.url;
-                const isActive =
-                  pathname === item.url;
-                return (
+        {!!sections.clients.length && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Recepção</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sections.clients.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url}
+                    >
+                      <Link href={item.url}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Atendimento</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {itemsProfessionals.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Recepção</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {itemsClients.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="bg-background border-t py-4">

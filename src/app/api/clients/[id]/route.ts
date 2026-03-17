@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { clientsTable, ticketsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { buildUserPermissions } from "@/lib/authorization";
 
 /**
  * GET /api/clients/[id]
@@ -19,6 +20,16 @@ export async function GET(
 
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const perms = buildUserPermissions({
+    id: session.user.id,
+    role: session.user.role,
+    profile: (session.user as any).profile,
+  });
+
+  if (!perms.can("clients.view")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { id } = await params;

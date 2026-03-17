@@ -1,5 +1,7 @@
 import "server-only";
 
+export const runtime = "nodejs";
+
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
@@ -28,20 +30,21 @@ export const auth = betterAuth({
       : []),
   ],
   plugins: [
-    // customSession: enriquece user com role, phoneNumber, cpf (uma query por getSession).
-    // Mantido em toda leitura pois role é usado em adminActionClient e UI pode usar phone/cpf.
+    // customSession: enriquece user com dados adicionais do banco.
     customSession(async ({ user, session }) => {
       const [userData] = await Promise.all([
         db.query.usersTable.findFirst({
           where: eq(usersTable.id, user.id),
         }),
       ]);
+
       return {
         user: {
           ...user,
           phoneNumber: userData?.phoneNumber,
           cpf: userData?.cpf,
           role: userData?.role,
+          profile: userData?.profile,
         },
         session,
       };
@@ -63,6 +66,11 @@ export const auth = betterAuth({
       role: {
         type: "string",
         fieldName: "role",
+        required: false,
+      },
+      profile: {
+        type: "string",
+        fieldName: "profile",
         required: false,
       },
     },

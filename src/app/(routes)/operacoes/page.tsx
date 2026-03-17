@@ -13,10 +13,12 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import {
-  usersTable,
-} from "@/db/schema";
+import { usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import {
+  assertSectorKeyAccess,
+  buildUserPermissions,
+} from "@/lib/authorization";
 
 import OperationsCard from "./_components/operations-card";
 
@@ -28,8 +30,18 @@ const Operations = async () => {
     redirect("/");
   }
 
+  const perms = buildUserPermissions({
+    id: session.user.id,
+    role: session.user.role,
+    profile: (session.user as any).profile,
+  });
+
+  if (!perms.can("operations.view")) {
+    return <AccessDenied />;
+  }
+
   // Buscar operações com status 'operating' ou 'in-attendance', incluindo joins e atendimentos
-  const operations = await db.query.operationsTable.findMany({
+  const operationsRaw = await db.query.operationsTable.findMany({
     where: (op, { eq, or }) =>
       or(eq(op.status, "operating"), eq(op.status, "in-attendance")),
     with: {
@@ -52,11 +64,20 @@ const Operations = async () => {
     },
   });
 
+  const operations = operationsRaw.filter((op) => {
+    try {
+      assertSectorKeyAccess(perms, op.servicePoint.sector?.key_name);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
   const user = await db.query.usersTable.findFirst({
     where: eq(usersTable.id, session.user.id),
   });
 
-  if (user?.role !== "administrator") {
+  if (!user?.role) {
     return <AccessDenied />;
   }
 

@@ -4,8 +4,8 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
-import { clientsTable, ticketsTable } from "@/db/schema";
-import { authActionClient } from "@/lib/next-safe-action";
+import { clientsTable, sectorsTable, ticketsTable } from "@/db/schema";
+import { permissionedActionClient } from "@/lib/next-safe-action";
 import { pusherServer } from "@/lib/pusher-server";
 import { calculateAge } from "@/lib/utils";
 
@@ -16,13 +16,24 @@ import {
   UpdateTicketSchema,
 } from "./schema";
 
-export const updateTicket = authActionClient
+export const updateTicket = permissionedActionClient("tickets.manage")
   .schema(UpdateTicketSchema)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, ctx }) => {
+    const { perms } = ctx;
     const ticket = await db.query.ticketsTable.findFirst({
       where: eq(ticketsTable.id, parsedInput.id),
+      with: { sector: true },
     });
     if (!ticket) throw new Error("Ticket não encontrado");
+
+    if (!perms.canAccessSectorKey(ticket.sector?.key_name)) {
+      return {
+        error: {
+          type: ErrorTypes.UNAUTHENTICATED,
+          message: "Acesso negado para este setor",
+        },
+      };
+    }
 
     await db
       .update(ticketsTable)
@@ -41,12 +52,33 @@ export const updateTicket = authActionClient
     }).catch((err) => console.error("[updateTicket] Pusher:", err));
   });
 
-export const createTicket = authActionClient
+export const createTicket = permissionedActionClient("tickets.manage")
   .schema(CreateTicketSchema)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, ctx }) => {
+    const { perms } = ctx;
     const client = await db.query.clientsTable.findFirst({
       where: eq(clientsTable.id, parsedInput.clientId),
     });
+
+    const sector = await db.query.sectorsTable.findFirst({
+      where: eq(sectorsTable.id, parsedInput.sectorId),
+    });
+    if (!sector) {
+      return {
+        error: {
+          type: ErrorTypes.UNAUTHENTICATED,
+          message: "Setor não encontrado",
+        },
+      };
+    }
+    if (!perms.canAccessSectorKey(sector.key_name)) {
+      return {
+        error: {
+          type: ErrorTypes.UNAUTHENTICATED,
+          message: "Acesso negado para este setor",
+        },
+      };
+    }
 
     let finalPriority = parsedInput.priority ?? 0;
     if (client?.dateOfBirth) {

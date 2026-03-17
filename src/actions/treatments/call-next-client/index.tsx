@@ -9,15 +9,16 @@ import {
   ticketsTable,
   treatmentsTable,
 } from "@/db/schema";
-import { authActionClient } from "@/lib/next-safe-action";
+import { permissionedActionClient } from "@/lib/next-safe-action";
 import { sendToPanel } from "@/lib/panel-api";
 import { getPriorityLabel } from "@/lib/priority-utils";
 
 import { ErrorMessages, ErrorTypes } from "./schema";
 import { sendLastCalledClients } from "./send-last-called-clients";
 
-export const callNextTicket = authActionClient.action(async ({ ctx }) => {
-  const { session } = ctx;
+export const callNextTicket = permissionedActionClient("treatments.manage").action(
+  async ({ ctx }) => {
+    const { session, perms } = ctx;
 
   // 1) Operação ativa com servicePoint e sector (uma query)
   const operation = await db.query.operationsTable.findFirst({
@@ -53,6 +54,15 @@ export const callNextTicket = authActionClient.action(async ({ ctx }) => {
   const servicePoint = operation.servicePoint;
   const sector = operation.servicePoint.sector;
   const sectorId = sector.id;
+
+  if (!perms.canAccessSectorKey(sector.key_name)) {
+    return {
+      error: {
+        type: ErrorTypes.UNAUTHENTICATED,
+        message: "Acesso negado para este setor",
+      },
+    };
+  }
 
   const existingTreatment = await db.query.treatmentsTable.findFirst({
     where: and(

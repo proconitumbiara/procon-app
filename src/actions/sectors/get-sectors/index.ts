@@ -1,39 +1,24 @@
 "use server";
 
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-
 import { db } from "@/db";
-import { sectorsTable } from "@/db/schema";
-import { authActionClient } from "@/lib/next-safe-action";
+import { permissionedActionClient } from "@/lib/next-safe-action";
 
 import { ErrorMessages, ErrorTypes } from "./schema";
 
-export const getSectors = authActionClient
-  .schema(
-    z.object({
-      sectorId: z.string(),
-    }),
-  )
-  .action(async ({ parsedInput }) => {
+export const getSectors = permissionedActionClient("sectors.view").action(
+  async ({ ctx }) => {
     try {
-      const sectors = await db.query.sectorsTable.findMany({
-        where: eq(sectorsTable.id, parsedInput.sectorId),
+      const sectorsRaw = await db.query.sectorsTable.findMany({
         with: {
           servicePoints: true,
         },
       });
 
-      if (!sectors) {
-        return {
-          error: {
-            type: ErrorTypes.SECTOR_NOT_FOUND,
-            message: ErrorMessages[ErrorTypes.SECTOR_NOT_FOUND],
-          },
-        };
-      }
+      const sectors = sectorsRaw.filter((s) =>
+        ctx.perms.canAccessSectorKey(s.key_name),
+      );
 
-      return sectors;
+      return { data: sectors };
     } catch {
       return {
         error: {
@@ -42,4 +27,5 @@ export const getSectors = authActionClient
         },
       };
     }
-  });
+  },
+);

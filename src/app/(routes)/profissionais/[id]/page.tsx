@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { buildUserPermissions } from "@/lib/authorization";
 
 import ProfessionalDetailClient from "./_components/professional-detail-client";
 
@@ -12,7 +13,9 @@ interface ProfessionalDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-const ProfessionalDetailPage = async ({ params }: ProfessionalDetailPageProps) => {
+const ProfessionalDetailPage = async ({
+  params,
+}: ProfessionalDetailPageProps) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -21,12 +24,21 @@ const ProfessionalDetailPage = async ({ params }: ProfessionalDetailPageProps) =
     redirect("/");
   }
 
+  const perms = buildUserPermissions({
+    id: session.user.id,
+    role: session.user.role,
+    profile: (session.user as any).profile,
+  });
+
   const { id } = await params;
 
-  if (
-    session.user.role === "professional" &&
-    id !== session.user.id
-  ) {
+  const isTechnician =
+    perms.profile === "tecnico-geral" ||
+    perms.profile === "tecnico-atendimento" ||
+    perms.profile === "tecnico-juridico";
+
+  // Técnicos só podem ver o próprio perfil pela rota dinâmica
+  if (isTechnician && id !== session.user.id) {
     redirect("/profissionais");
   }
 
@@ -40,7 +52,8 @@ const ProfessionalDetailPage = async ({ params }: ProfessionalDetailPageProps) =
     notFound();
   }
 
-  const showActions = session.user.role === "administrator";
+  const showActions =
+    perms.can("sectors.manage") || session.user.role === "administrator";
 
   return (
     <ProfessionalDetailClient
@@ -52,3 +65,4 @@ const ProfessionalDetailPage = async ({ params }: ProfessionalDetailPageProps) =
 };
 
 export default ProfessionalDetailPage;
+

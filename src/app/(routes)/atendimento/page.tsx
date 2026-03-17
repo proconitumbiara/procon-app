@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { PageActions, PageContainer, PageContent, PageDescription, PageHeader, PageHeaderContent, PageTitle } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
+import { buildUserPermissions } from "@/lib/authorization";
 
 import OngoingOperationCard from "./_components/ongoing-operation-card";
 import PauseOperationButton from "./_components/pause-operation-button";
@@ -26,7 +27,7 @@ const ProfessionalServices = async () => {
         with: { pauses: true },
     });
 
-    const [session, sectors, operations] = await Promise.all([
+    const [session, sectorsRaw, operations] = await Promise.all([
         sessionPromise,
         sectorsPromise,
         operationsPromise,
@@ -35,6 +36,14 @@ const ProfessionalServices = async () => {
     if (!session?.user) {
         redirect("/");
     }
+
+    const perms = buildUserPermissions({
+        id: session.user.id,
+        role: session.user.role,
+        profile: (session.user as any).profile,
+    });
+
+    const sectors = sectorsRaw.filter((s) => perms.canAccessSectorKey(s.key_name));
 
     const currentUserOperation = operations.find(
         (op) =>

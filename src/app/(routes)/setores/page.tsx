@@ -3,52 +3,83 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AccessDenied } from "@/components/ui/access-denied";
-import { PageActions, PageContainer, PageContent, PageDescription, PageHeader, PageHeaderContent, PageTitle } from "@/components/ui/page-container";
+import {
+  PageActions,
+  PageContainer,
+  PageContent,
+  PageDescription,
+  PageHeader,
+  PageHeaderContent,
+  PageTitle,
+} from "@/components/ui/page-container";
 import { db } from "@/db";
 import { usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import {
+  assertSectorKeyAccess,
+  buildUserPermissions,
+} from "@/lib/authorization";
 
 import AddSectorButton from "./_components/add-sector-button";
 import SectorsGrid from "./_components/sectors-cards";
 
 const AdminsSectors = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session?.user) {
+    redirect("/");
+  }
 
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-    if (!session?.user) {
-        redirect("/");
+  const perms = buildUserPermissions({
+    id: session.user.id,
+    role: session.user.role,
+    profile: (session.user as any).profile,
+  });
+
+  if (!perms.can("sectors.view")) {
+    return <AccessDenied />;
+  }
+
+  const sectors = await db.query.sectorsTable.findMany({
+    with: {
+      servicePoints: true,
+    },
+  });
+
+  const filteredSectors = sectors.filter((sector) => {
+    try {
+      assertSectorKeyAccess(perms, sector.key_name);
+      return true;
+    } catch {
+      return false;
     }
-    const sectors = await db.query.sectorsTable.findMany({
-        with: {
-            servicePoints: true,
-        }
-    });
+  });
 
-    const user = await db.query.usersTable.findFirst({
-        where: eq(usersTable.id, session.user.id),
-    });
+  const user = await db.query.usersTable.findFirst({
+    where: eq(usersTable.id, session.user.id),
+  });
 
-    if (user?.role !== "administrator") {
-        return <AccessDenied />
-    }
+  if (!user?.role) {
+    return <AccessDenied />;
+  }
 
-    return (
-        <PageContainer>
-            <PageHeader>
-                <PageHeaderContent>
-                    <PageTitle>Setores</PageTitle>
-                    <PageDescription>Gerencie seus setores.</PageDescription>
-                </PageHeaderContent>
-                <PageActions>
-                    <AddSectorButton />
-                </PageActions>
-            </PageHeader>
-            <PageContent>
-                <SectorsGrid sectors={sectors} />
-            </PageContent>
-        </PageContainer>
-    );
-}
+  return (
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderContent>
+          <PageTitle>Setores</PageTitle>
+          <PageDescription>Gerencie seus setores.</PageDescription>
+        </PageHeaderContent>
+        <PageActions>
+          <AddSectorButton />
+        </PageActions>
+      </PageHeader>
+      <PageContent>
+        <SectorsGrid sectors={filteredSectors} />
+      </PageContent>
+    </PageContainer>
+  );
+};
 
 export default AdminsSectors;

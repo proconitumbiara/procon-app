@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/page-container";
 import getDashboard from "@/data/get-dashboard";
 import { auth } from "@/lib/auth";
+import { buildUserPermissions } from "@/lib/authorization";
 import {
   getCurrentMonthInSaoPaulo,
   saoPauloDateStringToUTCEnd,
@@ -39,9 +40,13 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   if (!session?.user) {
     redirect("/");
   }
+  const perms = buildUserPermissions({
+    id: session.user.id,
+    role: session.user.role,
+    profile: (session.user as any).profile,
+  });
 
-  // session.user.role já é resolvido via customSession — sem query extra ao banco
-  if (session.user.role !== "administrator") {
+  if (!perms.can("results.view.general")) {
     return <AccessDenied />;
   }
 
@@ -65,7 +70,16 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     ? saoPauloDateStringToUTCEnd(to)
     : saoPauloDateStringToUTCEnd(defaultToStr);
 
-  const dashboard = await getDashboard({ from: fromDate, to: toDate });
+  const sectorKeyNames =
+    perms.sectorKeyFilter.length === 1 && perms.sectorKeyFilter[0] === "*"
+      ? null
+      : (perms.sectorKeyFilter as string[]);
+
+  const dashboard = await getDashboard({
+    from: fromDate,
+    to: toDate,
+    sectorKeyNames,
+  });
 
   const professionals = dashboard.topProfessionals.map((p) => ({
     id: p.professionalId as string,

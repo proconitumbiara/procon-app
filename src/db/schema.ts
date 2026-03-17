@@ -17,6 +17,7 @@ export const usersTable = pgTable("users", {
   emailVerified: boolean("email_verified").notNull(),
   cpf: text("cpf").unique(),
   phoneNumber: text("phone_number").unique(),
+  profile: text("profile").notNull().default("tecnico-atendimento"),
   role: text("role").notNull().default("user"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
@@ -65,6 +66,7 @@ export const verificationsTable = pgTable("verifications", {
 export const sectorsTable = pgTable("sectors", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  key_name: text("key_name").notNull().default("sector"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

@@ -5,6 +5,9 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { clientsTable, ticketsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import {
+  buildUserPermissions,
+} from "@/lib/authorization";
 
 import ClientDetailView from "./_components/client-detail-view";
 
@@ -12,13 +15,25 @@ interface ConsumerDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ConsumerDetailPage({ params }: ConsumerDetailPageProps) {
+export default async function ConsumerDetailPage({
+  params,
+}: ConsumerDetailPageProps) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session?.user) {
     redirect("/");
+  }
+
+  const perms = buildUserPermissions({
+    id: session.user.id,
+    role: session.user.role,
+    profile: (session.user as any).profile,
+  });
+
+  if (!perms.can("clients.view")) {
+    redirect("/atendimento");
   }
 
   const { id } = await params;
@@ -84,3 +99,4 @@ export default async function ConsumerDetailPage({ params }: ConsumerDetailPageP
     />
   );
 }
+

@@ -8,13 +8,13 @@ import {
   ticketsTable,
   treatmentsTable,
 } from "@/db/schema";
-import { authActionClient } from "@/lib/next-safe-action";
+import { permissionedActionClient } from "@/lib/next-safe-action";
 import { sendToPanel } from "@/lib/panel-api";
 import { getPriorityLabel } from "@/lib/priority-utils";
 
-export const callTheCustomerAgain = authActionClient.action(
+export const callTheCustomerAgain = permissionedActionClient("treatments.manage").action(
   async ({ ctx }) => {
-    const { session } = ctx;
+    const { session, perms } = ctx;
 
     const operation = await db.query.operationsTable.findFirst({
       where: and(
@@ -65,6 +65,10 @@ export const callTheCustomerAgain = authActionClient.action(
     const sector = servicePoint.sector;
     if (!sector) {
       return { error: "Setor não encontrado" };
+    }
+
+    if (!perms.canAccessSectorKey(sector.key_name)) {
+      return { error: "Acesso negado para este setor" };
     }
 
     void sendToPanel({

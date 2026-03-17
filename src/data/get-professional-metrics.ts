@@ -1,18 +1,26 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, lte, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
-import { operationsTable, pausesTable, treatmentsTable } from "@/db/schema";
+import {
+  operationsTable,
+  pausesTable,
+  sectorsTable,
+  servicePointsTable,
+  treatmentsTable,
+} from "@/db/schema";
 
 interface ProfessionalMetricsParams {
   professionalId: string;
   from?: Date;
   to?: Date;
+  sectorKeyNames?: string[] | null;
 }
 
 export const getProfessionalMetrics = async ({
   professionalId,
   from,
   to,
+  sectorKeyNames = null,
 }: ProfessionalMetricsParams) => {
   const dateFilter =
     from && to
@@ -38,8 +46,16 @@ export const getProfessionalMetrics = async ({
         )
       : undefined;
 
+  const sectorFilter =
+    sectorKeyNames && sectorKeyNames.length
+      ? inArray(sectorsTable.key_name, sectorKeyNames)
+      : null;
+
   const operationsWithTreatments = await db.query.operationsTable.findMany({
-    where: and(eq(operationsTable.userId, professionalId), dateFilter),
+    where: and(
+      eq(operationsTable.userId, professionalId),
+      dateFilter,
+    ),
     with: {
       treatments: {
         where: treatmentDateFilter,
@@ -55,13 +71,28 @@ export const getProfessionalMetrics = async ({
       pauses: {
         where: pauseDateFilter,
       },
-      servicePoint: true,
+      servicePoint: {
+        with: {
+          sector: true,
+        },
+      },
     },
   });
 
-  const totalOperations = operationsWithTreatments.length;
+  const operationsFiltered =
+    sectorFilter && sectorKeyNames && sectorKeyNames.length
+      ? operationsWithTreatments.filter((op) => {
+          const key =
+            op.servicePoint?.sector?.key_name ??
+            op.treatments[0]?.ticket?.sector?.key_name ??
+            null;
+          return !!key && sectorKeyNames.includes(key);
+        })
+      : operationsWithTreatments;
 
-  const operationDurations = operationsWithTreatments
+  const totalOperations = operationsFiltered.length;
+
+  const operationDurations = operationsFiltered
     .map((op) => {
       const start =
         op.createdAt instanceof Date ? op.createdAt : new Date(op.createdAt);
@@ -87,7 +118,7 @@ export const getProfessionalMetrics = async ({
         )
       : 0;
 
-  const allTreatments = operationsWithTreatments.flatMap(
+  const allTreatments = operationsFiltered.flatMap(
     (op) => op.treatments,
   );
   const totalTreatments = allTreatments.length;
@@ -107,7 +138,7 @@ export const getProfessionalMetrics = async ({
         )
       : 0;
 
-  const allTreatmentsWithOperation = operationsWithTreatments.flatMap((op) =>
+  const allTreatmentsWithOperation = operationsFiltered.flatMap((op) =>
     op.treatments.map((t) => ({ ...t, operation: op })),
   );
 
