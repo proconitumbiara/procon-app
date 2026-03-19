@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
 import { buildUserPermissions } from "@/lib/authorization";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   const session = await auth.api.getSession({
@@ -56,8 +57,8 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(professionals);
-  } catch (error) {
-    console.error("Erro ao buscar profissionais:", error);
+  } catch (error: unknown) {
+    logger.error("Erro ao buscar profissionais", { error });
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 },

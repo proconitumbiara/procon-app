@@ -5,6 +5,7 @@ import { LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { useTicketsWebSocket } from "@/hooks/use-tickets-websocket";
+import { logger } from "@/lib/logger";
 
 import { ticketsTableColumns, TicketTableRow } from "./table-columns";
 import TicketsCards from "./tickets-cards";
@@ -74,7 +75,7 @@ export default function TicketsFilters({
 
       setTickets(mapped);
     } catch (error) {
-      console.error("Erro ao recarregar tickets:", error);
+      logger.error("reloadTickets failed", { error });
     }
   }, []);
 
@@ -85,12 +86,6 @@ export default function TicketsFilters({
   useEffect(() => {
     setTickets(initialTickets);
   }, [initialTickets]);
-
-  // Polling como fallback (60 segundos)
-  useEffect(() => {
-    const interval = setInterval(reloadTickets, 60000);
-    return () => clearInterval(interval);
-  }, [reloadTickets]);
 
   const filteredTickets = useMemo(() => {
     let filtered = tickets.filter(

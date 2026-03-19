@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { extname, join } from "path";
 
 import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
   ".pdf": "application/pdf",
@@ -79,7 +80,7 @@ export async function GET(
         try {
           fileBuffer = await readFile(fallbackImagePath);
         } catch (fallbackError) {
-          console.error("Fallback image not found:", fallbackError);
+          logger.error("Fallback image not found", { fallbackError, filePath });
           return NextResponse.json(
             { error: "File not found" },
             { status: 404 },
@@ -102,8 +103,8 @@ export async function GET(
     return new NextResponse(new Uint8Array(fileBuffer), {
       headers,
     });
-  } catch (error) {
-    console.error("File serve error:", error);
+  } catch (error: unknown) {
+    logger.error("File serve error", { error });
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 }

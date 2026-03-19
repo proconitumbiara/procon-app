@@ -1,9 +1,10 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { registrationCodesTable } from "@/db/schema";
+import { logger } from "@/lib/logger";
 import { actionClient } from "@/lib/next-safe-action";
 
 import {
@@ -16,56 +17,49 @@ export const validateRegistrationCode = actionClient
   .schema(validateRegistrationCodeSchema)
   .action(async ({ parsedInput }) => {
     try {
-      // Normalizar código para maiúsculas para busca case-insensitive
       const normalizedCode = parsedInput.code.toUpperCase().trim();
+      const now = new Date();
+      const result = await db.transaction(async (tx) => {
+        const registrationCode = await tx.query.registrationCodesTable.findFirst({
+          where: eq(registrationCodesTable.code, normalizedCode),
+        });
 
-      // Buscar código no banco
-      const registrationCode = await db.query.registrationCodesTable.findFirst({
-        where: eq(registrationCodesTable.code, normalizedCode),
+        if (!registrationCode) return ErrorTypes.CODE_NOT_FOUND;
+        if (registrationCode.usedAt) return ErrorTypes.CODE_ALREADY_USED;
+        if (registrationCode.expiresAt < now) return ErrorTypes.CODE_EXPIRED;
+
+        const [updated] = await tx
+          .update(registrationCodesTable)
+          .set({ usedAt: now })
+          .where(
+            and(
+              eq(registrationCodesTable.id, registrationCode.id),
+              isNull(registrationCodesTable.usedAt),
+              gt(registrationCodesTable.expiresAt, now),
+            ),
+          )
+          .returning({ id: registrationCodesTable.id });
+
+        return updated ? "ok" : ErrorTypes.CODE_ALREADY_USED;
       });
 
-      if (!registrationCode) {
+      if (result !== "ok") {
         return {
           error: {
-            type: ErrorTypes.CODE_NOT_FOUND,
-            message: ErrorMessages[ErrorTypes.CODE_NOT_FOUND],
+            type: result,
+            message: ErrorMessages[result],
           },
         };
       }
-
-      // Verificar se já foi usado
-      if (registrationCode.usedAt) {
-        return {
-          error: {
-            type: ErrorTypes.CODE_ALREADY_USED,
-            message: ErrorMessages[ErrorTypes.CODE_ALREADY_USED],
-          },
-        };
-      }
-
-      // Verificar se está expirado
-      const now = new Date();
-      if (registrationCode.expiresAt < now) {
-        return {
-          error: {
-            type: ErrorTypes.CODE_EXPIRED,
-            message: ErrorMessages[ErrorTypes.CODE_EXPIRED],
-          },
-        };
-      }
-
-      // Marcar código como usado (atualizar usedAt)
-      await db
-        .update(registrationCodesTable)
-        .set({
-          usedAt: now,
-        })
-        .where(eq(registrationCodesTable.id, registrationCode.id));
 
       return {
         success: true,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      logger.error("validateRegistrationCode failed", {
+        action: "validate-registration-code",
+        error,
+      });
       return {
         error: {
           type: ErrorTypes.VALIDATION_ERROR,

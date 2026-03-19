@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import { z } from "zod";
 
 import { getProfessionalMetrics } from "@/data/get-professional-metrics";
+import { logger } from "@/lib/logger";
 import { authActionClient } from "@/lib/next-safe-action";
 
 import { ErrorMessages, ErrorTypes } from "./schema";
@@ -151,8 +152,8 @@ export const generateProfessionalMetricsPDF = authActionClient
         pdfData: pdfData,
         fileName: `metricas-${professionalName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`,
       };
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
+    } catch (error: unknown) {
+      logger.error("Erro ao gerar PDF de métricas", { error });
       return {
         error: {
           type: ErrorTypes.PDF_GENERATION_ERROR,
