@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Procon App
 
-## Getting Started
+Sistema de atendimento do PROCON com fila, operação por guichê, chamadas em painel e gestão de profissionais.
 
-First, run the development server:
+## Stack e arquitetura
+
+- `Next.js` (App Router) para rotas e rendering.
+- `Server Actions` (`next-safe-action`) para mutações seguras.
+- `API Routes` para integrações, consultas específicas e cron jobs.
+- `Drizzle ORM` + PostgreSQL para persistência.
+- `better-auth` para autenticação e sessão.
+- `Pusher` para atualização em tempo real entre telas.
+
+### Organização principal
+
+- `src/app/(routes)` páginas autenticadas.
+- `src/actions` regras de negócio e mutações.
+- `src/app/api` endpoints HTTP e cron.
+- `src/db` schema e acesso ao banco.
+- `src/lib/authorization.ts` matriz de permissões e filtros por setor.
+- `src/lib/realtime.ts` canais e eventos de tempo real.
+
+## Como rodar
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplicação local em `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variáveis de ambiente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Obrigatórias:
 
-## Learn More
+- `DATABASE_URL`: conexão PostgreSQL.
+- `BETTER_AUTH_SECRET`: segredo da autenticação (mínimo 32 chars).
+- `NEXT_PUBLIC_APP_URL`: URL base da aplicação.
+- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER`: servidor Pusher.
+- `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`: cliente Pusher.
+- `CRON_SECRET`: token de autorização das rotas de cron.
 
-To learn more about Next.js, take a look at the following resources:
+Opcionais:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `TRUSTED_ORIGINS`: origens adicionais permitidas na autenticação, separadas por vírgula.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Permissões e acesso
 
-## Deploy on Vercel
+O controle de acesso combina `role` e `profile`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `role` define nível global (ex.: `administrator`, `supervisor-geral`).
+- `profile` define escopo funcional/setorial (ex.: `tecnico-atendimento`, `recepcionista`).
+- Permissões e rotas por perfil ficam em `src/lib/authorization.ts`.
+- Filtro por setor usa `sector.key_name` e `canAccessSectorKey(...)`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Exemplos de permissões:
+
+- `tickets.view`, `tickets.manage`
+- `treatments.view`, `treatments.manage`
+- `clients.view`, `clients.manage`
+- `operations.view`, `operations.manage`
+- `results.view.general`, `results.view.professionals`
+
+## Fluxos principais
+
+### 1) Fila de atendimento
+
+1. Recepção cria ticket (`createTicket`).
+2. Ticket entra como `pending`.
+3. Profissional chama próximo (`callNextTicket`).
+4. Ticket muda para `in-attendance`; operação também muda.
+5. Ao finalizar (`endService`), ticket vira `finished` e operação volta para `operating`.
+
+### 2) Operações e pausas
+
+1. Profissional inicia operação (`startOperation`) vinculada a um guichê.
+2. Pode pausar (`startPause`) e retomar (`endPause`).
+3. Encerramento manual via `finishOperation` ou automático por cron.
+
+### 3) Tempo real (Pusher)
+
+Eventos principais:
+
+- Canal `tickets`: `ticket-created`, `ticket-updated`, `tickets-changed`
+- Canal `operations`: `operation-started`, `operation-paused`, `operation-resumed`, `operation-finished`, `auto-call-check`
+- Canal `clients`: `clients-changed`
+- Canal `professionals`: `professionals-changed`
+- Canal `painel`: `nova-chamada`, `ultimas-chamadas`
+
+As telas assinam eventos via hooks cliente para atualizar UI sem polling.
+
+## Cron jobs
+
+Rotas protegidas por header:
+
+```text
+Authorization: Bearer <CRON_SECRET>
+```
+
+Endpoints:
+
+- `GET /api/cron/close-active-operations`
+  - fecha operações ativas e libera guichês.
+- `GET /api/cron/close-stale-treatments`
+  - encerra atendimentos travados e finaliza tickets relacionados.
+- `GET /api/cron/end-of-shift-alert`
+  - emite alerta de encerramento no canal `sistema`.
+
+## Qualidade e validação
+
+- Lint: `npm run lint`
+- Build: `npm run build`
+
+Recomendado validar manualmente:
+
+- criação/cancelamento/chamada de ticket;
+- pausa e retomada de operação;
+- atualização em tempo real entre telas;
+- execução dos endpoints de cron com token.
