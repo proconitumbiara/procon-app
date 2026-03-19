@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -12,7 +12,10 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { PageActions } from "@/components/ui/page-container";
+import { usePusherChannel } from "@/hooks/use-pusher-channel";
 import { authClient } from "@/lib/auth.client";
+import { logger } from "@/lib/logger";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 
 import GenerateCodeButton from "./_components/generate-code-button";
 import ProfessionalListCard from "./_components/professional-list-card";
@@ -36,6 +39,20 @@ const ProfissionaisPage = () => {
   const isProfessional = session.data?.user?.role === "professional";
   const userId = session.data?.user?.id;
 
+  const loadProfessionals = useCallback(async () => {
+    try {
+      const response = await fetch("/api/professionals");
+      if (response.ok) {
+        const data = await response.json();
+        setProfessionals(data);
+      }
+    } catch (error) {
+      logger.error("loadProfessionals failed", { error });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Redirecionar profissional para a própria página
   useEffect(() => {
     if (session.isPending) return;
@@ -47,21 +64,18 @@ const ProfissionaisPage = () => {
       setLoading(false);
       return;
     }
-    const loadProfessionals = async () => {
-      try {
-        const response = await fetch("/api/professionals");
-        if (response.ok) {
-          const data = await response.json();
-          setProfessionals(data);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar profissionais:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadProfessionals();
-  }, [session.isPending, isProfessional, isAdmin, userId, router]);
+  }, [session.isPending, isProfessional, isAdmin, userId, router, loadProfessionals]);
+
+  const realtimeHandlers = useMemo(
+    () => ({
+      [REALTIME_EVENTS.professionalsChanged]: () => {
+        if (isAdmin) void loadProfessionals();
+      },
+    }),
+    [isAdmin, loadProfessionals],
+  );
+  usePusherChannel(REALTIME_CHANNELS.professionals, realtimeHandlers);
 
   if (session.isPending || (isProfessional && userId)) {
     return (

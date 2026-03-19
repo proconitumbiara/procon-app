@@ -1,9 +1,11 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PageActions, PageContainer, PageContent, PageDescription, PageHeader, PageHeaderContent, PageTitle } from "@/components/ui/page-container";
 import { clientsTable, sectorsTable } from "@/db/schema";
+import { usePusherChannel } from "@/hooks/use-pusher-channel";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 
 import AddClientButton from "./_components/add-client-button";
 import ClientFilters from "./_components/client-filters";
@@ -43,9 +45,16 @@ export default function ProfessionalServices() {
 
     useEffect(() => {
         loadData();
-        const interval = setInterval(loadData, 30000);
-        return () => clearInterval(interval);
     }, [loadData]);
+
+    const realtimeHandlers = useMemo(
+        () => ({
+            [REALTIME_EVENTS.clientsChanged]: () => loadData(),
+        }),
+        [loadData],
+    );
+
+    usePusherChannel(REALTIME_CHANNELS.clients, realtimeHandlers);
 
     return (
         <PageContainer>

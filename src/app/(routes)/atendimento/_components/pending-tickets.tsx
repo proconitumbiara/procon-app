@@ -66,9 +66,6 @@ export default function PendingTickets() {
 
     useEffect(() => {
         loadData();
-        // Manter polling como fallback, mas com intervalo maior (60s)
-        const interval = setInterval(loadData, 60000);
-        return () => clearInterval(interval);
     }, [loadData]);
 
     if (loading) {

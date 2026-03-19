@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { clientsTable } from "@/db/schema";
 import { authActionClient } from "@/lib/next-safe-action";
+import { pusherServer } from "@/lib/pusher-server";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 
 import {
   ErrorMessages,
@@ -30,6 +32,11 @@ export const updateUser = authActionClient
       .where(eq(clientsTable.id, parsedInput.id));
 
     revalidatePath("/consumidores");
+    void pusherServer
+      .trigger(REALTIME_CHANNELS.clients, REALTIME_EVENTS.clientsChanged, {
+        clientId: parsedInput.id,
+      })
+      .catch(() => {});
   });
 
 export const insertClient = authActionClient
@@ -43,4 +50,7 @@ export const insertClient = authActionClient
     });
 
     revalidatePath("/consumidores");
+    void pusherServer
+      .trigger(REALTIME_CHANNELS.clients, REALTIME_EVENTS.clientsChanged, {})
+      .catch(() => {});
   });

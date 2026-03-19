@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 
@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { callNextTicket } from "@/actions/treatments/call-next-client";
+import { usePusherChannel } from "@/hooks/use-pusher-channel";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 
-const POLLING_INTERVAL_MS = 60000; // 60s para não resetar a contagem durante o countdown
+const ALERT_COOLDOWN_MS = 60000;
 const COUNTDOWN_SECONDS = 15;
 
 export default function PendingTicketAlert() {
@@ -122,7 +124,7 @@ export default function PendingTicketAlert() {
         setCountdownSeconds(COUNTDOWN_SECONDS);
 
         const now = Date.now();
-        if (now - lastSoundTimestampRef.current >= POLLING_INTERVAL_MS - 50) {
+        if (now - lastSoundTimestampRef.current >= ALERT_COOLDOWN_MS - 50) {
           playAlarm();
           lastSoundTimestampRef.current = now;
         }
@@ -156,9 +158,28 @@ export default function PendingTicketAlert() {
 
   useEffect(() => {
     checkEligibility();
-    const intervalId = setInterval(checkEligibility, POLLING_INTERVAL_MS);
-    return () => clearInterval(intervalId);
   }, [checkEligibility]);
+
+  const ticketsHandlers = useMemo(
+    () => ({
+      [REALTIME_EVENTS.ticketsChanged]: () => checkEligibility(),
+      [REALTIME_EVENTS.ticketCreated]: () => checkEligibility(),
+      [REALTIME_EVENTS.ticketUpdated]: () => checkEligibility(),
+    }),
+    [checkEligibility],
+  );
+  const operationsHandlers = useMemo(
+    () => ({
+      [REALTIME_EVENTS.autoCallCheck]: () => checkEligibility(),
+      [REALTIME_EVENTS.operationStarted]: () => checkEligibility(),
+      [REALTIME_EVENTS.operationPaused]: () => checkEligibility(),
+      [REALTIME_EVENTS.operationResumed]: () => checkEligibility(),
+      [REALTIME_EVENTS.operationFinished]: () => checkEligibility(),
+    }),
+    [checkEligibility],
+  );
+  usePusherChannel(REALTIME_CHANNELS.tickets, ticketsHandlers);
+  usePusherChannel(REALTIME_CHANNELS.operations, operationsHandlers);
 
   const executeCallNextRef = useRef(executeCallNext);
   executeCallNextRef.current = executeCallNext;

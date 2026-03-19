@@ -1,38 +1,26 @@
 "use client";
 
-import Pusher from "pusher-js";
-import { useEffect, useRef } from "react";
+import { useMemo, useRef } from "react";
+
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
+
+import { usePusherChannel } from "./use-pusher-channel";
 
 type TicketUpdateCallback = () => void;
 
 export function useTicketsWebSocket(onTicketUpdate: TicketUpdateCallback) {
   const callbackRef = useRef(onTicketUpdate);
 
-  useEffect(() => {
-    callbackRef.current = onTicketUpdate;
-  }, [onTicketUpdate]);
+  callbackRef.current = onTicketUpdate;
 
-  useEffect(() => {
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-      activityTimeout: 25000,
-      pongTimeout: 15000,
-    });
+  const handlers = useMemo(
+    () => ({
+      [REALTIME_EVENTS.ticketCreated]: () => callbackRef.current(),
+      [REALTIME_EVENTS.ticketUpdated]: () => callbackRef.current(),
+      [REALTIME_EVENTS.ticketsChanged]: () => callbackRef.current(),
+    }),
+    [],
+  );
 
-    const channel = pusher.subscribe("tickets");
-
-    const handleUpdate = () => {
-      callbackRef.current();
-    };
-
-    channel.bind("ticket-created", handleUpdate);
-    channel.bind("ticket-updated", handleUpdate);
-
-    return () => {
-      channel.unbind("ticket-created", handleUpdate);
-      channel.unbind("ticket-updated", handleUpdate);
-      pusher.unsubscribe("tickets");
-      pusher.disconnect();
-    };
-  }, []);
+  usePusherChannel(REALTIME_CHANNELS.tickets, handlers);
 }

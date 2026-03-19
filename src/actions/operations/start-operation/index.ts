@@ -7,6 +7,8 @@ import { db } from "@/db";
 import { operationsTable, servicePointsTable } from "@/db/schema";
 import { authActionClient } from "@/lib/next-safe-action";
 import { assertSectorKeyAccess, buildUserPermissions } from "@/lib/authorization";
+import { pusherServer } from "@/lib/pusher-server";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 
 import { ErrorMessages, ErrorTypes, schema } from "./schema";
 
@@ -84,6 +86,17 @@ export const startOperation = authActionClient
       .where(eq(servicePointsTable.id, parsedInput.servicePointId));
 
     revalidatePath("/atendimento");
+    void pusherServer
+      .trigger(REALTIME_CHANNELS.operations, REALTIME_EVENTS.operationStarted, {
+        userId: session.user.id,
+        servicePointId: parsedInput.servicePointId,
+      })
+      .catch(() => {});
+    void pusherServer
+      .trigger(REALTIME_CHANNELS.operations, REALTIME_EVENTS.autoCallCheck, {
+        userId: session.user.id,
+      })
+      .catch(() => {});
 
     return { success: true };
   });

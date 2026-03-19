@@ -6,7 +6,9 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { clientsTable, sectorsTable, ticketsTable } from "@/db/schema";
 import { permissionedActionClient } from "@/lib/next-safe-action";
+import { logger } from "@/lib/logger";
 import { pusherServer } from "@/lib/pusher-server";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 import { calculateAge } from "@/lib/utils";
 
 import {
@@ -47,9 +49,15 @@ export const updateTicket = permissionedActionClient("tickets.manage")
 
     revalidatePath("/fila-atendimentos");
 
-    void pusherServer.trigger("tickets", "ticket-updated", {
+    void pusherServer.trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketUpdated, {
       ticketId: parsedInput.id,
-    }).catch((err) => console.error("[updateTicket] Pusher:", err));
+    }).catch((err) => logger.error("updateTicket Pusher failed", { error: err }));
+    void pusherServer
+      .trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketsChanged, {
+        ticketId: parsedInput.id,
+        status: "cancelled",
+      })
+      .catch(() => {});
   });
 
 export const createTicket = permissionedActionClient("tickets.manage")
@@ -101,9 +109,15 @@ export const createTicket = permissionedActionClient("tickets.manage")
     revalidatePath("/atendimento");
     revalidatePath("/fila-atendimentos");
 
-    void pusherServer.trigger("tickets", "ticket-created", {
+    void pusherServer.trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketCreated, {
       ticketId: newTicket.id,
-    }).catch((err) => console.error("[createTicket] Pusher:", err));
+    }).catch((err) => logger.error("createTicket Pusher failed", { error: err }));
+    void pusherServer
+      .trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketsChanged, {
+        ticketId: newTicket.id,
+        status: newTicket.status,
+      })
+      .catch(() => {});
 
     return { data: newTicket };
   });
