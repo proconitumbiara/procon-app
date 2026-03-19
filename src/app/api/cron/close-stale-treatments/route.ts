@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { ticketsTable, treatmentsTable } from "@/db/schema";
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
+import { pusherServer } from "@/lib/pusher-server";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -26,25 +29,41 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
 
-  for (const treatment of staleTreatments) {
-    const start =
-      treatment.createdAt instanceof Date
-        ? treatment.createdAt
-        : new Date(treatment.createdAt);
-    const durationMinutes = Math.floor((now.getTime() - start.getTime()) / 60000);
+  await db.transaction(async (tx) => {
+    for (const treatment of staleTreatments) {
+      const start =
+        treatment.createdAt instanceof Date
+          ? treatment.createdAt
+          : new Date(treatment.createdAt);
+      const durationMinutes = Math.floor((now.getTime() - start.getTime()) / 60000);
 
-    await db
-      .update(treatmentsTable)
-      .set({ status: "finished", duration: durationMinutes })
-      .where(eq(treatmentsTable.id, treatment.id));
+      await tx
+        .update(treatmentsTable)
+        .set({ status: "finished", duration: durationMinutes })
+        .where(eq(treatmentsTable.id, treatment.id));
 
-    if (treatment.ticketId) {
-      await db
-        .update(ticketsTable)
-        .set({ status: "finished" })
-        .where(eq(ticketsTable.id, treatment.ticketId));
+      if (treatment.ticketId) {
+        await tx
+          .update(ticketsTable)
+          .set({ status: "finished" })
+          .where(eq(ticketsTable.id, treatment.ticketId));
+      }
     }
-  }
+  });
+
+  void pusherServer
+    .trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketsChanged, {
+      source: "cron-close-stale-treatments",
+      count: staleTreatments.length,
+    })
+    .catch((error) => {
+      logger.warn("close-stale-treatments emit failed", { error });
+    });
+  void pusherServer
+    .trigger(REALTIME_CHANNELS.operations, REALTIME_EVENTS.autoCallCheck, {
+      source: "cron-close-stale-treatments",
+    })
+    .catch(() => {});
 
   return NextResponse.json({ closed: staleTreatments.length });
 }

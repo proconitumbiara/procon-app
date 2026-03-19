@@ -12,6 +12,9 @@ import {
 import { permissionedActionClient } from "@/lib/next-safe-action";
 import { sendToPanel } from "@/lib/panel-api";
 import { getPriorityLabel } from "@/lib/priority-utils";
+import { logger } from "@/lib/logger";
+import { pusherServer } from "@/lib/pusher-server";
+import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
 
 import { ErrorMessages, ErrorTypes } from "./schema";
 import { sendLastCalledClients } from "./send-last-called-clients";
@@ -125,28 +128,33 @@ export const callNextTicket = permissionedActionClient("treatments.manage").acti
     };
   }
 
-  await db.insert(treatmentsTable).values({
-    ticketId: ticketWithClient.id,
-    operationId: operation.id,
-    startedAt: new Date(),
+  await db.transaction(async (tx) => {
+    await tx.insert(treatmentsTable).values({
+      ticketId: ticketWithClient.id,
+      operationId: operation.id,
+      startedAt: new Date(),
+    });
+
+    await tx
+      .update(ticketsTable)
+      .set({ status: "in-attendance", calledAt: new Date(), updatedAt: new Date() })
+      .where(eq(ticketsTable.id, ticketWithClient.id));
+
+    await tx
+      .update(operationsTable)
+      .set({ status: "in-attendance", updatedAt: new Date() })
+      .where(eq(operationsTable.id, operation.id));
   });
-
-  await db
-    .update(ticketsTable)
-    .set({ status: "in-attendance", calledAt: new Date(), updatedAt: new Date() })
-    .where(eq(ticketsTable.id, ticketWithClient.id));
-
-  await db
-    .update(operationsTable)
-    .set({ status: "in-attendance", updatedAt: new Date() })
-    .where(eq(operationsTable.id, operation.id));
 
   revalidatePath("/atendimento");
   revalidatePath("/fila-atendimentos");
 
   // Pusher em background (não bloquear resposta ao usuário)
   void sendLastCalledClients().catch((err) => {
-    console.error("[callNextTicket] sendLastCalledClients:", err);
+    logger.error("callNextTicket sendLastCalledClients failed", {
+      action: "call-next-ticket",
+      error: err,
+    });
   });
   void sendToPanel({
     nome: client.name,
@@ -154,8 +162,27 @@ export const callNextTicket = permissionedActionClient("treatments.manage").acti
     prioridade: getPriorityLabel(ticketWithClient.priority),
     chamadoEm: new Date().toISOString(),
   }).catch((err) => {
-    console.error("[callNextTicket] sendToPanel:", err);
+    logger.error("callNextTicket sendToPanel failed", {
+      action: "call-next-ticket",
+      error: err,
+    });
   });
+  void pusherServer
+    .trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketsChanged, {
+      ticketId: ticketWithClient.id,
+      status: "in-attendance",
+    })
+    .catch((err) => {
+      logger.warn("callNextTicket ticketsChanged emit failed", {
+        action: "call-next-ticket",
+        error: err,
+      });
+    });
+  void pusherServer
+    .trigger(REALTIME_CHANNELS.operations, REALTIME_EVENTS.autoCallCheck, {
+      operationId: operation.id,
+    })
+    .catch(() => {});
 
   return { success: true };
 });
