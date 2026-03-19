@@ -2,10 +2,7 @@ import { headers } from "next/headers";
 import { createSafeActionClient } from "next-safe-action";
 
 import { auth } from "@/lib/auth";
-import {
-  type PermissionKey,
-  buildUserPermissions,
-} from "@/lib/authorization";
+import { type PermissionKey, buildUserPermissions } from "@/lib/authorization";
 
 export const actionClient = createSafeActionClient();
 
@@ -33,7 +30,10 @@ export const adminActionClient = createSafeActionClient().use(
       throw new Error("Não autorizado");
     }
 
-    if (session.user.role !== "administrator" && session.user.role !== "developer") {
+    if (
+      session.user.role !== "administrator" &&
+      session.user.role !== "supervisor-geral"
+    ) {
       throw new Error("Acesso negado");
     }
 
@@ -63,4 +63,3 @@ export const permissionedActionClient = (permission: PermissionKey) =>
 
     return next({ ctx: { session, perms } });
   });
-

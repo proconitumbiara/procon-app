@@ -20,9 +20,15 @@ export async function GET(request: NextRequest) {
   });
 
   // Apenas administradores/supervisores podem listar profissionais
-  if (session.user.role !== "administrator" && session.user.role !== "developer") {
+  if (
+    session.user.role !== "administrator" &&
+    session.user.role !== "supervisor-geral"
+  ) {
     return NextResponse.json(
-      { error: "Acesso negado. Apenas administradores podem listar profissionais." },
+      {
+        error:
+          "Acesso negado. Apenas administradores podem listar profissionais.",
+      },
       { status: 403 },
     );
   }
@@ -33,22 +39,16 @@ export async function GET(request: NextRequest) {
     // Regra do doc:
     // - supervisor-atendimento: vê apenas tecnico-atendimento e tecnico-geral
     // - supervisor-juridico: vê apenas tecnico-juridico e tecnico-geral
-    // - developer/administrator (outros perfis): vê todos
+    // - supervisor-geral/administrator (outros perfis): vê todos
     const professionals = professionalsRaw.filter((user) => {
       const profile = user.profile as string | null;
 
       if (perms.profile === "supervisor-atendimento") {
-        return (
-          profile === "tecnico-atendimento" ||
-          profile === "tecnico-geral"
-        );
+        return profile === "tecnico-atendimento" || profile === "tecnico-geral";
       }
 
       if (perms.profile === "supervisor-juridico") {
-        return (
-          profile === "tecnico-juridico" ||
-          profile === "tecnico-geral"
-        );
+        return profile === "tecnico-juridico" || profile === "tecnico-geral";
       }
 
       // Outros administradores/desenvolvedores enxergam todos
