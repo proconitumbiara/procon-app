@@ -16,6 +16,11 @@ interface ProfessionalMetricsParams {
   sectorKeyNames?: string[] | null;
 }
 
+type FinishedTreatmentWithDates = {
+  startedAt: Date | string;
+  finishedAt: Date | string;
+};
+
 export const getProfessionalMetrics = async ({
   professionalId,
   from,
@@ -142,8 +147,19 @@ export const getProfessionalMetrics = async ({
     op.treatments.map((t) => ({ ...t, operation: op })),
   );
 
+  const hasFinishedDates = (
+    treatment: typeof allTreatmentsWithOperation[number],
+  ): treatment is typeof allTreatmentsWithOperation[number] &
+    FinishedTreatmentWithDates => {
+    return (
+      treatment.status === "finished" &&
+      treatment.startedAt !== null &&
+      treatment.finishedAt !== null
+    );
+  };
+
   const sortedFinishedTreatments = allTreatmentsWithOperation
-    .filter((t) => t.status === "finished" && t.startedAt && t.finishedAt)
+    .filter(hasFinishedDates)
     .map((t) => ({
       startedAt:
         t.startedAt instanceof Date ? t.startedAt : new Date(t.startedAt),
