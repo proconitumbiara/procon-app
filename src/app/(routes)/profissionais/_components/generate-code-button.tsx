@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, KeyRound, Loader2 } from "lucide-react";
+import { Check, Copy, Loader2, UserPlus } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -84,8 +84,7 @@ const GenerateCodeButton = () => {
           </>
         ) : (
           <>
-            <KeyRound className="h-4 w-4" />
-            Gerar Código de Cadastro
+            <UserPlus className="h-4 w-4" />
           </>
         )}
       </Button>
