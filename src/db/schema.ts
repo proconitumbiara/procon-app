@@ -163,7 +163,7 @@ export const treatmentsTable = pgTable(
     status: text("status").notNull().default("in_service"),
     duration: integer("duration"),
     startedAt: timestamp("started_at").defaultNow().notNull(),
-    finishedAt: timestamp("finished_at").defaultNow().notNull(),
+    finishedAt: timestamp("finished_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
