@@ -6,6 +6,7 @@ import {
   BriefcaseBusinessIcon,
   ChartBarBig,
   Headset,
+  FileText,
   LaptopMinimalCheck,
   ListCheck,
   ListOrdered,
@@ -98,6 +99,19 @@ function getSidebarSectionsForUser(args: {
     const myProfileUrl = userId ? `/profissionais/${userId}` : "/profissionais";
     return {
       ...base,
+      professionals: [
+        { title: "Operação", url: "/atendimento", icon: Headset },
+        { title: "Meus atendimentos", url: "/meus-atendimentos", icon: ListCheck },
+        { title: "Meu perfil", url: myProfileUrl, icon: Users },
+      ],
+    };
+  }
+
+  if (profile === "auditor-denuncia") {
+    const myProfileUrl = userId ? `/profissionais/${userId}` : "/profissionais";
+    return {
+      ...base,
+      enterprise: [{ title: "Denúncias", url: "/denuncias", icon: FileText }],
       professionals: [
         { title: "Operação", url: "/atendimento", icon: Headset },
         { title: "Meus atendimentos", url: "/meus-atendimentos", icon: ListCheck },

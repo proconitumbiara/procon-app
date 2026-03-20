@@ -4,11 +4,19 @@ import {
   date,
   index,
   integer,
+  pgEnum,
   pgTable,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+
+// Enum para meios de prova (seção 6)
+export const evidenceTypeEnum = pgEnum("evidence_type", [
+  "documentary",
+  "photo_video",
+  "none",
+]);
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -227,6 +235,47 @@ export const pausesTable = pgTable(
     ),
   ],
 );
+
+export const complaintsTable = pgTable("complaints", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  // Seção 1 - Solicitação Anônima
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+
+  // Seção 2 - Qualificação do Denunciante (Consumidor)
+  complainantName: text("complainant_name"),
+  complainantProfession: text("complainant_profession"),
+  complainantCpf: text("complainant_cpf"),
+  complainantPhone: text("complainant_phone"),
+  complainantEmail: text("complainant_email"),
+  complainantAddress: text("complainant_address"),
+  complainantZipCode: text("complainant_zip_code"),
+
+  // Seção 3 - Qualificação do Denunciado (Fornecedor)
+  respondentCompanyName: text("respondent_company_name").notNull(),
+  respondentCnpj: text("respondent_cnpj"),
+  respondentAddress: text("respondent_address").notNull(),
+  respondentZipCode: text("respondent_zip_code").notNull(),
+  respondentAdditionalInfo: text("respondent_additional_info"),
+
+  // Seção 4 - Relato dos Fatos
+  factsDescription: text("facts_description").notNull(),
+
+  // Seção 5 - Do Pedido
+  request: text("request").notNull(),
+
+  // Seção 6 - Meios de Prova
+  evidenceType: evidenceTypeEnum("evidence_type").notNull().default("none"),
+
+  // Metadados
+  filingDate: date("filing_date").notNull(),
+  viewingStatus: text("viewing_status").notNull().default("pending"),
+  viewingDate: timestamp("viewing_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
 
 export const usersTableRelations = relations(usersTable, ({ many }) => ({
   operations: many(operationsTable),

@@ -10,6 +10,7 @@ export type UserProfile =
   | "tecnico-geral"
   | "tecnico-atendimento"
   | "tecnico-juridico"
+  | "auditor-denuncia"
   | "recepcionista"
   | "supervisor-atendimento"
   | "supervisor-juridico"
@@ -24,6 +25,9 @@ export type PermissionKey =
   | "tickets.manage"
   | "treatments.view"
   | "treatments.manage"
+  // denúncias
+  | "complaints.view"
+  | "complaints.manage"
   // recepção
   | "clients.view"
   | "clients.manage"
@@ -89,6 +93,25 @@ export const PROFILE_PERMISSIONS: Record<UserProfile, ProfilePermissions> = {
       "tickets.manage",
       "treatments.view",
       "treatments.manage",
+    ],
+    sectorKeyFilter: ["atendimento"],
+  },
+  "auditor-denuncia": {
+    // Mantém o mesmo escopo do `tecnico-atendimento` e adiciona acesso às denúncias.
+    allowedRoutes: [
+      "/atendimento",
+      "/meus-atendimentos",
+      "/profissionais/[id]",
+      "/denuncias",
+      "/denuncias/[id]",
+    ],
+    allowedPermissions: [
+      "tickets.view",
+      "tickets.manage",
+      "treatments.view",
+      "treatments.manage",
+      "complaints.view",
+      "complaints.manage",
     ],
     sectorKeyFilter: ["atendimento"],
   },
