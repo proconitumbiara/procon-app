@@ -240,7 +240,7 @@ export const complaintsTable = pgTable("complaints", {
   id: uuid("id").primaryKey().defaultRandom(),
 
   // Seção 1 - Solicitação Anônima
-  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  isAnonymous: boolean("is_anonymous").notNull(),
 
   // Seção 2 - Qualificação do Denunciante (Consumidor)
   complainantName: text("complainant_name"),
@@ -254,8 +254,7 @@ export const complaintsTable = pgTable("complaints", {
   // Seção 3 - Qualificação do Denunciado (Fornecedor)
   respondentCompanyName: text("respondent_company_name").notNull(),
   respondentCnpj: text("respondent_cnpj"),
-  respondentAddress: text("respondent_address").notNull(),
-  respondentZipCode: text("respondent_zip_code").notNull(),
+  respondentAddress: text("respondent_address"),
   respondentAdditionalInfo: text("respondent_additional_info"),
 
   // Seção 4 - Relato dos Fatos
@@ -265,11 +264,11 @@ export const complaintsTable = pgTable("complaints", {
   request: text("request").notNull(),
 
   // Seção 6 - Meios de Prova
-  evidenceType: evidenceTypeEnum("evidence_type").notNull().default("none"),
+  evidenceType: text("evidence_type"),
 
   // Metadados
-  filingDate: date("filing_date").notNull(),
-  viewingStatus: text("viewing_status").notNull().default("pending"),
+  filingDate: timestamp("filing_date").notNull(),
+  viewingStatus: text("viewing_status").notNull(),
   viewingDate: timestamp("viewing_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

@@ -44,7 +44,7 @@ function toErrorDetails(error: unknown) {
 const evidenceTypeSchema = z.enum(["documentary", "photo_video", "none"]);
 
 const createComplaintSchema = z.object({
-  isAnonymous: z.boolean().optional().default(false),
+  isAnonymous: z.boolean().default(true),
 
   // Consumidor (opcional)
   complainantName: z.string().optional().nullable(),
@@ -58,35 +58,28 @@ const createComplaintSchema = z.object({
   // Fornecedor (obrigatório no schema)
   respondentCompanyName: z.string().min(1),
   respondentCnpj: z.string().optional().nullable(),
-  respondentAddress: z.string().min(1),
-  respondentZipCode: z.string().min(1),
+  respondentAddress: z.string().optional().nullable(),
   respondentAdditionalInfo: z.string().optional().nullable(),
 
   // Relato (obrigatório no schema)
   factsDescription: z.string().min(1),
   // O schema original do banco chama a coluna de `request`.
   // Para evitar conflito mental no código, aceitamos como `requestText` e/ou `request`.
-  requestText: z.string().min(1).optional().nullable(),
-  request: z.string().min(1).optional().nullable(),
+  request: z.string().min(1),
 
   // Meios de Prova
   evidenceType: evidenceTypeSchema.optional().default("none"),
 
   // Data (coluna `date` -> string YYYY-MM-DD)
-  viewingStatus: z.enum(["pending", "viewed"]).optional().default("pending"),
+  viewingStatus: z.string().min(1).default("pending"),
   viewingDate: z.string().optional().nullable(),
-  filingDate: z
-    .string()
-    .regex(
-      /^\d{4}-\d{2}-\d{2}$/,
-      "filingDate deve estar no formato YYYY-MM-DD",
-    ),
+  filingDate: z.date().optional().nullable().default(new Date()),
 });
 
 function normalizeComplaintInput(
   parsed: z.infer<typeof createComplaintSchema>,
 ) {
-  const requestValue = (parsed.requestText ?? parsed.request ?? "").trim();
+  const requestValue = (parsed.request ?? "").trim();
   if (!requestValue) {
     // Garante que a coluna `request` (not null) seja preenchida.
     throw new z.ZodError([
@@ -98,7 +91,7 @@ function normalizeComplaintInput(
     ]);
   }
   return {
-    isAnonymous: parsed.isAnonymous ?? false,
+    isAnonymous: parsed.isAnonymous ?? true,
 
     complainantName: parsed.complainantName ?? null,
     complainantProfession: parsed.complainantProfession ?? null,
@@ -110,15 +103,14 @@ function normalizeComplaintInput(
 
     respondentCompanyName: parsed.respondentCompanyName,
     respondentCnpj: parsed.respondentCnpj ?? null,
-    respondentAddress: parsed.respondentAddress,
-    respondentZipCode: parsed.respondentZipCode,
+    respondentAddress: parsed.respondentAddress ?? null,
     respondentAdditionalInfo: parsed.respondentAdditionalInfo ?? null,
 
     factsDescription: parsed.factsDescription,
     request: requestValue,
 
     evidenceType: parsed.evidenceType ?? "none",
-    filingDate: parsed.filingDate,
+    filingDate: parsed.filingDate ?? new Date(),
     viewingStatus: parsed.viewingStatus ?? "pending",
     viewingDate: parsed.viewingDate ?? null,
   };
@@ -178,6 +170,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Cria uma nova reclamação.
 export async function POST(request: NextRequest) {
   if (!authWithSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -202,12 +195,12 @@ export async function POST(request: NextRequest) {
         respondentCompanyName: normalized.respondentCompanyName,
         respondentCnpj: normalized.respondentCnpj,
         respondentAddress: normalized.respondentAddress,
-        respondentZipCode: normalized.respondentZipCode,
         respondentAdditionalInfo: normalized.respondentAdditionalInfo,
         factsDescription: normalized.factsDescription,
         request: normalized.request,
         evidenceType: normalized.evidenceType,
         filingDate: normalized.filingDate,
+        viewingStatus: normalized.viewingStatus,
       })
       .returning();
 
