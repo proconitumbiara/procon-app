@@ -1,7 +1,7 @@
 "use client";
 
-import { Eye, FileText } from "lucide-react";
-import Link from "next/link";
+import { Check, Eye } from "lucide-react";
+
 
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
@@ -9,13 +9,10 @@ import { toast } from "sonner";
 import { updateComplaint } from "@/actions/complaint/update";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+
+import { Separator } from "@/components/ui/separator";
+import { useRouter } from "next/navigation";
 
 type ComplaintCardRow = {
   id: string;
@@ -28,6 +25,8 @@ type ComplaintCardRow = {
   viewingDate: Date | string | null;
   createdAt: Date | string;
 };
+
+
 
 function truncate(text: string, maxChars: number) {
   if (text.length <= maxChars) return text;
@@ -48,6 +47,12 @@ function formatDateTime(value: string | Date | null | undefined) {
   return date.toLocaleString("pt-BR");
 }
 
+function getNumericShortId(id: string) {
+  // Mostra apenas os dígitos do id (ignorando letras) para formar um "short id".
+  const numeric = id.replace(/\D/g, "");
+  return numeric.slice(0, 6) || id.slice(0, 6);
+}
+
 function getViewingBadgeConfig(status: "pending" | "viewed") {
   if (status === "viewed")
     return {
@@ -60,9 +65,18 @@ function getViewingBadgeConfig(status: "pending" | "viewed") {
   };
 }
 
+function getAnonymousBadgeConfig(isAnonymous: boolean) {
+  return {
+    className: isAnonymous ? "bg-gray-100 text-gray-800 border-gray-300" : "bg-blue-100 text-blue-800 border-blue-300",
+    label: isAnonymous ? "Anônimo" : "Identificado",
+  };
+}
+
 function ComplaintCard({ complaint }: { complaint: ComplaintCardRow }) {
-  const idShort = complaint.id.slice(0, 6);
+  const router = useRouter();
+  const idShort = getNumericShortId(complaint.id);
   const badgeConfig = getViewingBadgeConfig(complaint.viewingStatus);
+  const anonymousBadgeConfig = getAnonymousBadgeConfig(complaint.isAnonymous);
 
   const { execute, status } = useAction(updateComplaint, {
     onSuccess: () => {
@@ -82,70 +96,64 @@ function ComplaintCard({ complaint }: { complaint: ComplaintCardRow }) {
 
   return (
     <Card className="border shadow-sm">
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground font-medium">
-              ID: <span className="font-mono">{idShort}</span>
-            </p>
+      <CardContent>
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col items-start">
             <p className="font-semibold">
               {complaint.respondentCompanyName}
             </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              ID: <span className="font-mono">{idShort}</span>
+            </p>
           </div>
-          <Badge variant="outline" className={badgeConfig.className}>
-            {badgeConfig.label}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={badgeConfig.className}>
+              {badgeConfig.label}
+            </Badge>
+            <Badge variant="outline" className={anonymousBadgeConfig.className}>
+              {anonymousBadgeConfig.label}
+            </Badge>
+          </div>
         </div>
 
-        <div className="space-y-1 text-sm">
-          <p className="text-muted-foreground">
-            Data do registro: {formatDate(complaint.filingDate)}
-          </p>
-          <p className="text-muted-foreground">Resumo dos fatos:</p>
-          <p className="leading-snug">{truncate(complaint.factsDescription, 140)}</p>
-          <p className="text-muted-foreground">Pedido:</p>
-          <p className="leading-snug">{truncate(complaint.request, 140)}</p>
+        <div className="flex flex-col items-center justify-between gap-2 mt-4">
+          <Button
+            variant="outline"
+            className="w-full text-xs"
+            size="icon"
+            aria-label="Visualizar denúncia"
+            onClick={() => router.push(`/denuncias/${complaint.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+            Detalhar denúncia
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full text-xs"
+            size="icon"
+            aria-label="Marcar como visualizada"
+            disabled={isViewed || isExecuting}
+            onClick={() => execute({ complaintId: complaint.id })}
+          >
+            <Check className="h-4 w-4 text-green-500" />
+            {isViewed || isExecuting ? "Visualizada" : "Marcar como visualizada"}
+          </Button>
         </div>
+      </CardContent>
 
+      <Separator />
+      <CardFooter className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          Data do registro: {formatDate(complaint.filingDate)}
+        </p>
         {complaint.viewingDate && complaint.viewingStatus === "viewed" && (
           <p className="text-xs text-muted-foreground">
             Visualizada em: {formatDateTime(complaint.viewingDate)}
           </p>
         )}
-
-        <div className="flex items-center justify-end gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Marcar como visualizada"
-                  disabled={isViewed || isExecuting}
-                  onClick={() => execute({ complaintId: complaint.id })}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[240px]">
-                Marcar como visualizada
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" asChild aria-label="Detalhar denúncia">
-                  <Link href={`/denuncias/${complaint.id}`}>
-                    <FileText className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Detalhar</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardContent>
+      </CardFooter>
     </Card>
+
   );
 }
 
