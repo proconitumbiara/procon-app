@@ -22,6 +22,7 @@ import { db } from "@/db";
 import { complaintsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { buildUserPermissions } from "@/lib/authorization";
+import { formatDateInSaoPaulo } from "@/lib/timezone-utils";
 import {
   ComplaintEvidenceFile,
   getIdPrefixFromComplaintId,
@@ -35,14 +36,21 @@ function formatDate(value: string | Date | null | undefined) {
   if (!value) return "-";
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("pt-BR");
+  return formatDateInSaoPaulo(date);
 }
 
 function formatDateTime(value: string | Date | null | undefined) {
   if (!value) return "-";
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("pt-BR");
+  return date.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function getNumericShortId(id: string) {

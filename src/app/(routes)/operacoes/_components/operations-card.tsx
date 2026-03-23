@@ -20,6 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatCPF } from "@/lib/utils";
+import { formatDateInSaoPaulo } from "@/lib/timezone-utils";
+
+const saoPauloTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
 
 interface OperationClient {
   id: string;
@@ -208,18 +216,15 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
             <p className="text-foreground text-sm font-light">
               <span className="text-foreground font-semibold">Início:</span>{" "}
               {operation.createdAt
-                ? new Date(operation.createdAt).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "2-digit",
-                })
+                ? formatDateInSaoPaulo(operation.createdAt, {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "2-digit",
+                  })
                 : "-"}{" "}
               <span className="text-foreground font-semibold">Horário:</span>{" "}
               {operation.createdAt
-                ? new Date(operation.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
+                ? saoPauloTimeFormatter.format(new Date(operation.createdAt))
                 : "-"}
               {operation.createdAt && (
                 <OperationTimer createdAt={operation.createdAt} />
@@ -247,18 +252,15 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
                     <p className="text-sm">
                       <span className="text-foreground font-semibold">Início do atendimento:</span>{" "}
                       {treatment.createdAt
-                        ? new Date(treatment.createdAt).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "2-digit",
-                        })
+                        ? formatDateInSaoPaulo(treatment.createdAt, {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "2-digit",
+                          })
                         : "-"}{" "}
                       <span className="text-foreground font-semibold">às</span>{" "}
                       {treatment.createdAt
-                        ? new Date(treatment.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                        ? saoPauloTimeFormatter.format(new Date(treatment.createdAt))
                         : "-"}
                     </p>
                     {treatment.createdAt && (

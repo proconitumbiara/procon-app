@@ -3,9 +3,17 @@ import { and, eq } from "drizzle-orm";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { db } from "@/db";
 import { treatmentsTable } from "@/db/schema";
+import { formatDateInSaoPaulo } from "@/lib/timezone-utils";
 
 import CallCustomerAgainButton from "./call-customer-again-button";
 import FinishServiceButton from "./finish-service-button";
+
+const saoPauloTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+});
 
 interface ServiceInProgressCardProps {
     /** Id da operação em andamento do usuário (vinda da página). Quando null, o card não busca treatment. */
@@ -46,8 +54,8 @@ const ServiceInProgressCard = async ({ operatingOperationId }: ServiceInProgress
 
     // Formatar data e horário de início
     const startDate = treatment.createdAt ? new Date(treatment.createdAt) : null;
-    const formattedDate = startDate ? startDate.toLocaleDateString() : "-";
-    const formattedTime = startDate ? startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
+    const formattedDate = startDate ? formatDateInSaoPaulo(startDate) : "-";
+    const formattedTime = startDate ? saoPauloTimeFormatter.format(startDate) : "-";
 
     return (
         <div className="flex flex-col gap-4 w-full h-full max-h-[80vh]">
@@ -59,8 +67,8 @@ const ServiceInProgressCard = async ({ operatingOperationId }: ServiceInProgress
                             <p className="text-sm text-muted-foreground"><span className="font-semibold text-primary">Consumidor:</span> {client?.name || "-"}</p>
                             <div className="h-4 border border-gray-300" />
                             <p className="text-sm text-muted-foreground"><span className="font-semibold text-primary">Data:</span> {formattedDate}</p>
-                            <div className="h-4 border border-gray-300" />
-                            <p className="text-sm text-muted-foreground"><span className="font-semibold text-primary">Horário de início:</span> {formattedTime}</p>
+                            {/* <div className="h-4 border border-gray-300" />
+                            <p className="text-sm text-muted-foreground"><span className="font-semibold text-primary">Horário de início:</span> {formattedTime}</p> */}
                         </div>
                     </div>
                 </CardContent>
