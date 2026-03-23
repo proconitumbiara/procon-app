@@ -7,6 +7,7 @@ import { formatDateInSaoPaulo } from "@/lib/timezone-utils";
 
 import CallCustomerAgainButton from "./call-customer-again-button";
 import FinishServiceButton from "./finish-service-button";
+import AttendanceDurationTimer from "./attendance-duration-timer";
 
 const saoPauloTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
@@ -67,8 +68,11 @@ const ServiceInProgressCard = async ({ operatingOperationId }: ServiceInProgress
                             <p className="text-sm text-muted-foreground"><span className="font-semibold text-primary">Consumidor:</span> {client?.name || "-"}</p>
                             <div className="h-4 border border-gray-300" />
                             <p className="text-sm text-muted-foreground"><span className="font-semibold text-primary">Data:</span> {formattedDate}</p>
-                            {/* <div className="h-4 border border-gray-300" />
-                            <p className="text-sm text-muted-foreground"><span className="font-semibold text-primary">Horário de início:</span> {formattedTime}</p> */}
+                            <div className="h-4 border border-gray-300" />
+                            <p className="text-sm text-muted-foreground">
+                                <span className="font-semibold text-primary">Duração:</span>{" "}
+                                <AttendanceDurationTimer createdAt={treatment.createdAt} />
+                            </p>
                         </div>
                     </div>
                 </CardContent>

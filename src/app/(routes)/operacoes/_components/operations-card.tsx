@@ -21,6 +21,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator";
 import { formatCPF } from "@/lib/utils";
 import { formatDateInSaoPaulo } from "@/lib/timezone-utils";
+import AttendanceDurationTimer from "../../atendimento/_components/attendance-duration-timer";
 
 const saoPauloTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -217,10 +218,10 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
               <span className="text-foreground font-semibold">Início:</span>{" "}
               {operation.createdAt
                 ? formatDateInSaoPaulo(operation.createdAt, {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "2-digit",
+                })
                 : "-"}{" "}
               <span className="text-foreground font-semibold">Horário:</span>{" "}
               {operation.createdAt
@@ -235,7 +236,7 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
           <CardContent className="flex-1 flex flex-col">
             {/* Seção de atendimentos em andamento */}
             {operation.treatments && operation.treatments.length > 0 ? (
-              <div className="flex-1 bg-background/10 flex flex-col justify-between h-full">
+              <div className="flex-1 bg-transparent flex flex-col justify-between h-full">
                 <h3 className="text-base text-primary font-semibold mb-2">
                   Atendimento em Andamento
                 </h3>
@@ -253,19 +254,16 @@ const OperationsCard = ({ operations }: OperationCardProps) => {
                       <span className="text-foreground font-semibold">Início do atendimento:</span>{" "}
                       {treatment.createdAt
                         ? formatDateInSaoPaulo(treatment.createdAt, {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "2-digit",
-                          })
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                        })
                         : "-"}{" "}
-                      <span className="text-foreground font-semibold">às</span>{" "}
-                      {treatment.createdAt
-                        ? saoPauloTimeFormatter.format(new Date(treatment.createdAt))
-                        : "-"}
                     </p>
-                    {treatment.createdAt && (
-                      <TreatmentTimer createdAt={treatment.createdAt} />
-                    )}
+                    <p className="text-sm">
+                      <span className="text-foreground font-semibold">Duração:</span>{" "}
+                      <AttendanceDurationTimer createdAt={treatment.createdAt} />
+                    </p>
                   </div>
                 ))}
               </div>
