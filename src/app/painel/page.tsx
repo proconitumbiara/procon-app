@@ -3,8 +3,6 @@
 import type { ChamadaCliente } from "@/lib/panel-api";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Check, Clock, ListOrdered } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Pusher from "pusher-js";
@@ -27,11 +25,6 @@ function filterValidChamadas(list: ChamadaCliente[]): ChamadaCliente[] {
 
 function chamadaKey(c: ChamadaCliente): string {
   return `${c.chamadoEm ?? ""}-${c.nome}-${c.guiche}`;
-}
-
-/** Retorna os 4 primeiros nomes (palavras) do nome completo. */
-function primeirosDoisNomes(nome: string): string {
-  return nome.trim().split(/\s+/).slice(0, 2).join(" ") || "";
 }
 
 function playBeep() {
@@ -176,23 +169,23 @@ export default function PainelPage() {
   return (
     <div className="flex h-screen min-h-screen w-full flex-col overflow-hidden bg-secondary">
       <div className="flex min-h-0 flex-1 flex-row">
-        <main className="flex min-w-0 flex-1 flex-col">
-          <header className="flex shrink-0 items-center justify-center border-transparent bg-white px-4 py-3 text-center shadow-2xl">
-            <h1 className="text-[clamp(1.25rem,2.5vw,2.5rem)] font-bold tracking-wide text-secondary">
+        <main className="flex min-w-0 flex-1 flex-col w-full">
+          <header className="flex shrink-0 items-center justify-center border-transparent bg-white px-6 py-4 text-center shadow-2xl 2xl:py-6">
+            <h1 className="text-[clamp(1.5rem,2.2vw,3.2rem)] font-bold tracking-wide text-secondary 2xl:text-[clamp(2.2rem,2.6vw,3.8rem)]">
               PROCON ITUMBIARA - PAINEL DE ATENDIMENTO
             </h1>
           </header>
 
-          <div className="flex flex-1 flex-col items-center justify-center p-4 md:p-6">
-            <Card className="w-full max-w-[90%] bg-white border border-transparent shadow-lg md:max-w-4xl">
-              <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center md:gap-6 md:py-16">
-                <h2 className="max-w-full whitespace-normal px-2 text-center font-black leading-tight tracking-wide text-secondary text-[clamp(2rem,5vw,6rem)]">
+          <div className="flex flex-1 flex-col items-center justify-center p-5 md:p-10 2xl:p-14 w-full">
+            <Card className="w-full border border-transparent bg-white shadow-lg md:max-w-[88%] 2xl:max-w-[92%]">
+              <CardContent className="flex flex-col items-center justify-center gap-6 py-16 text-center md:gap-8 md:py-22 2xl:gap-10 2xl:py-28">
+                <h2 className="max-w-full whitespace-nowrap px-6 text-center font-black leading-none tracking-wide text-secondary text-[clamp(2.8rem,4.4vw,7rem)] 2xl:text-[clamp(4rem,4.8vw,8.2rem)]">
                   {chamadaAtual?.nome
                     ? chamadaAtual.nome
                     : "Aguardando chamada"}
                 </h2>
                 {chamadaAtual?.guiche && (
-                  <p className="font-bold text-primary/75 text-[clamp(1.25rem,2.5vw,3rem)]">
+                  <p className="font-bold text-primary/75 text-[clamp(1.8rem,2.8vw,4rem)] 2xl:text-[clamp(2.5rem,3.2vw,4.8rem)]">
                     {guicheDisplay}
                   </p>
                 )}
@@ -201,40 +194,40 @@ export default function PainelPage() {
           </div>
         </main>
 
-        <aside className="flex w-full max-w-88 shrink-0 flex-col items-center justify-between gap-4 border-l border-border bg-white px-4 py-6 shadow-2xl xl:max-w-md">
+        <aside className="flex w-full max-w-xl shrink-0 flex-col items-center justify-between gap-6 border-l border-border bg-white px-8 py-8 shadow-2xl 2xl:max-w-2xl 2xl:px-10 2xl:py-10">
           <Image
             src="/Logo.svg"
             alt="Logo PROCON Itumbiara"
-            width={320}
-            height={120}
+            width={520}
+            height={180}
             priority
-            className="h-auto w-full max-w-[18rem] shrink-0 object-contain"
+            className="h-auto w-full max-w-120 shrink-0 object-contain 2xl:max-w-136"
           />
 
-          <Card className="w-full min-w-0 flex-1 overflow-hidden bg-white border-none shadow-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-xl font-bold text-secondary">
+          <Card className="w-full min-w-0 flex-1 overflow-hidden border-none bg-white shadow-none">
+            <CardHeader className="pb-4 2xl:pb-5">
+              <CardTitle className="flex items-center gap-2 text-4xl font-bold text-secondary 2xl:text-5xl">
                 Últimas chamadas
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <ul className="list-none space-y-2 p-0" role="list">
+            <CardContent className="space-y-4">
+              <ul className="list-none space-y-4 p-0" role="list">
                 {ultimasChamadas.map((c) => (
                   <li
                     key={chamadaKey(c)}
-                    className="rounded-md border border-transparent bg-white px-3 py-2 text-xl"
+                    className="rounded-md border border-transparent bg-white px-4 py-3 text-3xl 2xl:text-4xl"
                   >
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="font-semibold text-secondary">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                      <span className="font-semibold text-secondary text-3xl 2xl:text-4xl">
                         {c.nome}
                       </span>
                       {c.prioridade === "Prioritário" && (
-                        <Badge variant="default" className="shrink-0 text-xs bg-primary/75 py-0.5 text-white">
+                        <Badge variant="default" className="shrink-0 bg-primary/75 px-3 py-1.5 text-base text-white 2xl:text-lg">
                           Prioritário
                         </Badge>
                       )}
                     </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-secondary text-md">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 text-2xl text-secondary 2xl:text-3xl">
                       <span>{c.guiche} - </span>
                       {c.chamadoEm && (
                         <span>
@@ -252,13 +245,13 @@ export default function PainelPage() {
           </Card>
 
 
-          <div className="flex shrink-0 flex-col items-center gap-1 text-center">
+          <div className="flex shrink-0 flex-col items-center gap-2 text-center">
             <div className="flex items-center gap-2 font-bold text-secondary">
-              <span className="text-[clamp(1.25rem,2vw,2rem)] tabular-nums text-2xl">
+              <span className="tabular-nums text-[clamp(2rem,2.8vw,3.2rem)] 2xl:text-[clamp(2.8rem,3vw,4rem)]">
                 {clockTime}
               </span>
             </div>
-            <div className="font-medium capitalize text-secondary text-2xl">
+            <div className="font-medium capitalize text-3xl text-secondary 2xl:text-4xl">
               {clockDate}
             </div>
           </div>
