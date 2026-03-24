@@ -186,9 +186,9 @@ export default function PainelPage() {
           <div className="flex flex-1 flex-col items-center justify-center p-4 md:p-6">
             <Card className="w-full max-w-[90%] bg-white border border-transparent shadow-lg md:max-w-4xl">
               <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center md:gap-6 md:py-16">
-                <h2 className="max-w-full wrap-break-words px-2 text-center font-black tracking-wide text-secondary text-[clamp(2rem,5vw,6rem)]">
+                <h2 className="max-w-full whitespace-normal px-2 text-center font-black leading-tight tracking-wide text-secondary text-[clamp(2rem,5vw,6rem)]">
                   {chamadaAtual?.nome
-                    ? primeirosDoisNomes(chamadaAtual.nome) + ""
+                    ? chamadaAtual.nome
                     : "Aguardando chamada"}
                 </h2>
                 {chamadaAtual?.guiche && (
