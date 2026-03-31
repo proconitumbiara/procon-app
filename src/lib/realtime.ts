@@ -20,3 +20,15 @@ export const REALTIME_EVENTS = {
   autoCallCheck: "auto-call-check",
 } as const;
 
+export type TicketRealtimeStatus =
+  | "pending"
+  | "in-attendance"
+  | "finished"
+  | "cancelled";
+
+export type TicketChangedPayload = {
+  ticketId: string;
+  status: TicketRealtimeStatus;
+  updatedAt: string;
+};
+

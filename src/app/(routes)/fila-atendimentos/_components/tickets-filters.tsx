@@ -30,7 +30,10 @@ export default function TicketsFilters({
   // Função para recarregar tickets
   const reloadTickets = useCallback(async () => {
     try {
-      const res = await fetch("/api/tickets", { credentials: "same-origin" });
+      const res = await fetch("/api/tickets", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
       if (!res.ok) {
         if (res.status === 401) throw new Error("unauthorized");
         throw new Error("Erro ao buscar tickets");
@@ -38,7 +41,10 @@ export default function TicketsFilters({
       const data = await res.json();
 
       // Buscar clientes e setores
-      const clientsRes = await fetch("/api/clients", { credentials: "same-origin" });
+      const clientsRes = await fetch("/api/clients", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
       if (!clientsRes.ok) throw new Error("Erro ao buscar clientes/setores");
       const clientsSectorsData = await clientsRes.json();
 
@@ -75,7 +81,10 @@ export default function TicketsFilters({
 
       setTickets(mapped);
     } catch (error) {
-      logger.error("reloadTickets failed", { error });
+      logger.error("reloadTickets failed", {
+        action: "fila-atendimentos.reloadTickets",
+        error,
+      });
     }
   }, []);
 

@@ -8,15 +8,47 @@ import { clientsTable, sectorsTable, ticketsTable } from "@/db/schema";
 import { permissionedActionClient } from "@/lib/next-safe-action";
 import { logger } from "@/lib/logger";
 import { pusherServer } from "@/lib/pusher-server";
-import { REALTIME_CHANNELS, REALTIME_EVENTS } from "@/lib/realtime";
+import {
+  REALTIME_CHANNELS,
+  REALTIME_EVENTS,
+  type TicketChangedPayload,
+  type TicketRealtimeStatus,
+} from "@/lib/realtime";
 import { calculateAge } from "@/lib/utils";
 
 import {
   CreateTicketSchema,
-  ErrorMessages,
   ErrorTypes,
   UpdateTicketSchema,
 } from "./schema";
+
+async function emitTicketRealtimeEvents(payload: TicketChangedPayload) {
+  const events = [
+    { event: REALTIME_EVENTS.ticketsChanged, payload },
+    { event: REALTIME_EVENTS.ticketUpdated, payload: { ticketId: payload.ticketId } },
+    { event: REALTIME_EVENTS.ticketCreated, payload: { ticketId: payload.ticketId } },
+  ] as const;
+
+  const results = await Promise.allSettled(
+    events.map(({ event, payload: eventPayload }) =>
+      pusherServer.trigger(REALTIME_CHANNELS.tickets, event, eventPayload),
+    ),
+  );
+
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      logger.error("Ticket realtime emit failed", {
+        action: "ticket-upsert",
+        channel: REALTIME_CHANNELS.tickets,
+        event: events[index].event,
+        ticketId: payload.ticketId,
+        status: payload.status,
+        updatedAt: payload.updatedAt,
+        error: result.reason,
+      });
+    }
+  });
+}
 
 export const updateTicket = permissionedActionClient("tickets.manage")
   .schema(UpdateTicketSchema)
@@ -37,27 +69,26 @@ export const updateTicket = permissionedActionClient("tickets.manage")
       };
     }
 
+    const updatedAt = new Date();
+
     await db
       .update(ticketsTable)
       .set({
         status: "cancelled",
-        finishedAt: new Date(),
+        finishedAt: updatedAt,
         sectorId: ticket.sectorId,
         clientId: ticket.clientId,
+        updatedAt,
       })
       .where(eq(ticketsTable.id, parsedInput.id));
 
     revalidatePath("/fila-atendimentos");
 
-    void pusherServer.trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketUpdated, {
+    await emitTicketRealtimeEvents({
       ticketId: parsedInput.id,
-    }).catch((err) => logger.error("updateTicket Pusher failed", { error: err }));
-    void pusherServer
-      .trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketsChanged, {
-        ticketId: parsedInput.id,
-        status: "cancelled",
-      })
-      .catch(() => {});
+      status: "cancelled",
+      updatedAt: updatedAt.toISOString(),
+    });
   });
 
 export const createTicket = permissionedActionClient("tickets.manage")
@@ -109,15 +140,11 @@ export const createTicket = permissionedActionClient("tickets.manage")
     revalidatePath("/atendimento");
     revalidatePath("/fila-atendimentos");
 
-    void pusherServer.trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketCreated, {
+    await emitTicketRealtimeEvents({
       ticketId: newTicket.id,
-    }).catch((err) => logger.error("createTicket Pusher failed", { error: err }));
-    void pusherServer
-      .trigger(REALTIME_CHANNELS.tickets, REALTIME_EVENTS.ticketsChanged, {
-        ticketId: newTicket.id,
-        status: newTicket.status,
-      })
-      .catch(() => {});
+      status: newTicket.status as TicketRealtimeStatus,
+      updatedAt: (newTicket.updatedAt ?? newTicket.createdAt).toISOString(),
+    });
 
     return { data: newTicket };
   });

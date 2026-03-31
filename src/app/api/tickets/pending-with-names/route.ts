@@ -6,6 +6,8 @@ import { ticketsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { buildUserPermissions } from "@/lib/authorization";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/tickets/pending-with-names
  * Retorna tickets com status 'pending' já com clientName e sectorName.
@@ -59,5 +61,14 @@ export async function GET(request: NextRequest) {
     createdAt: t.createdAt,
     }));
 
-  return NextResponse.json({ tickets });
+  return NextResponse.json(
+    { tickets },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    },
+  );
 }

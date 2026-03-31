@@ -10,16 +10,23 @@ export const ErrorMessages = {
 
 export type ErrorType = keyof typeof ErrorTypes;
 
+export const TicketStatusSchema = z.enum([
+  "pending",
+  "in-attendance",
+  "finished",
+  "cancelled",
+]);
+
 export const UpdateTicketSchema = z.object({
   id: z.string().min(1, "ID é obrigatório"),
-  status: z.string().optional(),
+  status: TicketStatusSchema.optional(),
   sectorId: z.string().optional(),
   clientId: z.string().optional(),
   priority: z.number().int().min(0).max(1).optional(),
 });
 
 export const CreateTicketSchema = z.object({
-  status: z.string().min(1, "Status é obrigatório"),
+  status: TicketStatusSchema,
   sectorId: z.string().min(1, "ID do setor é obrigatório"),
   clientId: z.string().min(1, "ID do cliente é obrigatório"),
   priority: z.number().int().min(0).max(1).optional().default(0),

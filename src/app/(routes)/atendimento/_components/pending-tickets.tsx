@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,10 @@ import { ticketsTableColumns, TicketTableRow } from "./tickets-table-columns";
 import { TicketWaitTime } from "@/components/ticket-wait-time";
 
 const fetchPendingTicketsWithNames = async () => {
-    const res = await fetch("/api/tickets/pending-with-names", { credentials: "same-origin" });
+    const res = await fetch("/api/tickets/pending-with-names", {
+        credentials: "same-origin",
+        cache: "no-store",
+    });
     if (!res.ok) {
         if (res.status === 401) throw new Error("unauthorized");
         throw new Error("Erro ao buscar tickets");
@@ -23,11 +26,22 @@ const fetchPendingTicketsWithNames = async () => {
 export default function PendingTickets() {
     const [tableData, setTableData] = useState<TicketTableRow[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingError, setLoadingError] = useState<string | null>(null);
     const router = useRouter();
+    const isReloadingRef = useRef(false);
+    const shouldReloadAgainRef = useRef(false);
 
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async (silent = false) => {
+        if (isReloadingRef.current) {
+            shouldReloadAgainRef.current = true;
+            return;
+        }
+
+        isReloadingRef.current = true;
+        if (!silent) setLoading(true);
+
         try {
-            setLoading(true);
+            setLoadingError(null);
             const data = await fetchPendingTicketsWithNames();
             const tickets = data.tickets ?? [];
             const mapped: TicketTableRow[] = tickets.map(
@@ -52,24 +66,40 @@ export default function PendingTickets() {
                 }),
             );
             setTableData(mapped);
-            setLoading(false);
         } catch (err: unknown) {
             if (err instanceof Error && err.message === "unauthorized") {
                 router.replace("/");
+                return;
             }
-            setLoading(false);
+            console.error("Falha ao carregar tickets pendentes", err);
+            setLoadingError("Erro ao carregar tickets pendentes.");
+        } finally {
+            if (!silent) setLoading(false);
+            isReloadingRef.current = false;
+
+            if (shouldReloadAgainRef.current) {
+                shouldReloadAgainRef.current = false;
+                void loadData(true);
+            }
         }
     }, [router]);
 
     // Conectar ao WebSocket para atualizações em tempo real
-    useTicketsWebSocket(loadData);
+    const handleTicketUpdate = useCallback(() => {
+        void loadData(true);
+    }, [loadData]);
+    useTicketsWebSocket(handleTicketUpdate);
 
     useEffect(() => {
-        loadData();
+        void loadData();
     }, [loadData]);
 
     if (loading) {
         return <Card className="w-full h-full text-sm text-muted-foreground text-center">Carregando...</Card>;
+    }
+
+    if (loadingError) {
+        return <Card className="w-full h-full text-sm text-destructive text-center">{loadingError}</Card>;
     }
 
     if (!tableData.length) {
