@@ -1,13 +1,16 @@
-import { and, asc, eq, lt } from "drizzle-orm";
+import { and, asc, eq, exists, inArray, lt, notExists } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import {
   operationsTable,
+  sectorsTable,
+  servicePointsTable,
   ticketsTable,
   treatmentsTable,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { buildUserPermissions } from "@/lib/authorization";
 
 const PENDING_MINUTES = 10;
 
@@ -26,49 +29,74 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const tenMinutesAgo = new Date(Date.now() - PENDING_MINUTES * 60 * 1000);
-
-  const [eligibleTicket] = await db
-    .select({ id: ticketsTable.id })
-    .from(ticketsTable)
-    .where(
-      and(
-        eq(ticketsTable.status, "pending"),
-        lt(ticketsTable.createdAt, tenMinutesAgo)
-      )
-    )
-    .limit(1);
-
-  if (!eligibleTicket) {
-    return NextResponse.json({ showCountdown: false });
-  }
-
-  const operationIdsWithService = await db
-    .select({ operationId: treatmentsTable.operationId })
-    .from(treatmentsTable)
-    .where(eq(treatmentsTable.status, "in_service"));
-
-  const idsWithService = new Set(
-    operationIdsWithService
-      .map((r) => r.operationId)
-      .filter((id): id is string => id != null)
-  );
-
-  const operatingOperations = await db.query.operationsTable.findMany({
-    where: eq(operationsTable.status, "operating"),
-    orderBy: asc(operationsTable.updatedAt),
-    columns: { id: true, userId: true },
+  const perms = buildUserPermissions({
+    id: session.user.id,
+    role: session.user.role,
+    profile: (session.user as { profile?: string | null }).profile,
   });
 
-  const oldestIdleOperation = operatingOperations.find(
-    (op) => !idsWithService.has(op.id)
-  );
-
-  if (!oldestIdleOperation) {
+  if (!perms.can("treatments.manage")) {
     return NextResponse.json({ showCountdown: false });
   }
 
-  const showCountdown = oldestIdleOperation.userId === session.user.id;
+  const tenMinutesAgo = new Date(Date.now() - PENDING_MINUTES * 60 * 1000);
+
+  const baseEligibilityConditions = [
+    eq(operationsTable.status, "operating"),
+    notExists(
+      db
+        .select({ operationId: treatmentsTable.operationId })
+        .from(treatmentsTable)
+        .where(
+          and(
+            eq(treatmentsTable.operationId, operationsTable.id),
+            eq(treatmentsTable.status, "in_service"),
+          ),
+        ),
+    ),
+    exists(
+      db
+        .select({ id: ticketsTable.id })
+        .from(ticketsTable)
+        .where(
+          and(
+            eq(ticketsTable.status, "pending"),
+            eq(ticketsTable.sectorId, servicePointsTable.sectorId),
+            lt(ticketsTable.createdAt, tenMinutesAgo),
+          ),
+        ),
+    ),
+  ];
+
+  const whereConditions =
+    perms.sectorKeyFilter.length === 1 && perms.sectorKeyFilter[0] === "*"
+      ? and(...baseEligibilityConditions)
+      : and(
+          ...baseEligibilityConditions,
+          inArray(sectorsTable.key_name, perms.sectorKeyFilter),
+        );
+
+  const oldestEligibleOperation = await db
+    .select({
+      id: operationsTable.id,
+      userId: operationsTable.userId,
+    })
+    .from(operationsTable)
+    .innerJoin(
+      servicePointsTable,
+      eq(servicePointsTable.id, operationsTable.servicePointId),
+    )
+    .innerJoin(sectorsTable, eq(sectorsTable.id, servicePointsTable.sectorId))
+    .where(whereConditions)
+    .orderBy(asc(operationsTable.updatedAt), asc(operationsTable.id))
+    .limit(1)
+    .then((rows) => rows[0]);
+
+  if (!oldestEligibleOperation) {
+    return NextResponse.json({ showCountdown: false });
+  }
+
+  const showCountdown = oldestEligibleOperation.userId === session.user.id;
 
   return NextResponse.json({ showCountdown });
 }
