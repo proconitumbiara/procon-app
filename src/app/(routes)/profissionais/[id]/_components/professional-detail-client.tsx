@@ -25,6 +25,7 @@ interface ProfessionalMetricsData {
   totalPauses: number;
   averagePausesPerOperation: number;
   averageTimeBetweenTreatments: number;
+  averageTimeBetweenTreatmentsMean: number;
   operations: Array<{
     id: string;
     status: string;
@@ -93,6 +94,7 @@ const ProfessionalDetailClient = ({
     totalPauses: 0,
     averagePausesPerOperation: 0,
     averageTimeBetweenTreatments: 0,
+    averageTimeBetweenTreatmentsMean: 0,
     operations: [],
     treatments: [],
     pauses: [],

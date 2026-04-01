@@ -158,27 +158,67 @@ export const getProfessionalMetrics = async ({
     );
   };
 
-  const sortedFinishedTreatments = allTreatmentsWithOperation
-    .filter(hasFinishedDates)
-    .map((t) => ({
-      startedAt:
-        t.startedAt instanceof Date ? t.startedAt : new Date(t.startedAt),
-      finishedAt:
-        t.finishedAt instanceof Date ? t.finishedAt : new Date(t.finishedAt),
-    }))
-    .sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+  const gapsBetweenTreatments: number[] = operationsFiltered.flatMap((op) => {
+    const operationStart =
+      op.createdAt instanceof Date ? op.createdAt : new Date(op.createdAt);
+    const operationEnd =
+      op.status === "finished" && op.finishedAt
+        ? op.finishedAt instanceof Date
+          ? op.finishedAt
+          : new Date(op.finishedAt)
+        : op.updatedAt instanceof Date
+          ? op.updatedAt
+          : new Date(op.updatedAt ?? op.createdAt);
 
-  const gapsBetweenTreatments: number[] = [];
-  for (let i = 1; i < sortedFinishedTreatments.length; i++) {
-    const prev = sortedFinishedTreatments[i - 1];
-    const curr = sortedFinishedTreatments[i];
-    const gapMs = curr.startedAt.getTime() - prev.finishedAt.getTime();
-    if (gapMs > 0) {
-      gapsBetweenTreatments.push(Math.round(gapMs / 60000));
+    const sortedFinishedTreatments = op.treatments
+      .filter(
+        (
+          t,
+        ): t is typeof op.treatments[number] &
+          FinishedTreatmentWithDates =>
+          t.status === "finished" &&
+          t.startedAt !== null &&
+          t.finishedAt !== null,
+      )
+      .map((t) => ({
+        startedAt: t.startedAt instanceof Date ? t.startedAt : new Date(t.startedAt),
+        finishedAt:
+          t.finishedAt instanceof Date ? t.finishedAt : new Date(t.finishedAt),
+      }))
+      .sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+
+    const operationGaps: number[] = [];
+    for (let i = 1; i < sortedFinishedTreatments.length; i++) {
+      const prev = sortedFinishedTreatments[i - 1];
+      const curr = sortedFinishedTreatments[i];
+
+      // Restringe o gap ao tempo de atividade da operação mãe
+      const gapStart = new Date(
+        Math.max(prev.finishedAt.getTime(), operationStart.getTime()),
+      );
+      const gapEnd = new Date(
+        Math.min(curr.startedAt.getTime(), operationEnd.getTime()),
+      );
+
+      const gapMs = gapEnd.getTime() - gapStart.getTime();
+      if (gapMs > 0) {
+        operationGaps.push(Math.round(gapMs / 60000));
+      }
     }
-  }
 
-  const averageTimeBetweenTreatments =
+    return operationGaps;
+  });
+
+  const sortedGaps = [...gapsBetweenTreatments].sort((a, b) => a - b);
+  const middleIndex = Math.floor(sortedGaps.length / 2);
+  const medianTimeBetweenTreatments =
+    sortedGaps.length === 0
+      ? 0
+      : sortedGaps.length % 2 === 1
+        ? sortedGaps[middleIndex]
+        : Math.round((sortedGaps[middleIndex - 1] + sortedGaps[middleIndex]) / 2);
+
+  const averageTimeBetweenTreatmentsMean =
     gapsBetweenTreatments.length > 0
       ? Math.round(
           gapsBetweenTreatments.reduce((a, b) => a + b, 0) /
@@ -251,7 +291,8 @@ export const getProfessionalMetrics = async ({
     averageTreatmentTime,
     totalPauses,
     averagePausesPerOperation,
-    averageTimeBetweenTreatments,
+    averageTimeBetweenTreatments: medianTimeBetweenTreatments,
+    averageTimeBetweenTreatmentsMean,
     operations: operationsWithTreatments,
     treatments: treatmentsForList,
     pauses: pausesForList,

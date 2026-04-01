@@ -23,6 +23,7 @@ interface ProfessionalMetricsData {
     totalPauses: number;
     averagePausesPerOperation: number;
     averageTimeBetweenTreatments: number;
+    averageTimeBetweenTreatmentsMean: number;
 }
 
 interface ProfessionalMetricsProps {
@@ -324,7 +325,7 @@ const ProfessionalMetrics = ({ metrics, selectedDateRange, onDateRangeSelect, pr
                     </CardContent>
                 </Card>
 
-                {/* Tempo médio entre atendimentos */}
+                {/* Intervalo entre atendimentos */}
                 <Card>
                     <CardHeader className="flex flex-row items-center space-y-0 gap-2 pb-2">
                         <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
@@ -342,7 +343,7 @@ const ProfessionalMetrics = ({ metrics, selectedDateRange, onDateRangeSelect, pr
                                     </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-[280px]">
-                                    Média do tempo (em minutos) entre o encerramento de um atendimento e o início do próximo . Considerados apenas atendimentos finalizados, ordenados por data de início.
+                                    Valor principal: mediana do intervalo (em minutos) entre o encerramento de um atendimento e o início do próximo, calculado dentro da mesma operação. Valor de apoio: média desses mesmos intervalos.
                                 </TooltipContent>
                             </Tooltip>
                         </CardTitle>
@@ -352,8 +353,11 @@ const ProfessionalMetrics = ({ metrics, selectedDateRange, onDateRangeSelect, pr
                             {formatTime(metrics.averageTimeBetweenTreatments ?? 0)}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Tempo médio entre um atendimento e outro
+                            Mediana entre atendimentos
                         </p>
+                        {/* <p className="text-xs text-muted-foreground">
+                            Média (apoio): {formatTime(metrics.averageTimeBetweenTreatmentsMean ?? 0)}
+                        </p> */}
                     </CardContent>
                 </Card>
             </div>
