@@ -234,13 +234,13 @@ const getDashboard = async ({ from, to, sectorKeyNames = null }: Params) => {
       ? new Date(t.startedAt).getTime()
       : null;
     const waitingTimeMs =
-      ticketCreatedAt != null && (calledAt != null || treatmentStartedAt != null)
+      ticketCreatedAt != null &&
+      (calledAt != null || treatmentStartedAt != null)
         ? (calledAt ?? treatmentStartedAt!) - ticketCreatedAt
         : null;
     const waitingTimeMinutes =
       waitingTimeMs != null ? Math.round(waitingTimeMs / 60000) : null;
-    const durationMinutes =
-      t.duration != null ? Math.round(t.duration / 60) : null;
+    const durationMinutes = t.duration != null ? t.duration : null;
 
     return {
       id: t.id,
