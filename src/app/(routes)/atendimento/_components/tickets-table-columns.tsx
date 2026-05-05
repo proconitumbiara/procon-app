@@ -1,9 +1,13 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
+import { Copy } from "lucide-react"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { TicketWaitTime } from "@/components/ticket-wait-time"
+import { formatCPF } from "@/lib/utils"
 
 
 export type TicketTableRow = {
@@ -11,6 +15,7 @@ export type TicketTableRow = {
     status: string
     priority: number
     clientName: string
+    register: string
     clientId: string
     sectorName: string
     sectorId: string
@@ -22,6 +27,44 @@ export const ticketsTableColumns: ColumnDef<TicketTableRow>[] = [
         id: "clientName",
         accessorKey: "clientName",
         header: "Cliente",
+    },
+    {
+        id: "register",
+        accessorKey: "register",
+        header: "CPF",
+        cell: ({ row }) => {
+            const register = row.original.register
+            const formattedRegister = register ? formatCPF(register) : "-"
+
+            if (!register) return "-"
+
+            const handleCopyCPF = async () => {
+                try {
+                    await navigator.clipboard.writeText(register)
+                    toast.success("CPF copiado para a área de transferência!")
+                } catch {
+                    toast.error("Erro ao copiar CPF")
+                }
+            }
+
+            return (
+                <div className="flex items-center gap-2">
+                    <span>{formattedRegister}</span>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(event) => {
+                            event.stopPropagation()
+                            void handleCopyCPF()
+                        }}
+                    >
+                        <Copy className="h-4 w-4" />
+                    </Button>
+                </div>
+            )
+        },
     },
     {
         id: "sectorName",

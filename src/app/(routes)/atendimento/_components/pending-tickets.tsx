@@ -51,6 +51,7 @@ export default function PendingTickets() {
                     priority: number;
                     clientId: string;
                     clientName: string;
+                    register: string;
                     sectorId: string;
                     sectorName: string;
                     createdAt: string;
@@ -59,6 +60,7 @@ export default function PendingTickets() {
                     status: ticket.status,
                     priority: ticket.priority ?? 0,
                     clientName: ticket.clientName ?? "-",
+                    register: ticket.register ?? "",
                     clientId: ticket.clientId,
                     sectorName: ticket.sectorName ?? "-",
                     sectorId: ticket.sectorId,

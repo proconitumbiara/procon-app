@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
     priority: t.priority ?? 0,
     clientId: t.clientId,
     clientName: t.client?.name ?? "-",
+    register: t.client?.register ?? "",
     sectorId: t.sectorId,
     sectorName: t.sector?.name ?? "-",
     createdAt: t.createdAt,
