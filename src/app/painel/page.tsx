@@ -170,22 +170,22 @@ export default function PainelPage() {
     <div className="flex h-screen min-h-screen w-full flex-col overflow-hidden bg-secondary">
       <div className="flex min-h-0 flex-1 flex-row">
         <main className="flex min-w-0 flex-1 flex-col w-full">
-          <header className="flex shrink-0 items-center justify-center border-transparent bg-white px-6 py-4 text-center shadow-2xl 2xl:py-6">
-            <h1 className="text-[clamp(1.5rem,2.2vw,3.2rem)] font-bold tracking-wide text-secondary 2xl:text-[clamp(2.2rem,2.6vw,3.8rem)]">
+          <header className="flex shrink-0 items-center justify-center bg-white px-6 py-4 text-center shadow-2xl xl:py-4">
+            <h1 className="text-2xl font-bold tracking-wide text-secondary xl:text-4xl">
               PROCON ITUMBIARA - PAINEL DE ATENDIMENTO
             </h1>
           </header>
 
-          <div className="flex flex-1 flex-col items-center justify-center p-5 md:p-10 2xl:p-14 w-full">
-            <Card className="w-full border border-transparent bg-white shadow-lg md:max-w-[88%] 2xl:max-w-[92%]">
-              <CardContent className="flex flex-col items-center justify-center gap-6 py-16 text-center md:gap-8 md:py-22 2xl:gap-10 2xl:py-28">
-                <h2 className="max-w-full whitespace-nowrap px-6 text-center font-black leading-none tracking-wide text-secondary text-[clamp(2.8rem,4.4vw,7rem)] 2xl:text-[clamp(4rem,4.8vw,8.2rem)]">
+          <div className="flex flex-1 flex-col items-center justify-center p-5 md:p-8 xl:p-10 2xl:p-12 w-full">
+            <Card className="w-full border border-transparent bg-white shadow-lg md:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
+              <CardContent className="flex flex-col items-center justify-center gap-6 py-12 text-center md:gap-8 md:py-16 xl:gap-10 xl:py-20">
+                <h2 className="max-w-full whitespace-normal px-6 text-center text-5xl font-black leading-tight tracking-wide text-secondary xl:text-6xl 2xl:text-7xl">
                   {chamadaAtual?.nome
                     ? chamadaAtual.nome
                     : "Aguardando chamada"}
                 </h2>
                 {chamadaAtual?.guiche && (
-                  <p className="font-bold text-primary/75 text-[clamp(1.8rem,2.8vw,4rem)] 2xl:text-[clamp(2.5rem,3.2vw,4.8rem)]">
+                  <p className="text-3xl font-bold text-primary/75 xl:text-4xl 2xl:text-5xl">
                     {guicheDisplay}
                   </p>
                 )}
@@ -194,40 +194,40 @@ export default function PainelPage() {
           </div>
         </main>
 
-        <aside className="flex w-full max-w-xl shrink-0 flex-col items-center justify-between gap-6 border-l border-border bg-white px-8 py-8 shadow-2xl 2xl:max-w-2xl 2xl:px-10 2xl:py-10">
+        <aside className="flex w-full max-w-md shrink-0 flex-col items-center justify-between gap-5 border-l border-border bg-white px-6 py-6 shadow-2xl xl:max-w-lg xl:px-7 xl:py-7 2xl:max-w-sm 2xl:px-2 2xl:py-2">
           <Image
             src="/Logo.svg"
             alt="Logo PROCON Itumbiara"
             width={520}
             height={180}
             priority
-            className="h-auto w-full max-w-120 shrink-0 object-contain 2xl:max-w-136"
+            className="h-auto w-full max-w-xs shrink-0 object-contain xl:max-w-sm 2xl:max-w-xs"
           />
 
           <Card className="w-full min-w-0 flex-1 overflow-hidden border-none bg-white shadow-none">
-            <CardHeader className="pb-4 2xl:pb-5">
-              <CardTitle className="flex items-center gap-2 text-4xl font-bold text-secondary 2xl:text-5xl">
+            <CardHeader className="pb-3 xl:pb-4">
+              <CardTitle className="flex items-center gap-2 text-3xl font-bold text-secondary xl:text-4xl">
                 Últimas chamadas
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="list-none space-y-4 p-0" role="list">
+            <CardContent className="space-y-3 xl:space-y-4">
+              <ul className="list-none space-y-3 p-0 xl:space-y-4" role="list">
                 {ultimasChamadas.map((c) => (
                   <li
                     key={chamadaKey(c)}
-                    className="rounded-md border border-transparent bg-white px-4 py-3 text-3xl 2xl:text-4xl"
+                    className="rounded-md border border-transparent bg-white px-3 py-2 text-2xl xl:px-4 xl:py-3 xl:text-3xl"
                   >
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                      <span className="font-semibold text-secondary text-3xl 2xl:text-4xl">
+                      <span className="text-2xl font-semibold text-secondary xl:text-2xl">
                         {c.nome}
                       </span>
                       {c.prioridade === "Prioritário" && (
-                        <Badge variant="default" className="shrink-0 bg-primary/75 px-3 py-1.5 text-base text-white 2xl:text-lg">
+                        <Badge variant="default" className="shrink-0 bg-primary/75 px-2 py-1 text-sm text-white xl:px-3 xl:text-sm">
                           Prioritário
                         </Badge>
                       )}
                     </div>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 text-2xl text-secondary 2xl:text-3xl">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xl text-secondary xl:text-xl">
                       <span>{c.guiche} - </span>
                       {c.chamadoEm && (
                         <span>
@@ -247,19 +247,19 @@ export default function PainelPage() {
 
           <div className="flex shrink-0 flex-col items-center gap-2 text-center">
             <div className="flex items-center gap-2 font-bold text-secondary">
-              <span className="tabular-nums text-[clamp(2rem,2.8vw,3.2rem)] 2xl:text-[clamp(2.8rem,3vw,4rem)]">
+              <span className="tabular-nums text-4xl xl:text-5xl">
                 {clockTime}
               </span>
             </div>
-            <div className="font-medium capitalize text-3xl text-secondary 2xl:text-4xl">
+            <div className="text-2xl font-medium capitalize text-secondary xl:text-md">
               {clockDate}
             </div>
           </div>
         </aside>
       </div>
 
-      <footer className="flex shrink-0 items-center justify-center overflow-hidden bg-primary py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.07)]">
-        <span className="painel-marquee inline-block whitespace-nowrap font-bold text-primary-foreground text-[clamp(0.875rem,1.5vw,1.25rem)]">
+      <footer className="flex shrink-0 items-center justify-center overflow-hidden bg-primary py-1 xl:py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.07)]">
+        <span className="painel-marquee inline-block whitespace-nowrap text-sm font-bold text-primary-foreground xl:text-base">
           SEJAM BEM-VINDOS • MANTENHA SEUS DOCUMENTOS EM MÃOS • AGUARDE SER
           CHAMADO • SIGA NOSSAS REDES SOCIAIS - @PROCONITUMBIARA
         </span>
